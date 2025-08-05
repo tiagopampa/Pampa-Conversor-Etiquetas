@@ -99,9 +99,10 @@
         </div>
 
         <!-- Abas de Navegação -->
-        <div class="mb-8 flex justify-center space-x-4 border-b border-gray-200 pb-4">
+        <div class="mb-8 flex justify-center space-x-2 md:space-x-4 border-b border-gray-200 pb-4">
             <button id="tab-excel" class="tab-button active">Etiqueta com Excel</button>
             <button id="tab-declaration" class="tab-button">Etiqueta + Declaração</button>
+            <button id="tab-checklist" class="tab-button">Etiqueta + Checklist</button>
         </div>
         
         <!-- Ferramenta 1: Etiqueta com Excel -->
@@ -146,22 +147,22 @@
             <p class="text-gray-500 mt-2 text-center">Informe o número de etiquetas e envie o PDF para intercalar.</p>
 
             <div class="my-8">
-                 <div id="pdf-upload-area-single" class="upload-box max-w-md mx-auto">
-                    <input type="file" id="pdf-input-single" class="hidden" accept="application/pdf">
-                    <div id="pdf-upload-prompt-single">
+                 <div id="pdf-upload-area-single-decl" class="upload-box max-w-md mx-auto">
+                    <input type="file" id="pdf-input-single-decl" class="hidden" accept="application/pdf">
+                    <div id="pdf-upload-prompt-single-decl">
                         <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                         <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">1. Enviar PDF Único</span></p>
                     </div>
-                    <div id="pdf-file-info-single" class="hidden text-center">
-                         <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-single"></p>
-                         <button id="pdf-remove-file-single" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                    <div id="pdf-file-info-single-decl" class="hidden text-center">
+                         <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-single-decl"></p>
+                         <button id="pdf-remove-file-single-decl" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
                     </div>
                 </div>
             </div>
             
             <div class="my-8">
-                <label for="label-count" class="block text-sm font-medium text-gray-700 text-center mb-2">2. Informe o número exato de etiquetas</label>
-                <input type="number" id="label-count" name="label-count" min="1" class="mx-auto block w-full max-w-xs px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Ex: 7" required>
+                <label for="label-count-decl" class="block text-sm font-medium text-gray-700 text-center mb-2">2. Informe o número exato de etiquetas</label>
+                <input type="number" id="label-count-decl" name="label-count-decl" min="1" class="mx-auto block w-full max-w-xs px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Ex: 7" required>
             </div>
             
              <div id="convert-button-container-declaration" class="text-center">
@@ -170,6 +171,38 @@
                 </button>
             </div>
         </div>
+        
+        <!-- Ferramenta 3: Etiqueta + Checklist -->
+        <div id="tool-checklist" class="hidden">
+            <h1 class="text-2xl font-bold text-gray-800 text-center">Organizador de Etiqueta + Checklist</h1>
+            <p class="text-gray-500 mt-2 text-center">Informe o número de itens e envie o PDF para intercalar.</p>
+
+            <div class="my-8">
+                 <div id="pdf-upload-area-single-check" class="upload-box max-w-md mx-auto">
+                    <input type="file" id="pdf-input-single-check" class="hidden" accept="application/pdf">
+                    <div id="pdf-upload-prompt-single-check">
+                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">1. Enviar PDF Único</span></p>
+                    </div>
+                    <div id="pdf-file-info-single-check" class="hidden text-center">
+                         <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-single-check"></p>
+                         <button id="pdf-remove-file-single-check" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="my-8">
+                <label for="label-count-check" class="block text-sm font-medium text-gray-700 text-center mb-2">2. Informe o número de etiquetas / checklists</label>
+                <input type="number" id="label-count-check" name="label-count-check" min="1" class="mx-auto block w-full max-w-xs px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Ex: 12" required>
+            </div>
+            
+             <div id="convert-button-container-checklist" class="text-center">
+                <button id="convert-btn-checklist" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                    Organizar Arquivo
+                </button>
+            </div>
+        </div>
+
 
         <!-- Área de Carregamento e Resultados (Comum) -->
         <div id="loading-area" class="hidden text-center mt-8">
@@ -222,8 +255,6 @@
         const allowedUsers = {
             "pampa": "solucoes123",
             "cliente": "teste",
-            "tales": "varella3",
-            "carlos": "carlos3"
         };
 
         loginForm.addEventListener('submit', (e) => {
@@ -249,15 +280,19 @@
         // --- Lógica de Navegação por Abas ---
         const tabExcel = document.getElementById('tab-excel');
         const tabDeclaration = document.getElementById('tab-declaration');
+        const tabChecklist = document.getElementById('tab-checklist');
         const toolExcel = document.getElementById('tool-excel');
         const toolDeclaration = document.getElementById('tool-declaration');
+        const toolChecklist = document.getElementById('tool-checklist');
 
         function showTool(toolToShow) {
             toolExcel.classList.add('hidden');
             toolDeclaration.classList.add('hidden');
+            toolChecklist.classList.add('hidden');
             resetCommonUI();
             tabExcel.classList.remove('active');
             tabDeclaration.classList.remove('active');
+            tabChecklist.classList.remove('active');
 
             if (toolToShow === 'excel') {
                 toolExcel.classList.remove('hidden');
@@ -265,11 +300,15 @@
             } else if (toolToShow === 'declaration') {
                 toolDeclaration.classList.remove('hidden');
                 tabDeclaration.classList.add('active');
+            } else if (toolToShow === 'checklist') {
+                toolChecklist.classList.remove('hidden');
+                tabChecklist.classList.add('active');
             }
         }
 
         tabExcel.addEventListener('click', () => showTool('excel'));
         tabDeclaration.addEventListener('click', () => showTool('declaration'));
+        tabChecklist.addEventListener('click', () => showTool('checklist'));
 
 
         // --- Elementos e Lógica Comuns ---
@@ -287,7 +326,10 @@
         }
         
         startOverBtn.addEventListener('click', () => {
-             showTool(tabExcel.classList.contains('active') ? 'excel' : 'declaration');
+            let currentTool = 'excel';
+            if (tabDeclaration.classList.contains('active')) currentTool = 'declaration';
+            if (tabChecklist.classList.contains('active')) currentTool = 'checklist';
+            showTool(currentTool);
         });
 
         function updateProgress(processed, total) {
@@ -450,28 +492,28 @@
         }
 
         // --- LÓGICA DA FERRAMENTA 2: ETIQUETA + DECLARAÇÃO ---
-        const pdfUploadAreaSingle = document.getElementById('pdf-upload-area-single');
-        const pdfInputSingle = document.getElementById('pdf-input-single');
-        const pdfUploadPromptSingle = document.getElementById('pdf-upload-prompt-single');
-        const pdfFileInfoSingle = document.getElementById('pdf-file-info-single');
-        const pdfFileNameElSingle = document.getElementById('pdf-file-name-single');
-        const pdfRemoveFileBtnSingle = document.getElementById('pdf-remove-file-single');
-        const labelCountInput = document.getElementById('label-count');
+        const pdfUploadAreaSingleDecl = document.getElementById('pdf-upload-area-single-decl');
+        const pdfInputSingleDecl = document.getElementById('pdf-input-single-decl');
+        const pdfUploadPromptSingleDecl = document.getElementById('pdf-upload-prompt-single-decl');
+        const pdfFileInfoSingleDecl = document.getElementById('pdf-file-info-single-decl');
+        const pdfFileNameElSingleDecl = document.getElementById('pdf-file-name-single-decl');
+        const pdfRemoveFileBtnSingleDecl = document.getElementById('pdf-remove-file-single-decl');
+        const labelCountInputDecl = document.getElementById('label-count-decl');
 
         const convertBtnDeclaration = document.getElementById('convert-btn-declaration');
-        let selectedPdfFileSingle = null;
+        let selectedPdfFileSingleDecl = null;
 
         function checkEnableConvertButtonDeclaration() {
-            convertBtnDeclaration.disabled = !(selectedPdfFileSingle && labelCountInput.value > 0);
+            convertBtnDeclaration.disabled = !(selectedPdfFileSingleDecl && labelCountInputDecl.value > 0);
         }
 
-        setupUploadArea(pdfUploadAreaSingle, pdfInputSingle, pdfUploadPromptSingle, pdfFileInfoSingle, pdfFileNameElSingle, pdfRemoveFileBtnSingle, 'pdf-single');
-        labelCountInput.addEventListener('input', checkEnableConvertButtonDeclaration);
+        setupUploadArea(pdfUploadAreaSingleDecl, pdfInputSingleDecl, pdfUploadPromptSingleDecl, pdfFileInfoSingleDecl, pdfFileNameElSingleDecl, pdfRemoveFileBtnSingleDecl, 'pdf-single-decl');
+        labelCountInputDecl.addEventListener('input', checkEnableConvertButtonDeclaration);
 
 
         convertBtnDeclaration.addEventListener('click', () => {
-            if (selectedPdfFileSingle && labelCountInput.value > 0) {
-                processDeclarationPdf(selectedPdfFileSingle, parseInt(labelCountInput.value));
+            if (selectedPdfFileSingleDecl && labelCountInputDecl.value > 0) {
+                processDeclarationPdf(selectedPdfFileSingleDecl, parseInt(labelCountInputDecl.value));
             }
         });
 
@@ -501,12 +543,11 @@
                     const page = sourcePages[i];
                     if (labelQuadrants.length >= totalLabelsToProcess) break;
                     const { width, height } = page.getSize();
-                    // Ordem corrigida: 1, 2 (vertical), 3, 4 (vertical)
                     const quadrants = [
-                        { page, cropBox: { x: 0, y: height / 2, width: width / 2, height: height / 2 } }, // 1 - Superior Esquerdo
-                        { page, cropBox: { x: 0, y: 0, width: width / 2, height: height / 2 } }, // 2 - Inferior Esquerdo
-                        { page, cropBox: { x: width / 2, y: height / 2, width: width / 2, height: height / 2 } }, // 3 - Superior Direito
-                        { page, cropBox: { x: width / 2, y: 0, width: width / 2, height: height / 2 } }  // 4 - Inferior Direito
+                        { page, cropBox: { x: 0, y: height / 2, width: width / 2, height: height / 2 } },
+                        { page, cropBox: { x: 0, y: 0, width: width / 2, height: height / 2 } },
+                        { page, cropBox: { x: width / 2, y: height / 2, width: width / 2, height: height / 2 } },
+                        { page, cropBox: { x: width / 2, y: 0, width: width / 2, height: height / 2 } }
                     ];
                     for(const quad of quadrants) {
                         if (labelQuadrants.length < totalLabelsToProcess) {
@@ -522,13 +563,11 @@
                 const targetHeight = 15 * CM_TO_POINTS;
 
                 for (let i = 0; i < totalLabelsToProcess; i++) {
-                    // Adiciona a etiqueta
                     const { page: labelPage, cropBox: labelBox } = labelQuadrants[i];
                     const newLabelPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
                     const embeddedLabel = await finalPdfDoc.embedPage(labelPage, { left: labelBox.x, bottom: labelBox.y, right: labelBox.x + labelBox.width, top: labelBox.y + labelBox.height });
                     newLabelPage.drawPage(embeddedLabel, { x: 0, y: 0, width: targetWidth, height: targetHeight });
                     
-                    // Adiciona a declaração (página inteira)
                     const declarationPageIndex = totalLabelPages + i;
                     const [embeddedDecl] = await finalPdfDoc.copyPages(sourceDoc, [declarationPageIndex]);
                     finalPdfDoc.addPage(embeddedDecl);
@@ -549,6 +588,115 @@
                 showTool('declaration');
             }
         }
+
+        // --- LÓGICA DA FERRAMENTA 3: ETIQUETA + CHECKLIST ---
+        const pdfUploadAreaSingleCheck = document.getElementById('pdf-upload-area-single-check');
+        const pdfInputSingleCheck = document.getElementById('pdf-input-single-check');
+        const pdfUploadPromptSingleCheck = document.getElementById('pdf-upload-prompt-single-check');
+        const pdfFileInfoSingleCheck = document.getElementById('pdf-file-info-single-check');
+        const pdfFileNameElSingleCheck = document.getElementById('pdf-file-name-single-check');
+        const pdfRemoveFileBtnSingleCheck = document.getElementById('pdf-remove-file-single-check');
+        const labelCountInputCheck = document.getElementById('label-count-check');
+
+        const convertBtnChecklist = document.getElementById('convert-btn-checklist');
+        let selectedPdfFileSingleCheck = null;
+
+        function checkEnableConvertButtonChecklist() {
+            convertBtnChecklist.disabled = !(selectedPdfFileSingleCheck && labelCountInputCheck.value > 0);
+        }
+
+        setupUploadArea(pdfUploadAreaSingleCheck, pdfInputSingleCheck, pdfUploadPromptSingleCheck, pdfFileInfoSingleCheck, pdfFileNameElSingleCheck, pdfRemoveFileBtnSingleCheck, 'pdf-single-check');
+        labelCountInputCheck.addEventListener('input', checkEnableConvertButtonChecklist);
+
+        convertBtnChecklist.addEventListener('click', () => {
+            if (selectedPdfFileSingleCheck && labelCountInputCheck.value > 0) {
+                processChecklistPdf(selectedPdfFileSingleCheck, parseInt(labelCountInputCheck.value));
+            }
+        });
+
+        async function processChecklistPdf(pdfFile, totalItemsToProcess) {
+            toolChecklist.classList.add('hidden');
+            loadingArea.classList.remove('hidden');
+            updateProgress(0, 0);
+
+            try {
+                progressText.textContent = 'Lendo o arquivo PDF...';
+                const pdfBytes = await pdfFile.arrayBuffer();
+                const sourceDoc = await PDFDocument.load(pdfBytes);
+                const finalPdfDoc = await PDFDocument.create();
+                
+                const totalSourcePages = sourceDoc.getPageCount();
+                const pagesPerSheet = 4;
+                const totalLabelPages = Math.ceil(totalItemsToProcess / pagesPerSheet);
+                const totalChecklistPages = totalLabelPages; // Assume o mesmo número de páginas
+
+                if (totalSourcePages < totalLabelPages + totalChecklistPages) {
+                     throw new Error(`O arquivo não tem páginas suficientes para ${totalItemsToProcess} etiquetas e checklists.`);
+                }
+
+                progressText.textContent = 'Extraindo etiquetas e checklists...';
+                const sourcePages = sourceDoc.getPages();
+                
+                const extractQuadrants = (startPage, numPages, totalItems) => {
+                    const quadrants = [];
+                     for (let i = 0; i < numPages; i++) {
+                        const page = sourcePages[startPage + i];
+                        if (quadrants.length >= totalItems) break;
+                        const { width, height } = page.getSize();
+                        const pageQuadrants = [
+                            { page, cropBox: { x: 0, y: height / 2, width: width / 2, height: height / 2 } },
+                            { page, cropBox: { x: 0, y: 0, width: width / 2, height: height / 2 } },
+                            { page, cropBox: { x: width / 2, y: height / 2, width: width / 2, height: height / 2 } },
+                            { page, cropBox: { x: width / 2, y: 0, width: width / 2, height: height / 2 } }
+                        ];
+                        for(const quad of pageQuadrants) {
+                            if (quadrants.length < totalItems) {
+                                quadrants.push(quad);
+                            }
+                        }
+                    }
+                    return quadrants;
+                };
+
+                const labelQuadrants = extractQuadrants(0, totalLabelPages, totalItemsToProcess);
+                const checklistQuadrants = extractQuadrants(totalLabelPages, totalChecklistPages, totalItemsToProcess);
+                
+                updateProgress(0, totalItemsToProcess);
+
+                const CM_TO_POINTS = 28.3465;
+                const targetWidth = 10 * CM_TO_POINTS;
+                const targetHeight = 15 * CM_TO_POINTS;
+
+                for (let i = 0; i < totalItemsToProcess; i++) {
+                    // Adiciona a etiqueta
+                    const { page: labelPage, cropBox: labelBox } = labelQuadrants[i];
+                    const newLabelPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                    const embeddedLabel = await finalPdfDoc.embedPage(labelPage, { left: labelBox.x, bottom: labelBox.y, right: labelBox.x + labelBox.width, top: labelBox.y + labelBox.height });
+                    newLabelPage.drawPage(embeddedLabel, { x: 0, y: 0, width: targetWidth, height: targetHeight });
+                    
+                    // Adiciona o checklist
+                    const { page: checkPage, cropBox: checkLabelBox } = checklistQuadrants[i];
+                    const newCheckPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                    const embeddedCheck = await finalPdfDoc.embedPage(checkPage, { left: checkLabelBox.x, bottom: checkLabelBox.y, right: checkLabelBox.x + checkLabelBox.width, top: checkLabelBox.y + checkLabelBox.height });
+                    newCheckPage.drawPage(embeddedCheck, { x: 0, y: 0, width: targetWidth, height: targetHeight });
+
+                    updateProgress(i + 1, totalItemsToProcess);
+                }
+
+                progressText.textContent = 'Finalizando o arquivo PDF...';
+                const finalPdfBytes = await finalPdfDoc.save();
+                createDownloadLink(finalPdfBytes, `${pdfFile.name.replace(/\.pdf$/i, '')}_organizado.pdf`, 'Baixar PDF Organizado');
+                
+                loadingArea.classList.add('hidden');
+                resultsArea.classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Erro ao processar PDF de checklist:", error);
+                alert(`Ocorreu um erro: ${error.message}`);
+                showTool('checklist');
+            }
+        }
+        
         
         // --- Função Genérica de Setup de Upload ---
         function setupUploadArea(area, input, prompt, info, nameEl, removeBtn, type) {
@@ -557,19 +705,24 @@
             area.addEventListener('dragleave', (e) => { e.preventDefault(); area.classList.remove('border-blue-500', 'bg-gray-50'); });
             
             const handleFile = (file) => {
-                if (file.type !== 'application/pdf' && (type === 'pdf-excel' || type === 'pdf-single')) return;
-                if (type === 'excel' && !file.name.match(/\.(xlsx|xls)$/)) return;
+                const isPdf = file.type === 'application/pdf';
+                const isExcel = file.name.match(/\.(xlsx|xls)$/);
+
+                if (type.startsWith('pdf') && !isPdf) return;
+                if (type === 'excel' && !isExcel) return;
 
                 if (type === 'pdf-excel') { selectedPdfFileExcel = file; }
                 else if (type === 'excel') { selectedExcelFile = file; }
-                else if (type === 'pdf-single') { selectedPdfFileSingle = file; }
+                else if (type === 'pdf-single-decl') { selectedPdfFileSingleDecl = file; }
+                else if (type === 'pdf-single-check') { selectedPdfFileSingleCheck = file; }
                 
                 nameEl.textContent = file.name;
                 prompt.classList.add('hidden');
                 info.classList.remove('hidden');
                 
                 if (type === 'pdf-excel' || type === 'excel') checkEnableConvertButtonExcel();
-                if (type === 'pdf-single') checkEnableConvertButtonDeclaration();
+                if (type === 'pdf-single-decl') checkEnableConvertButtonDeclaration();
+                if (type === 'pdf-single-check') checkEnableConvertButtonChecklist();
             };
 
             area.addEventListener('drop', (e) => {
@@ -584,13 +737,15 @@
                 e.stopPropagation();
                 if (type === 'pdf-excel') { selectedPdfFileExcel = null; pdfInputExcel.value = ''; }
                 else if (type === 'excel') { selectedExcelFile = null; excelInput.value = ''; }
-                else if (type === 'pdf-single') { selectedPdfFileSingle = null; pdfInputSingle.value = ''; }
+                else if (type === 'pdf-single-decl') { selectedPdfFileSingleDecl = null; pdfInputSingleDecl.value = ''; }
+                else if (type === 'pdf-single-check') { selectedPdfFileSingleCheck = null; pdfInputSingleCheck.value = ''; }
 
                 prompt.classList.remove('hidden');
                 info.classList.add('hidden');
 
                 if (type === 'pdf-excel' || type === 'excel') checkEnableConvertButtonExcel();
-                if (type === 'pdf-single') checkEnableConvertButtonDeclaration();
+                if (type === 'pdf-single-decl') checkEnableConvertButtonDeclaration();
+                if (type === 'pdf-single-check') checkEnableConvertButtonChecklist();
             });
         }
     });
