@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pampa Soluções - Conversor de PDF</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .upload-box {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .upload-box:hover {
+            border-color: #3b82f6;
+            background-color: #f9fafb;
+        }
+        #main-app {
+            display: none; /* A aplicação principal começa escondida */
+        }
+        .tab-button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .tab-button.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .tab-button:not(.active) {
+            background-color: #e5e7eb;
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen py-12">
+
+    <!-- Tela de Login -->
+    <div id="login-screen" class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm mx-4">
+        <div class="text-center mb-8">
+            <h2 class="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 mb-2">
+                Pampa Soluções
+            </h2>
+            <h1 class="text-2xl font-bold text-gray-800">Conversor de Etiquetas</h1>
+            <p class="text-gray-500 mt-2">Acesso Restrito</p>
+        </div>
+        <form id="login-form">
+            <div class="mb-4">
+                <label for="username" class="block text-sm font-medium text-gray-700">Usuário</label>
+                <input type="text" id="username" name="username" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+            </div>
+            <div class="mb-6">
+                <label for="password" class="block text-sm font-medium text-gray-700">Senha</label>
+                <div class="relative mt-1">
+                    <input type="password" id="password" name="password" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10" required>
+                    <button type="button" id="toggle-password" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                        <svg id="eye-open" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <svg id="eye-closed" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 .847 0 1.673.124 2.468.352M10.582 10.582a3 3 0 11-4.243 4.243M16.5 16.5l-1.5-1.5" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 2l20 20" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="error-message" class="hidden text-center text-sm text-red-600 mb-4">
+                Usuário ou senha inválidos.
+            </div>
+            <div>
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Entrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Aplicação Principal (escondida) -->
+    <div id="main-app" class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-3xl mx-4">
+        
+        <div class="text-center mb-4">
+            <h2 class="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+                Pampa Soluções
+            </h2>
+        </div>
+
+        <!-- Abas de Navegação -->
+        <div class="mb-8 flex justify-center space-x-4 border-b border-gray-200 pb-4">
+            <button id="tab-excel" class="tab-button active">Etiqueta com Excel</button>
+            <button id="tab-declaration" class="tab-button">Etiqueta + Declaração</button>
+        </div>
+        
+        <!-- Ferramenta 1: Etiqueta com Excel -->
+        <div id="tool-excel">
+            <h1 class="text-2xl font-bold text-gray-800 text-center">Conversor de Etiquetas PDF</h1>
+            <p class="text-gray-500 mt-2 text-center">Envie um PDF e uma planilha Excel para gerar etiquetas 10x15 com informações do produto.</p>
+            
+            <div id="upload-container-excel" class="grid md:grid-cols-2 gap-6 my-8">
+                <div id="pdf-upload-area-excel" class="upload-box">
+                    <input type="file" id="pdf-input-excel" class="hidden" accept="application/pdf">
+                    <div id="pdf-upload-prompt-excel">
+                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">Enviar PDF</span> ou arrastar</p>
+                    </div>
+                    <div id="pdf-file-info-excel" class="hidden text-center">
+                         <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-excel"></p>
+                         <button id="pdf-remove-file-excel" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                    </div>
+                </div>
+                <div id="excel-upload-area" class="upload-box">
+                    <input type="file" id="excel-input" class="hidden" accept=".xls,.xlsx">
+                    <div id="excel-upload-prompt">
+                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-green-600">Enviar Excel</span> ou arrastar</p>
+                    </div>
+                    <div id="excel-file-info" class="hidden text-center">
+                         <p class="text-sm font-medium text-gray-700 truncate" id="excel-file-name"></p>
+                         <button id="excel-remove-file" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                    </div>
+                </div>
+            </div>
+            <div id="convert-button-container-excel" class="text-center">
+                <button id="convert-btn-excel" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                    Converter Arquivos
+                </button>
+            </div>
+        </div>
+
+        <!-- Ferramenta 2: Etiqueta + Declaração -->
+        <div id="tool-declaration" class="hidden">
+            <h1 class="text-2xl font-bold text-gray-800 text-center">Organizador de Etiqueta + Declaração</h1>
+            <p class="text-gray-500 mt-2 text-center">Informe o número de etiquetas e envie o PDF para intercalar.</p>
+
+            <div class="my-8">
+                 <div id="pdf-upload-area-single" class="upload-box max-w-md mx-auto">
+                    <input type="file" id="pdf-input-single" class="hidden" accept="application/pdf">
+                    <div id="pdf-upload-prompt-single">
+                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">1. Enviar PDF Único</span></p>
+                    </div>
+                    <div id="pdf-file-info-single" class="hidden text-center">
+                         <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-single"></p>
+                         <button id="pdf-remove-file-single" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="my-8">
+                <label for="label-count" class="block text-sm font-medium text-gray-700 text-center mb-2">2. Informe o número exato de etiquetas</label>
+                <input type="number" id="label-count" name="label-count" min="1" class="mx-auto block w-full max-w-xs px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Ex: 7" required>
+            </div>
+            
+             <div id="convert-button-container-declaration" class="text-center">
+                <button id="convert-btn-declaration" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                    Organizar Arquivo
+                </button>
+            </div>
+        </div>
+
+        <!-- Área de Carregamento e Resultados (Comum) -->
+        <div id="loading-area" class="hidden text-center mt-8">
+            <div id="progress-container" class="w-full bg-gray-200 rounded-full h-4 mb-2">
+                <div id="progress-bar" class="bg-blue-600 h-4 rounded-full transition-width duration-300" style="width: 0%"></div>
+            </div>
+            <p id="progress-text" class="text-sm text-gray-600">Iniciando...</p>
+        </div>
+
+        <div id="results-area" class="hidden mt-8">
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Download Pronto!</h2>
+            <div id="download-links" class="grid grid-cols-1 gap-4"></div>
+             <div class="mt-8 text-center">
+                <button id="start-over-btn" class="bg-gray-200 text-gray-800 font-bold py-3 px-8 rounded-lg hover:bg-gray-300 transition-all">
+                    Começar Novamente
+                </button>
+            </div>
+        </div>
+
+        <!-- Rodapé com Contato (Comum) -->
+        <div class="mt-12 text-center border-t border-gray-200 pt-6">
+            <div class="bg-slate-50 rounded-lg p-6">
+                <p class="text-gray-800 font-semibold mb-4">
+                    Vendemos ETIQUETAS e saquinhos de embalagem, venha cotar com a gente, garantimos o melhor preço no atacado.
+                </p>
+                <a href="https://wa.me/5537991316234" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-all shadow-sm">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 4.315 1.919 6.066l-1.225 4.485 4.635-1.218zM8.332 10.233c-.131-.26-.26-.263-.383-.263-.116 0-.249.001-.38.001-.131 0-.341.043-.518.234-.176.193-.661.652-.661 1.576 0 .924.675 1.823.769 1.954.093.13 1.328 2.118 3.231 2.87.536.208.96.33.96.425 0 .213.001.484-.043.553-.043.07-.248.043-.518-.043s-2.119-1.225-2.421-1.396c-.302-.17-.562-.192-.787-.109-.225.083-.464.26-.567.382-.103.123-.193.26-.282.403-.09.142-.17.143-.302.109-.131-.033-1.043-.463-1.985-1.225-.724-.584-1.224-1.303-1.363-1.532-.139-.23-.279-.353-.139-.661.14-.307.302-.382.403-.517.102-.135.142-.225.225-.383.083-.157.043-.28.001-.382-.043-.102-.341-.834-.465-.962s-.249-.109-.341-.109z"/></svg>
+                    <span>Chame no WhatsApp</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Importa as funções necessárias das bibliotecas
+        const { PDFDocument, rgb, StandardFonts } = PDFLib;
+        const { read, utils } = XLSX;
+
+        // --- Lógica de Autenticação ---
+        const loginScreen = document.getElementById('login-screen');
+        const mainApp = document.getElementById('main-app');
+        const loginForm = document.getElementById('login-form');
+        const errorMessage = document.getElementById('error-message');
+        const passwordInput = document.getElementById('password');
+        const togglePasswordButton = document.getElementById('toggle-password');
+        const eyeOpenIcon = document.getElementById('eye-open');
+        const eyeClosedIcon = document.getElementById('eye-closed');
+
+        const allowedUsers = {
+            "pampa": "solucoes123",
+            "cliente": "teste",
+            "tales": "varella3",
+            "carlos": "carlos3"
+        };
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = loginForm.username.value;
+            const password = passwordInput.value;
+
+            if (allowedUsers[username] && allowedUsers[username] === password) {
+                loginScreen.style.display = 'none';
+                mainApp.style.display = 'block';
+            } else {
+                errorMessage.style.display = 'block';
+            }
+        });
+
+        togglePasswordButton.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            eyeOpenIcon.classList.toggle('hidden');
+            eyeClosedIcon.classList.toggle('hidden');
+        });
+
+        // --- Lógica de Navegação por Abas ---
+        const tabExcel = document.getElementById('tab-excel');
+        const tabDeclaration = document.getElementById('tab-declaration');
+        const toolExcel = document.getElementById('tool-excel');
+        const toolDeclaration = document.getElementById('tool-declaration');
+
+        function showTool(toolToShow) {
+            toolExcel.classList.add('hidden');
+            toolDeclaration.classList.add('hidden');
+            resetCommonUI();
+            tabExcel.classList.remove('active');
+            tabDeclaration.classList.remove('active');
+
+            if (toolToShow === 'excel') {
+                toolExcel.classList.remove('hidden');
+                tabExcel.classList.add('active');
+            } else if (toolToShow === 'declaration') {
+                toolDeclaration.classList.remove('hidden');
+                tabDeclaration.classList.add('active');
+            }
+        }
+
+        tabExcel.addEventListener('click', () => showTool('excel'));
+        tabDeclaration.addEventListener('click', () => showTool('declaration'));
+
+
+        // --- Elementos e Lógica Comuns ---
+        const loadingArea = document.getElementById('loading-area');
+        const resultsArea = document.getElementById('results-area');
+        const downloadLinksContainer = document.getElementById('download-links');
+        const startOverBtn = document.getElementById('start-over-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+
+        function resetCommonUI() {
+            loadingArea.classList.add('hidden');
+            resultsArea.classList.add('hidden');
+            downloadLinksContainer.innerHTML = '';
+        }
+        
+        startOverBtn.addEventListener('click', () => {
+             showTool(tabExcel.classList.contains('active') ? 'excel' : 'declaration');
+        });
+
+        function updateProgress(processed, total) {
+            const percentage = total > 0 ? Math.round((processed / total) * 100) : 0;
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `Processando item ${processed} de ${total}...`;
+        }
+        
+        function createDownloadLink(bytes, fileName, linkText) {
+            const blob = new Blob([bytes], { type: 'application/pdf' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.className = 'bg-blue-600 text-white p-4 rounded-lg flex items-center justify-center hover:bg-blue-700 transition-all text-lg font-semibold';
+            link.innerHTML = `<span>${linkText}</span><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>`;
+            downloadLinksContainer.appendChild(link);
+        }
+
+        // --- LÓGICA DA FERRAMENTA 1: ETIQUETA COM EXCEL ---
+        const pdfUploadAreaExcel = document.getElementById('pdf-upload-area-excel');
+        const pdfInputExcel = document.getElementById('pdf-input-excel');
+        const pdfUploadPromptExcel = document.getElementById('pdf-upload-prompt-excel');
+        const pdfFileInfoExcel = document.getElementById('pdf-file-info-excel');
+        const pdfFileNameElExcel = document.getElementById('pdf-file-name-excel');
+        const pdfRemoveFileBtnExcel = document.getElementById('pdf-remove-file-excel');
+        
+        const excelUploadArea = document.getElementById('excel-upload-area');
+        const excelInput = document.getElementById('excel-input');
+        const excelUploadPrompt = document.getElementById('excel-upload-prompt');
+        const excelFileInfo = document.getElementById('excel-file-info');
+        const excelFileNameEl = document.getElementById('excel-file-name');
+        const excelRemoveFileBtn = document.getElementById('excel-remove-file');
+
+        const convertBtnExcel = document.getElementById('convert-btn-excel');
+        let selectedPdfFileExcel = null;
+        let selectedExcelFile = null;
+
+        function checkEnableConvertButtonExcel() {
+            convertBtnExcel.disabled = !(selectedPdfFileExcel && selectedExcelFile);
+        }
+
+        setupUploadArea(pdfUploadAreaExcel, pdfInputExcel, pdfUploadPromptExcel, pdfFileInfoExcel, pdfFileNameElExcel, pdfRemoveFileBtnExcel, 'pdf-excel');
+        setupUploadArea(excelUploadArea, excelInput, excelUploadPrompt, excelFileInfo, excelFileNameEl, excelRemoveFileBtn, 'excel');
+        
+        convertBtnExcel.addEventListener('click', () => {
+            if (selectedPdfFileExcel && selectedExcelFile) {
+                processFilesExcel(selectedPdfFileExcel, selectedExcelFile);
+            }
+        });
+
+        function parseMultiProductInfo(infoString) {
+            if (!infoString || typeof infoString !== 'string') return [];
+            const products = [];
+            const productChunks = infoString.split('Product Name:').slice(1);
+            for (const chunk of productChunks) {
+                const singleProductString = 'Product Name:' + chunk;
+                const info = {};
+                const parts = singleProductString.split(';');
+                parts.forEach(part => {
+                    const [key, ...valueParts] = part.split(':');
+                    if (key && valueParts.length > 0) {
+                        const value = valueParts.join(':').trim();
+                        if (key.trim() === 'Product Name') info.productName = value;
+                        if (key.trim() === 'Variation Name') info.variationName = value;
+                        if (key.trim() === 'Quantity') info.quantity = value;
+                        if (key.trim() === 'SKU Reference No.') info.sku = value;
+                    }
+                });
+                if (info.productName) products.push(info);
+            }
+            return products;
+        }
+
+        async function processFilesExcel(pdfFile, excelFile) {
+            toolExcel.classList.add('hidden');
+            loadingArea.classList.remove('hidden');
+            updateProgress(0, 0);
+
+            try {
+                progressText.textContent = 'Lendo arquivos...';
+                const [pdfBytes, excelBytes] = await Promise.all([pdfFile.arrayBuffer(), excelFile.arrayBuffer()]);
+
+                progressText.textContent = 'Processando dados do Excel...';
+                const workbook = read(excelBytes, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const excelData = utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+                const sourceDoc = await PDFDocument.load(pdfBytes);
+                const finalPdfDoc = await PDFDocument.create();
+                const helveticaFont = await finalPdfDoc.embedFont(StandardFonts.Helvetica);
+
+                const CM_TO_POINTS = 28.3465;
+                const targetWidth = 10 * CM_TO_POINTS;
+                const targetHeight = 15 * CM_TO_POINTS;
+                const infoAreaHeight = 3 * CM_TO_POINTS;
+                const labelAreaHeight = targetHeight - infoAreaHeight;
+                const margin = 10;
+
+                let labelIndex = 0;
+                const totalLabels = sourceDoc.getPageCount() * 4;
+                updateProgress(0, totalLabels);
+
+                for (const sourcePage of sourceDoc.getPages()) {
+                    const { width: sourceWidth, height: sourceHeight } = sourcePage.getSize();
+                    const quadrantWidth = sourceWidth / 2;
+                    const quadrantHeight = sourceHeight / 2;
+                    const quadrants = [{ x: 0, y: sourceHeight / 2 }, { x: sourceWidth / 2, y: sourceHeight / 2 }, { x: 0, y: 0 }, { x: sourceWidth / 2, y: 0 }];
+
+                    for (const quadrant of quadrants) {
+                        if (labelIndex >= excelData.length) break;
+                        const products = parseMultiProductInfo(excelData[labelIndex].product_info);
+                        const newPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                        const embeddedQuadrant = await finalPdfDoc.embedPage(sourcePage, { left: quadrant.x, bottom: quadrant.y, right: quadrant.x + quadrantWidth, top: quadrant.y + quadrantHeight });
+                        const scale = Math.min(targetWidth / embeddedQuadrant.width, labelAreaHeight / embeddedQuadrant.height);
+                        const scaledWidth = embeddedQuadrant.width * scale;
+                        const scaledHeight = embeddedQuadrant.height * scale;
+                        const xOffset = (targetWidth - scaledWidth) / 2;
+                        const yOffset = infoAreaHeight + (labelAreaHeight - scaledHeight) / 2;
+                        newPage.drawPage(embeddedQuadrant, { x: xOffset, y: yOffset, width: scaledWidth, height: scaledHeight });
+
+                        let textY = infoAreaHeight - margin;
+                        const colWidths = [120, 85, 25, 60];
+                        const colPositions = [margin, margin + colWidths[0], margin + colWidths[0] + colWidths[1], margin + colWidths[0] + colWidths[1] + colWidths[2]];
+                        const fontSize = 8;
+                        const lineHeight = fontSize + 4;
+
+                        for (const productInfo of products) {
+                            if (textY < lineHeight) break;
+                            const rowData = [productInfo.productName || '', productInfo.variationName || '', productInfo.quantity || '', productInfo.sku || ''];
+                            for(let i = 0; i < rowData.length; i++) {
+                                let text = rowData[i];
+                                const colWidth = colWidths[i] - 5;
+                                if (helveticaFont.widthOfTextAtSize(text, fontSize) > colWidth) {
+                                    let truncated = '';
+                                    for(const char of text) {
+                                        if (helveticaFont.widthOfTextAtSize(truncated + char + '...', fontSize) > colWidth) break;
+                                        truncated += char;
+                                    }
+                                    text = truncated + '...';
+                                }
+                                newPage.drawText(text, { x: colPositions[i], y: textY, font: helveticaFont, size: fontSize, color: rgb(0.1, 0.1, 0.1) });
+                            }
+                            textY -= lineHeight;
+                        }
+                        labelIndex++;
+                        updateProgress(labelIndex, totalLabels);
+                    }
+                    if (labelIndex >= excelData.length) break;
+                }
+                progressText.textContent = 'Finalizando o arquivo PDF...';
+                const finalPdfBytes = await finalPdfDoc.save();
+                createDownloadLink(finalPdfBytes, `${pdfFile.name.replace(/\.pdf$/i, '')}_etiquetas.pdf`, 'Baixar Etiquetas Geradas');
+                loadingArea.classList.add('hidden');
+                resultsArea.classList.remove('hidden');
+            } catch (error) {
+                console.error("Erro ao processar arquivos:", error);
+                alert("Ocorreu um erro. Verifique se os arquivos são válidos.");
+                showTool('excel');
+            }
+        }
+
+        // --- LÓGICA DA FERRAMENTA 2: ETIQUETA + DECLARAÇÃO ---
+        const pdfUploadAreaSingle = document.getElementById('pdf-upload-area-single');
+        const pdfInputSingle = document.getElementById('pdf-input-single');
+        const pdfUploadPromptSingle = document.getElementById('pdf-upload-prompt-single');
+        const pdfFileInfoSingle = document.getElementById('pdf-file-info-single');
+        const pdfFileNameElSingle = document.getElementById('pdf-file-name-single');
+        const pdfRemoveFileBtnSingle = document.getElementById('pdf-remove-file-single');
+        const labelCountInput = document.getElementById('label-count');
+
+        const convertBtnDeclaration = document.getElementById('convert-btn-declaration');
+        let selectedPdfFileSingle = null;
+
+        function checkEnableConvertButtonDeclaration() {
+            convertBtnDeclaration.disabled = !(selectedPdfFileSingle && labelCountInput.value > 0);
+        }
+
+        setupUploadArea(pdfUploadAreaSingle, pdfInputSingle, pdfUploadPromptSingle, pdfFileInfoSingle, pdfFileNameElSingle, pdfRemoveFileBtnSingle, 'pdf-single');
+        labelCountInput.addEventListener('input', checkEnableConvertButtonDeclaration);
+
+
+        convertBtnDeclaration.addEventListener('click', () => {
+            if (selectedPdfFileSingle && labelCountInput.value > 0) {
+                processDeclarationPdf(selectedPdfFileSingle, parseInt(labelCountInput.value));
+            }
+        });
+
+        async function processDeclarationPdf(pdfFile, totalLabelsToProcess) {
+            toolDeclaration.classList.add('hidden');
+            loadingArea.classList.remove('hidden');
+            updateProgress(0, 0);
+
+            try {
+                progressText.textContent = 'Lendo o arquivo PDF...';
+                const pdfBytes = await pdfFile.arrayBuffer();
+                const sourceDoc = await PDFDocument.load(pdfBytes);
+                const finalPdfDoc = await PDFDocument.create();
+                
+                const totalSourcePages = sourceDoc.getPageCount();
+                const pagesPerLabelSheet = 4;
+                const totalLabelPages = Math.ceil(totalLabelsToProcess / pagesPerLabelSheet);
+
+                if (totalSourcePages < totalLabelPages + totalLabelsToProcess) {
+                     throw new Error(`O arquivo não tem páginas suficientes. Esperado: ${totalLabelPages} de etiquetas + ${totalLabelsToProcess} de declarações = ${totalLabelPages + totalLabelsToProcess} páginas. Encontrado: ${totalSourcePages}.`);
+                }
+
+                progressText.textContent = 'Extraindo etiquetas...';
+                const labelQuadrants = [];
+                const sourcePages = sourceDoc.getPages();
+                for (let i = 0; i < totalLabelPages; i++) {
+                    const page = sourcePages[i];
+                    if (labelQuadrants.length >= totalLabelsToProcess) break;
+                    const { width, height } = page.getSize();
+                    // Ordem corrigida: 1, 2 (vertical), 3, 4 (vertical)
+                    const quadrants = [
+                        { page, cropBox: { x: 0, y: height / 2, width: width / 2, height: height / 2 } }, // 1 - Superior Esquerdo
+                        { page, cropBox: { x: 0, y: 0, width: width / 2, height: height / 2 } }, // 2 - Inferior Esquerdo
+                        { page, cropBox: { x: width / 2, y: height / 2, width: width / 2, height: height / 2 } }, // 3 - Superior Direito
+                        { page, cropBox: { x: width / 2, y: 0, width: width / 2, height: height / 2 } }  // 4 - Inferior Direito
+                    ];
+                    for(const quad of quadrants) {
+                        if (labelQuadrants.length < totalLabelsToProcess) {
+                            labelQuadrants.push(quad);
+                        }
+                    }
+                }
+                
+                updateProgress(0, totalLabelsToProcess);
+
+                const CM_TO_POINTS = 28.3465;
+                const targetWidth = 10 * CM_TO_POINTS;
+                const targetHeight = 15 * CM_TO_POINTS;
+
+                for (let i = 0; i < totalLabelsToProcess; i++) {
+                    // Adiciona a etiqueta
+                    const { page: labelPage, cropBox: labelBox } = labelQuadrants[i];
+                    const newLabelPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                    const embeddedLabel = await finalPdfDoc.embedPage(labelPage, { left: labelBox.x, bottom: labelBox.y, right: labelBox.x + labelBox.width, top: labelBox.y + labelBox.height });
+                    newLabelPage.drawPage(embeddedLabel, { x: 0, y: 0, width: targetWidth, height: targetHeight });
+                    
+                    // Adiciona a declaração (página inteira)
+                    const declarationPageIndex = totalLabelPages + i;
+                    const [embeddedDecl] = await finalPdfDoc.copyPages(sourceDoc, [declarationPageIndex]);
+                    finalPdfDoc.addPage(embeddedDecl);
+                    
+                    updateProgress(i + 1, totalLabelsToProcess);
+                }
+
+                progressText.textContent = 'Finalizando o arquivo PDF...';
+                const finalPdfBytes = await finalPdfDoc.save();
+                createDownloadLink(finalPdfBytes, `${pdfFile.name.replace(/\.pdf$/i, '')}_organizado.pdf`, 'Baixar PDF Organizado');
+                
+                loadingArea.classList.add('hidden');
+                resultsArea.classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Erro ao processar PDF de declaração:", error);
+                alert(`Ocorreu um erro: ${error.message}`);
+                showTool('declaration');
+            }
+        }
+        
+        // --- Função Genérica de Setup de Upload ---
+        function setupUploadArea(area, input, prompt, info, nameEl, removeBtn, type) {
+            area.addEventListener('click', () => input.click());
+            area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('border-blue-500', 'bg-gray-50'); });
+            area.addEventListener('dragleave', (e) => { e.preventDefault(); area.classList.remove('border-blue-500', 'bg-gray-50'); });
+            
+            const handleFile = (file) => {
+                if (file.type !== 'application/pdf' && (type === 'pdf-excel' || type === 'pdf-single')) return;
+                if (type === 'excel' && !file.name.match(/\.(xlsx|xls)$/)) return;
+
+                if (type === 'pdf-excel') { selectedPdfFileExcel = file; }
+                else if (type === 'excel') { selectedExcelFile = file; }
+                else if (type === 'pdf-single') { selectedPdfFileSingle = file; }
+                
+                nameEl.textContent = file.name;
+                prompt.classList.add('hidden');
+                info.classList.remove('hidden');
+                
+                if (type === 'pdf-excel' || type === 'excel') checkEnableConvertButtonExcel();
+                if (type === 'pdf-single') checkEnableConvertButtonDeclaration();
+            };
+
+            area.addEventListener('drop', (e) => {
+                e.preventDefault();
+                area.classList.remove('border-blue-500', 'bg-gray-50');
+                if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+            });
+            input.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) handleFile(e.target.files[0]);
+            });
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (type === 'pdf-excel') { selectedPdfFileExcel = null; pdfInputExcel.value = ''; }
+                else if (type === 'excel') { selectedExcelFile = null; excelInput.value = ''; }
+                else if (type === 'pdf-single') { selectedPdfFileSingle = null; pdfInputSingle.value = ''; }
+
+                prompt.classList.remove('hidden');
+                info.classList.add('hidden');
+
+                if (type === 'pdf-excel' || type === 'excel') checkEnableConvertButtonExcel();
+                if (type === 'pdf-single') checkEnableConvertButtonDeclaration();
+            });
+        }
+    });
+    </script>
+</body>
+</html>
