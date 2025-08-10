@@ -135,6 +135,9 @@
                 </div>
             </div>
             <div id="convert-button-container-excel" class="text-center">
+                 <div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm font-semibold rounded-lg">
+                    Confira sempre o número do pedido em baixo pra ter certeza que está correto!!
+                </div>
                 <button id="convert-btn-excel" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
                     Converter Arquivos
                 </button>
@@ -255,7 +258,9 @@
         const allowedUsers = {
             "pampa": "solucoes123",
             "cliente": "teste",
+            "tales": "varella",
             "fernando": "daiane",
+            "carlos": "carlos123",
         };
 
         loginForm.addEventListener('submit', (e) => {
@@ -403,6 +408,37 @@
             }
             return products;
         }
+        
+        function wrapText(text, font, size, maxWidth, maxLines = 2) {
+            const words = text.split(' ');
+            let lines = [];
+            let currentLine = '';
+
+            for (const word of words) {
+                const testLine = currentLine ? `${currentLine} ${word}` : word;
+                if (font.widthOfTextAtSize(testLine, size) <= maxWidth) {
+                    currentLine = testLine;
+                } else {
+                    if (lines.length === maxLines - 1) {
+                        currentLine = testLine;
+                        break; 
+                    }
+                    lines.push(currentLine);
+                    currentLine = word;
+                }
+            }
+            lines.push(currentLine);
+            
+            if (lines.length > maxLines) {
+                let lastLine = lines[maxLines - 1];
+                while (font.widthOfTextAtSize(lastLine + '...', size) > maxWidth && lastLine.length > 0) {
+                    lastLine = lastLine.slice(0, -1);
+                }
+                lines[maxLines - 1] = lastLine + '...';
+            }
+
+            return lines.slice(0, maxLines);
+        }
 
         async function processFilesExcel(pdfFile, excelFile) {
             toolExcel.classList.add('hidden');
@@ -413,7 +449,7 @@
                 progressText.textContent = 'Lendo arquivos...';
                 const [pdfBytes, excelBytes] = await Promise.all([pdfFile.arrayBuffer(), excelFile.arrayBuffer()]);
 
-                progressText.textContent = 'Processando dados do Excel...';
+                progressText.textContent = 'Processando e ordenando dados do Excel...';
                 const workbook = read(excelBytes, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
                 const excelData = utils.sheet_to_json(workbook.Sheets[sheetName]);
@@ -425,66 +461,124 @@
                 const CM_TO_POINTS = 28.3465;
                 const targetWidth = 10 * CM_TO_POINTS;
                 const targetHeight = 15 * CM_TO_POINTS;
-                const infoAreaHeight = 3 * CM_TO_POINTS;
+                const infoAreaHeight = targetHeight * 0.15; // Espaço reduzido para a tabela
                 const labelAreaHeight = targetHeight - infoAreaHeight;
-                const margin = 10;
+                const margin = 8;
 
                 let labelIndex = 0;
-                const totalLabels = sourceDoc.getPageCount() * 4;
-                updateProgress(0, totalLabels);
+                let combinedData = [];
 
+                // 1. Associa os dados do Excel com os quadrantes do PDF na ordem correta
                 for (const sourcePage of sourceDoc.getPages()) {
                     const { width: sourceWidth, height: sourceHeight } = sourcePage.getSize();
                     const quadrantWidth = sourceWidth / 2;
                     const quadrantHeight = sourceHeight / 2;
-                    const quadrants = [{ x: 0, y: sourceHeight / 2 }, { x: sourceWidth / 2, y: sourceHeight / 2 }, { x: 0, y: 0 }, { x: sourceWidth / 2, y: 0 }];
+                    const quadrants = [
+                        { x: 0, y: sourceHeight / 2 }, // 1 - Superior Esquerdo
+                        { x: 0, y: 0 }, // 2 - Inferior Esquerdo
+                        { x: sourceWidth / 2, y: sourceHeight / 2 }, // 3 - Superior Direito
+                        { x: sourceWidth / 2, y: 0 }  // 4 - Inferior Direito
+                    ];
 
                     for (const quadrant of quadrants) {
                         if (labelIndex >= excelData.length) break;
-                        const products = parseMultiProductInfo(excelData[labelIndex].product_info);
-                        const newPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
-                        const embeddedQuadrant = await finalPdfDoc.embedPage(sourcePage, { left: quadrant.x, bottom: quadrant.y, right: quadrant.x + quadrantWidth, top: quadrant.y + quadrantHeight });
-                        const scale = Math.min(targetWidth / embeddedQuadrant.width, labelAreaHeight / embeddedQuadrant.height);
-                        const scaledWidth = embeddedQuadrant.width * scale;
-                        const scaledHeight = embeddedQuadrant.height * scale;
-                        const xOffset = (targetWidth - scaledWidth) / 2;
-                        const yOffset = infoAreaHeight + (labelAreaHeight - scaledHeight) / 2;
-                        newPage.drawPage(embeddedQuadrant, { x: xOffset, y: yOffset, width: scaledWidth, height: scaledHeight });
+                        
+                        const excelRow = excelData[labelIndex];
+                        const products = parseMultiProductInfo(excelRow.product_info);
+                        const sortKey = products.length > 0 ? products[0].productName || '' : '';
 
-                        let textY = infoAreaHeight - margin;
-                        const colWidths = [120, 85, 25, 60];
-                        const colPositions = [margin, margin + colWidths[0], margin + colWidths[0] + colWidths[1], margin + colWidths[0] + colWidths[1] + colWidths[2]];
-                        const fontSize = 8;
-                        const lineHeight = fontSize + 4;
-
-                        for (const productInfo of products) {
-                            if (textY < lineHeight) break;
-                            const rowData = [productInfo.productName || '', productInfo.variationName || '', productInfo.quantity || '', productInfo.sku || ''];
-                            for(let i = 0; i < rowData.length; i++) {
-                                let text = rowData[i];
-                                const colWidth = colWidths[i] - 5;
-                                if (helveticaFont.widthOfTextAtSize(text, fontSize) > colWidth) {
-                                    let truncated = '';
-                                    for(const char of text) {
-                                        if (helveticaFont.widthOfTextAtSize(truncated + char + '...', fontSize) > colWidth) break;
-                                        truncated += char;
-                                    }
-                                    text = truncated + '...';
-                                }
-                                newPage.drawText(text, { x: colPositions[i], y: textY, font: helveticaFont, size: fontSize, color: rgb(0.1, 0.1, 0.1) });
-                            }
-                            textY -= lineHeight;
-                        }
+                        combinedData.push({
+                            sourcePage,
+                            quadrant,
+                            quadrantWidth,
+                            quadrantHeight,
+                            excelRow,
+                            sortKey
+                        });
                         labelIndex++;
-                        updateProgress(labelIndex, totalLabels);
                     }
                     if (labelIndex >= excelData.length) break;
                 }
+                
+                // 2. Ordena os dados combinados pelo nome do produto
+                combinedData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+
+                // 3. Gera as páginas do PDF a partir dos dados ordenados
+                updateProgress(0, combinedData.length);
+                for (let i = 0; i < combinedData.length; i++) {
+                    const item = combinedData[i];
+                    const products = parseMultiProductInfo(item.excelRow.product_info);
+                    const newPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+
+                    const embeddedQuadrant = await finalPdfDoc.embedPage(item.sourcePage, { left: item.quadrant.x, bottom: item.quadrant.y, right: item.quadrant.x + item.quadrantWidth, top: item.quadrant.y + item.quadrantHeight });
+                    const scale = Math.min(targetWidth / embeddedQuadrant.width, labelAreaHeight / embeddedQuadrant.height);
+                    const scaledWidth = embeddedQuadrant.width * scale;
+                    const scaledHeight = embeddedQuadrant.height * scale;
+                    const xOffset = (targetWidth - scaledWidth) / 2;
+                    const yOffset = infoAreaHeight + (labelAreaHeight - scaledHeight) / 2;
+                    newPage.drawPage(embeddedQuadrant, { x: xOffset, y: yOffset, width: scaledWidth, height: scaledHeight });
+
+                    // Desenha a tabela
+                    let currentY = infoAreaHeight - 5;
+                    const colWidths = [110, 85, 25, 60];
+                    const colPositions = [margin, margin + colWidths[0], margin + colWidths[0] + colWidths[1], margin + colWidths[0] + colWidths[1] + colWidths[2]];
+                    const fontSize = 7;
+                    const lineHeight = fontSize + 3;
+
+                    const tableBottomY = margin + fontSize + 2; // Deixa espaço para o texto do pedido
+                    const tableTopY = infoAreaHeight - margin / 2;
+                    const tableLeftX = margin / 2;
+                    const tableRightX = targetWidth - margin / 2;
+
+                    newPage.drawRectangle({ x: tableLeftX, y: tableBottomY, width: tableRightX - tableLeftX, height: tableTopY - tableBottomY, borderColor: rgb(0, 0, 0), borderWidth: 0.5 });
+                    for(let j=1; j < colPositions.length; j++){
+                        newPage.drawLine({start: {x: colPositions[j] - 2, y: tableTopY }, end: {x: colPositions[j] - 2, y: tableBottomY }, thickness: 0.5});
+                    }
+
+                    for (const productInfo of products) {
+                         const productRowData = [
+                            productInfo.productName || '',
+                            productInfo.variationName || '',
+                            productInfo.quantity || '',
+                            productInfo.sku || ''
+                        ];
+
+                        const wrappedLines = productRowData.map((text, colIndex) => wrapText(text, helveticaFont, fontSize, colWidths[colIndex] - 4, 2));
+                        const maxLinesInRow = Math.max(...wrappedLines.map(lines => lines.length));
+                        
+                        const rowHeight = maxLinesInRow * lineHeight;
+                        if (currentY - rowHeight < tableBottomY) break;
+                        
+                        const rowTopY = currentY;
+                        
+                        for (let lineIndex = 0; lineIndex < maxLinesInRow; lineIndex++) {
+                            for(let colIndex = 0; colIndex < wrappedLines.length; colIndex++) {
+                                if (wrappedLines[colIndex][lineIndex]) {
+                                    const textY = rowTopY - (lineIndex * lineHeight) - fontSize;
+                                    newPage.drawText(wrappedLines[colIndex][lineIndex], { x: colPositions[colIndex], y: textY, font: helveticaFont, size: fontSize, color: rgb(0.1, 0.1, 0.1) });
+                                }
+                            }
+                        }
+                        currentY -= rowHeight;
+                        
+                         if(products.indexOf(productInfo) < products.length - 1 && currentY > tableBottomY) {
+                            newPage.drawLine({start: {x: tableLeftX, y: currentY}, end: {x: tableRightX, y: currentY}, thickness: 0.5});
+                         }
+                    }
+                    
+                    // Adiciona o número do pedido
+                    const orderSnText = `*Conferir número do pedido: ${item.excelRow.order_sn || ''}`;
+                    newPage.drawText(orderSnText, { x: tableLeftX + 2, y: tableBottomY - fontSize - 1, font: helveticaFont, size: fontSize, color: rgb(0.1, 0.1, 0.1) });
+
+                    updateProgress(i + 1, combinedData.length);
+                }
+
                 progressText.textContent = 'Finalizando o arquivo PDF...';
                 const finalPdfBytes = await finalPdfDoc.save();
-                createDownloadLink(finalPdfBytes, `${pdfFile.name.replace(/\.pdf$/i, '')}_etiquetas.pdf`, 'Baixar Etiquetas Geradas');
+                createDownloadLink(finalPdfBytes, `${pdfFile.name.replace(/\.pdf$/i, '')}_etiquetas_ordenadas.pdf`, 'Baixar Etiquetas Ordenadas');
                 loadingArea.classList.add('hidden');
                 resultsArea.classList.remove('hidden');
+
             } catch (error) {
                 console.error("Erro ao processar arquivos:", error);
                 alert("Ocorreu um erro. Verifique se os arquivos são válidos.");
@@ -629,7 +723,7 @@
                 const totalSourcePages = sourceDoc.getPageCount();
                 const pagesPerSheet = 4;
                 const totalLabelPages = Math.ceil(totalItemsToProcess / pagesPerSheet);
-                const totalChecklistPages = totalLabelPages; // Assume o mesmo número de páginas
+                const totalChecklistPages = totalLabelPages; 
 
                 if (totalSourcePages < totalLabelPages + totalChecklistPages) {
                      throw new Error(`O arquivo não tem páginas suficientes para ${totalItemsToProcess} etiquetas e checklists.`);
@@ -669,13 +763,11 @@
                 const targetHeight = 15 * CM_TO_POINTS;
 
                 for (let i = 0; i < totalItemsToProcess; i++) {
-                    // Adiciona a etiqueta
                     const { page: labelPage, cropBox: labelBox } = labelQuadrants[i];
                     const newLabelPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
                     const embeddedLabel = await finalPdfDoc.embedPage(labelPage, { left: labelBox.x, bottom: labelBox.y, right: labelBox.x + labelBox.width, top: labelBox.y + labelBox.height });
                     newLabelPage.drawPage(embeddedLabel, { x: 0, y: 0, width: targetWidth, height: targetHeight });
                     
-                    // Adiciona o checklist
                     const { page: checkPage, cropBox: checkLabelBox } = checklistQuadrants[i];
                     const newCheckPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
                     const embeddedCheck = await finalPdfDoc.embedPage(checkPage, { left: checkLabelBox.x, bottom: checkLabelBox.y, right: checkLabelBox.x + checkLabelBox.width, top: checkLabelBox.y + checkLabelBox.height });
