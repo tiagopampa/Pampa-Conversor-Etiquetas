@@ -118,8 +118,8 @@
                         <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">Enviar PDF</span> ou arrastar</p>
                     </div>
                     <div id="pdf-file-info-excel" class="hidden text-center">
-                         <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-excel"></p>
-                         <button id="pdf-remove-file-excel" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                          <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-excel"></p>
+                          <button id="pdf-remove-file-excel" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
                     </div>
                 </div>
                 <div id="excel-upload-area" class="upload-box">
@@ -129,8 +129,8 @@
                         <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-green-600">Enviar Excel</span> ou arrastar</p>
                     </div>
                     <div id="excel-file-info" class="hidden text-center">
-                         <p class="text-sm font-medium text-gray-700 truncate" id="excel-file-name"></p>
-                         <button id="excel-remove-file" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                          <p class="text-sm font-medium text-gray-700 truncate" id="excel-file-name"></p>
+                          <button id="excel-remove-file" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
                     </div>
                 </div>
             </div>
@@ -157,8 +157,8 @@
                         <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">1. Enviar PDF Único</span></p>
                     </div>
                     <div id="pdf-file-info-single-decl" class="hidden text-center">
-                         <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-single-decl"></p>
-                         <button id="pdf-remove-file-single-decl" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                          <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-single-decl"></p>
+                          <button id="pdf-remove-file-single-decl" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
                     </div>
                 </div>
             </div>
@@ -188,8 +188,8 @@
                         <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">1. Enviar PDF Único</span></p>
                     </div>
                     <div id="pdf-file-info-single-check" class="hidden text-center">
-                         <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-single-check"></p>
-                         <button id="pdf-remove-file-single-check" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                          <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-single-check"></p>
+                          <button id="pdf-remove-file-single-check" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
                     </div>
                 </div>
             </div>
@@ -260,7 +260,6 @@
             "cliente": "teste",
             "tales": "varella",
             "fernando": "daiane",
-            "carlos": "carlos123",
         };
 
         loginForm.addEventListener('submit', (e) => {
@@ -332,6 +331,26 @@
         }
         
         startOverBtn.addEventListener('click', () => {
+            // Reinicia os campos de upload e variáveis de estado para todas as ferramentas
+            resetUploadArea(pdfUploadAreaExcel, pdfInputExcel, pdfUploadPromptExcel, pdfFileInfoExcel);
+            selectedPdfFileExcel = null;
+            resetUploadArea(excelUploadArea, excelInput, excelUploadPrompt, excelFileInfo);
+            selectedExcelFile = null;
+            
+            resetUploadArea(pdfUploadAreaDecl, pdfInputDecl, pdfUploadPromptDecl, pdfFileInfoDecl);
+            selectedPdfFileDecl = null;
+            document.getElementById('label-count-decl').value = '';
+
+            resetUploadArea(pdfUploadAreaCheck, pdfInputCheck, pdfUploadPromptCheck, pdfFileInfoCheck);
+            selectedPdfFileCheck = null;
+            document.getElementById('label-count-check').value = '';
+            
+            // Reabilita os botões de conversão
+            checkEnableConvertButtonExcel();
+            checkEnableConvertButtonDeclaration();
+            checkEnableConvertButtonChecklist();
+
+            // Volta para a aba atual
             let currentTool = 'excel';
             if (tabDeclaration.classList.contains('active')) currentTool = 'declaration';
             if (tabChecklist.classList.contains('active')) currentTool = 'checklist';
@@ -377,8 +396,14 @@
             convertBtnExcel.disabled = !(selectedPdfFileExcel && selectedExcelFile);
         }
 
-        setupUploadArea(pdfUploadAreaExcel, pdfInputExcel, pdfUploadPromptExcel, pdfFileInfoExcel, pdfFileNameElExcel, pdfRemoveFileBtnExcel, 'pdf-excel');
-        setupUploadArea(excelUploadArea, excelInput, excelUploadPrompt, excelFileInfo, excelFileNameEl, excelRemoveFileBtn, 'excel');
+        setupUploadArea(pdfUploadAreaExcel, pdfInputExcel, pdfUploadPromptExcel, pdfFileInfoExcel, pdfFileNameElExcel, pdfRemoveFileBtnExcel, (file) => {
+            selectedPdfFileExcel = file;
+            checkEnableConvertButtonExcel();
+        });
+        setupUploadArea(excelUploadArea, excelInput, excelUploadPrompt, excelFileInfo, excelFileNameEl, excelRemoveFileBtn, (file) => {
+            selectedExcelFile = file;
+            checkEnableConvertButtonExcel();
+        });
         
         convertBtnExcel.addEventListener('click', () => {
             if (selectedPdfFileExcel && selectedExcelFile) {
@@ -389,27 +414,32 @@
         function parseMultiProductInfo(infoString) {
             if (!infoString || typeof infoString !== 'string') return [];
             const products = [];
-            const productChunks = infoString.split('Product Name:').slice(1);
-            for (const chunk of productChunks) {
-                const singleProductString = 'Product Name:' + chunk;
+            const productRegex = /\[\d+\]\s*(Product Name:.*?)(?=\s*\[\d+\]\s*Product Name:|$)/gs;
+            let match;
+            while ((match = productRegex.exec(infoString)) !== null) {
+                const productBlock = match[1];
                 const info = {};
-                const parts = singleProductString.split(';');
+                const parts = productBlock.split(';');
                 parts.forEach(part => {
                     const [key, ...valueParts] = part.split(':');
                     if (key && valueParts.length > 0) {
                         const value = valueParts.join(':').trim();
-                        if (key.trim() === 'Product Name') info.productName = value;
-                        if (key.trim() === 'Variation Name') info.variationName = value;
-                        if (key.trim() === 'Quantity') info.quantity = value;
-                        if (key.trim() === 'SKU Reference No.') info.sku = value;
+                        const cleanKey = key.trim();
+                        if (cleanKey === 'Product Name') info.productName = value;
+                        else if (cleanKey === 'Variation Name') info.variationName = value;
+                        else if (cleanKey === 'Quantity') info.quantity = value;
+                        else if (cleanKey === 'SKU Reference No.') info.sku = value;
                     }
                 });
-                if (info.productName) products.push(info);
+                if (info.productName) {
+                    products.push(info);
+                }
             }
             return products;
         }
         
         function wrapText(text, font, size, maxWidth, maxLines = 2) {
+            if (!text) return [];
             const words = text.split(' ');
             let lines = [];
             let currentLine = '';
@@ -419,25 +449,24 @@
                 if (font.widthOfTextAtSize(testLine, size) <= maxWidth) {
                     currentLine = testLine;
                 } else {
-                    if (lines.length === maxLines - 1) {
-                        currentLine = testLine;
-                        break; 
-                    }
                     lines.push(currentLine);
                     currentLine = word;
                 }
             }
             lines.push(currentLine);
-            
-            if (lines.length > maxLines) {
-                let lastLine = lines[maxLines - 1];
-                while (font.widthOfTextAtSize(lastLine + '...', size) > maxWidth && lastLine.length > 0) {
-                    lastLine = lastLine.slice(0, -1);
-                }
-                lines[maxLines - 1] = lastLine + '...';
-            }
 
-            return lines.slice(0, maxLines);
+            if (lines.length > maxLines) {
+                const allowedLines = lines.slice(0, maxLines);
+                let lastVisibleLine = allowedLines[maxLines - 1];
+
+                while (font.widthOfTextAtSize(lastVisibleLine + '...', size) > maxWidth && lastVisibleLine.length > 0) {
+                    lastVisibleLine = lastVisibleLine.slice(0, -1);
+                }
+                allowedLines[maxLines - 1] = lastVisibleLine + '...';
+                return allowedLines;
+            }
+            
+            return lines;
         }
 
         async function processFilesExcel(pdfFile, excelFile) {
@@ -448,8 +477,8 @@
             try {
                 progressText.textContent = 'Lendo arquivos...';
                 const [pdfBytes, excelBytes] = await Promise.all([pdfFile.arrayBuffer(), excelFile.arrayBuffer()]);
-
-                progressText.textContent = 'Processando e ordenando dados do Excel...';
+                
+                progressText.textContent = 'Processando dados...';
                 const workbook = read(excelBytes, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
                 const excelData = utils.sheet_to_json(workbook.Sheets[sheetName]);
@@ -457,390 +486,401 @@
                 const sourceDoc = await PDFDocument.load(pdfBytes);
                 const finalPdfDoc = await PDFDocument.create();
                 const helveticaFont = await finalPdfDoc.embedFont(StandardFonts.Helvetica);
+                const helveticaBoldFont = await finalPdfDoc.embedFont(StandardFonts.HelveticaBold);
 
                 const CM_TO_POINTS = 28.3465;
                 const targetWidth = 10 * CM_TO_POINTS;
                 const targetHeight = 15 * CM_TO_POINTS;
-                const infoAreaHeight = targetHeight * 0.15; // Espaço reduzido para a tabela
-                const labelAreaHeight = targetHeight - infoAreaHeight;
-                const margin = 8;
+                const margin = 10;
+                
+                const fonts = { helveticaFont, helveticaBoldFont };
+                const options = {
+                    targetWidth, targetHeight, margin,
+                    colWidths: [115, 85, 25, 50],
+                    fontSize: 7.5,
+                    lineHeight: 8.5
+                };
 
                 let labelIndex = 0;
                 let combinedData = [];
 
-                // 1. Associa os dados do Excel com os quadrantes do PDF na ordem correta
+                progressText.textContent = 'Associando etiquetas com dados do Excel...';
                 for (const sourcePage of sourceDoc.getPages()) {
                     const { width: sourceWidth, height: sourceHeight } = sourcePage.getSize();
-                    const quadrantWidth = sourceWidth / 2;
-                    const quadrantHeight = sourceHeight / 2;
                     const quadrants = [
-                        { x: 0, y: sourceHeight / 2 }, // 1 - Superior Esquerdo
-                        { x: 0, y: 0 }, // 2 - Inferior Esquerdo
-                        { x: sourceWidth / 2, y: sourceHeight / 2 }, // 3 - Superior Direito
-                        { x: sourceWidth / 2, y: 0 }  // 4 - Inferior Direito
+                        { x: 0, y: sourceHeight / 2 }, 
+                        { x: 0, y: 0 },                 
+                        { x: sourceWidth / 2, y: sourceHeight / 2 },
+                        { x: sourceWidth / 2, y: 0 }                  
                     ];
-
                     for (const quadrant of quadrants) {
                         if (labelIndex >= excelData.length) break;
-                        
                         const excelRow = excelData[labelIndex];
-                        const products = parseMultiProductInfo(excelRow.product_info);
-                        const sortKey = products.length > 0 ? products[0].productName || '' : '';
-
+                        const sortKey = parseMultiProductInfo(excelRow.product_info)[0]?.sku || '';
                         combinedData.push({
-                            sourcePage,
-                            quadrant,
-                            quadrantWidth,
-                            quadrantHeight,
-                            excelRow,
-                            sortKey
+                            sourcePage, quadrant,
+                            quadrantWidth: sourceWidth / 2, quadrantHeight: sourceHeight / 2,
+                            excelRow, sortKey: sortKey
                         });
                         labelIndex++;
                     }
                     if (labelIndex >= excelData.length) break;
                 }
                 
-                // 2. Ordena os dados combinados pelo nome do produto
+                progressText.textContent = 'Ordenando etiquetas...';
                 combinedData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-
-                // 3. Gera as páginas do PDF a partir dos dados ordenados
-                updateProgress(0, combinedData.length);
-                for (let i = 0; i < combinedData.length; i++) {
+                
+                const totalLabels = combinedData.length;
+                updateProgress(0, totalLabels);
+                for (let i = 0; i < totalLabels; i++) {
                     const item = combinedData[i];
                     const products = parseMultiProductInfo(item.excelRow.product_info);
-                    const newPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                    const orderId = item.excelRow.order_sn || 'N/A';
+
+                    const mainPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                    const infoAreaHeight = targetHeight * 0.20;
+                    const labelAreaHeight = targetHeight - infoAreaHeight;
 
                     const embeddedQuadrant = await finalPdfDoc.embedPage(item.sourcePage, { left: item.quadrant.x, bottom: item.quadrant.y, right: item.quadrant.x + item.quadrantWidth, top: item.quadrant.y + item.quadrantHeight });
                     const scale = Math.min(targetWidth / embeddedQuadrant.width, labelAreaHeight / embeddedQuadrant.height);
-                    const scaledWidth = embeddedQuadrant.width * scale;
-                    const scaledHeight = embeddedQuadrant.height * scale;
-                    const xOffset = (targetWidth - scaledWidth) / 2;
-                    const yOffset = infoAreaHeight + (labelAreaHeight - scaledHeight) / 2;
-                    newPage.drawPage(embeddedQuadrant, { x: xOffset, y: yOffset, width: scaledWidth, height: scaledHeight });
-
-                    // Desenha a tabela
-                    let currentY = infoAreaHeight - 5;
-                    const colWidths = [110, 85, 25, 60];
-                    const colPositions = [margin, margin + colWidths[0], margin + colWidths[0] + colWidths[1], margin + colWidths[0] + colWidths[1] + colWidths[2]];
-                    const fontSize = 7;
-                    const lineHeight = fontSize + 3;
-
-                    const tableBottomY = margin + fontSize + 2; // Deixa espaço para o texto do pedido
-                    const tableTopY = infoAreaHeight - margin / 2;
-                    const tableLeftX = margin / 2;
-                    const tableRightX = targetWidth - margin / 2;
-
-                    newPage.drawRectangle({ x: tableLeftX, y: tableBottomY, width: tableRightX - tableLeftX, height: tableTopY - tableBottomY, borderColor: rgb(0, 0, 0), borderWidth: 0.5 });
-                    for(let j=1; j < colPositions.length; j++){
-                        newPage.drawLine({start: {x: colPositions[j] - 2, y: tableTopY }, end: {x: colPositions[j] - 2, y: tableBottomY }, thickness: 0.5});
-                    }
-
-                    for (const productInfo of products) {
-                         const productRowData = [
-                            productInfo.productName || '',
-                            productInfo.variationName || '',
-                            productInfo.quantity || '',
-                            productInfo.sku || ''
-                        ];
-
-                        const wrappedLines = productRowData.map((text, colIndex) => wrapText(text, helveticaFont, fontSize, colWidths[colIndex] - 4, 2));
-                        const maxLinesInRow = Math.max(...wrappedLines.map(lines => lines.length));
-                        
-                        const rowHeight = maxLinesInRow * lineHeight;
-                        if (currentY - rowHeight < tableBottomY) break;
-                        
-                        const rowTopY = currentY;
-                        
-                        for (let lineIndex = 0; lineIndex < maxLinesInRow; lineIndex++) {
-                            for(let colIndex = 0; colIndex < wrappedLines.length; colIndex++) {
-                                if (wrappedLines[colIndex][lineIndex]) {
-                                    const textY = rowTopY - (lineIndex * lineHeight) - fontSize;
-                                    newPage.drawText(wrappedLines[colIndex][lineIndex], { x: colPositions[colIndex], y: textY, font: helveticaFont, size: fontSize, color: rgb(0.1, 0.1, 0.1) });
-                                }
-                            }
-                        }
-                        currentY -= rowHeight;
-                        
-                         if(products.indexOf(productInfo) < products.length - 1 && currentY > tableBottomY) {
-                            newPage.drawLine({start: {x: tableLeftX, y: currentY}, end: {x: tableRightX, y: currentY}, thickness: 0.5});
-                         }
-                    }
+                    mainPage.drawPage(embeddedQuadrant, {
+                        x: (targetWidth - embeddedQuadrant.width * scale) / 2,
+                        y: infoAreaHeight + (labelAreaHeight - embeddedQuadrant.height * scale) / 2,
+                        width: embeddedQuadrant.width * scale, height: embeddedQuadrant.height * scale
+                    });
                     
-                    // Adiciona o número do pedido
-                    const orderSnText = `*Conferir número do pedido: ${item.excelRow.order_sn || ''}`;
-                    newPage.drawText(orderSnText, { x: tableLeftX + 2, y: tableBottomY - fontSize - 1, font: helveticaFont, size: fontSize, color: rgb(0.1, 0.1, 0.1) });
+                    const productsOnFirstPage = products.slice(0, 2);
+                    drawProductTableOnPage(mainPage, productsOnFirstPage, infoAreaHeight, fonts, options);
+                    mainPage.drawText(`*Conferir número do pedido: ${orderId}`, { x: margin / 2, y: margin, font: helveticaFont, size: 7, color: rgb(0.2, 0.2, 0.2) });
 
-                    updateProgress(i + 1, combinedData.length);
+                    if (products.length > 2) {
+                        const remainingProducts = products.slice(2);
+                        const continuationPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                        drawProductTableOnPage(continuationPage, remainingProducts, targetHeight - margin, fonts, options);
+                        continuationPage.drawText(`*Conferir número do pedido: ${orderId}`, { x: margin / 2, y: margin, font: helveticaFont, size: 7, color: rgb(0.2, 0.2, 0.2) });
+                    }
+                    updateProgress(i + 1, totalLabels);
                 }
 
-                progressText.textContent = 'Finalizando o arquivo PDF...';
+                progressText.textContent = 'Salvando PDF...';
                 const finalPdfBytes = await finalPdfDoc.save();
-                createDownloadLink(finalPdfBytes, `${pdfFile.name.replace(/\.pdf$/i, '')}_etiquetas_ordenadas.pdf`, 'Baixar Etiquetas Ordenadas');
+                const newFileName = `conversor_pampa_${totalLabels}_etiquetas.pdf`;
+                createDownloadLink(finalPdfBytes, newFileName, `Baixar PDF com ${totalLabels} etiquetas`);
+                
                 loadingArea.classList.add('hidden');
                 resultsArea.classList.remove('hidden');
 
             } catch (error) {
-                console.error("Erro ao processar arquivos:", error);
-                alert("Ocorreu um erro. Verifique se os arquivos são válidos.");
-                showTool('excel');
+                console.error('Erro ao processar os arquivos:', error);
+                progressText.textContent = `Erro: ${error.message}. Tente novamente.`;
+                progressBar.style.backgroundColor = '#ef4444'; 
             }
         }
 
-        // --- LÓGICA DA FERRAMENTA 2: ETIQUETA + DECLARAÇÃO ---
-        const pdfUploadAreaSingleDecl = document.getElementById('pdf-upload-area-single-decl');
-        const pdfInputSingleDecl = document.getElementById('pdf-input-single-decl');
-        const pdfUploadPromptSingleDecl = document.getElementById('pdf-upload-prompt-single-decl');
-        const pdfFileInfoSingleDecl = document.getElementById('pdf-file-info-single-decl');
-        const pdfFileNameElSingleDecl = document.getElementById('pdf-file-name-single-decl');
-        const pdfRemoveFileBtnSingleDecl = document.getElementById('pdf-remove-file-single-decl');
-        const labelCountInputDecl = document.getElementById('label-count-decl');
+        function drawProductTableOnPage(page, products, startY, fonts, options) {
+            const { targetWidth, margin, colWidths, fontSize, lineHeight } = options;
+            const { helveticaFont, helveticaBoldFont } = fonts;
+            
+            const tableLeftX = margin / 2;
+            const tableRightX = targetWidth - margin / 2;
+            const colPositions = [
+                tableLeftX + 2, 
+                tableLeftX + colWidths[0], 
+                tableLeftX + colWidths[0] + colWidths[1], 
+                tableLeftX + colWidths[0] + colWidths[1] + colWidths[2]
+            ];
 
-        const convertBtnDeclaration = document.getElementById('convert-btn-declaration');
-        let selectedPdfFileSingleDecl = null;
+            let currentY = startY - lineHeight;
+
+            for (const product of products) {
+                const nameLines = wrapText(product.productName || '', helveticaBoldFont, fontSize, colWidths[0] - 6, 2);
+                const variationLines = wrapText(product.variationName || '', helveticaFont, fontSize, colWidths[1] - 6, 2);
+                const entryLineCount = Math.max(nameLines.length, variationLines.length, 1);
+                const entryHeight = entryLineCount * lineHeight;
+
+                page.drawRectangle({
+                    x: tableLeftX, y: currentY - entryHeight + lineHeight - 2,
+                    width: tableRightX - tableLeftX, height: entryHeight,
+                    borderColor: rgb(0, 0, 0), borderWidth: 0.5
+                });
+                for(let j = 1; j < colPositions.length; j++){
+                    page.drawLine({
+                        start: { x: colPositions[j] - 2, y: currentY + lineHeight - 2 },
+                        end: { x: colPositions[j] - 2, y: currentY - entryHeight + lineHeight - 2 },
+                        thickness: 0.5
+                    });
+                }
+
+                let lineY = currentY;
+                for(const line of nameLines) {
+                    page.drawText(line, { x: colPositions[0], y: lineY, font: helveticaBoldFont, size: fontSize, color: rgb(0, 0, 0) });
+                    lineY -= lineHeight;
+                }
+                lineY = currentY;
+                for(const line of variationLines) {
+                    page.drawText(line, { x: colPositions[1], y: lineY, font: helveticaFont, size: fontSize, color: rgb(0, 0, 0) });
+                    lineY -= lineHeight;
+                }
+                const singleLineY = currentY - ((entryLineCount - 1) * lineHeight / 2);
+                page.drawText(product.quantity || '', { x: colPositions[2], y: singleLineY, font: helveticaFont, size: fontSize, color: rgb(0, 0, 0) });
+                page.drawText(product.sku || '', { x: colPositions[3], y: singleLineY, font: helveticaFont, size: fontSize, color: rgb(0, 0, 0) });
+                
+                currentY -= entryHeight;
+            }
+        }
+        
+        // --- LÓGICA DAS FERRAMENTAS 2 E 3 (DECLARAÇÃO E CHECKLIST) ---
+        let selectedPdfFileDecl = null;
+        let selectedPdfFileCheck = null;
+        
+        const pdfUploadAreaDecl = document.getElementById('pdf-upload-area-single-decl');
+        const pdfInputDecl = document.getElementById('pdf-input-single-decl');
+        const pdfUploadPromptDecl = document.getElementById('pdf-upload-prompt-single-decl');
+        const pdfFileInfoDecl = document.getElementById('pdf-file-info-single-decl');
+        const pdfFileNameElDecl = document.getElementById('pdf-file-name-single-decl');
+        const pdfRemoveFileBtnDecl = document.getElementById('pdf-remove-file-single-decl');
+        const labelCountInputDecl = document.getElementById('label-count-decl');
+        const convertBtnDecl = document.getElementById('convert-btn-declaration');
+
+        const pdfUploadAreaCheck = document.getElementById('pdf-upload-area-single-check');
+        const pdfInputCheck = document.getElementById('pdf-input-single-check');
+        const pdfUploadPromptCheck = document.getElementById('pdf-upload-prompt-single-check');
+        const pdfFileInfoCheck = document.getElementById('pdf-file-info-single-check');
+        const pdfFileNameElCheck = document.getElementById('pdf-file-name-single-check');
+        const pdfRemoveFileBtnCheck = document.getElementById('pdf-remove-file-single-check');
+        const labelCountInputCheck = document.getElementById('label-count-check');
+        const convertBtnCheck = document.getElementById('convert-btn-checklist');
 
         function checkEnableConvertButtonDeclaration() {
-            convertBtnDeclaration.disabled = !(selectedPdfFileSingleDecl && labelCountInputDecl.value > 0);
+            convertBtnDecl.disabled = !(selectedPdfFileDecl && labelCountInputDecl.value > 0);
         }
-
-        setupUploadArea(pdfUploadAreaSingleDecl, pdfInputSingleDecl, pdfUploadPromptSingleDecl, pdfFileInfoSingleDecl, pdfFileNameElSingleDecl, pdfRemoveFileBtnSingleDecl, 'pdf-single-decl');
-        labelCountInputDecl.addEventListener('input', checkEnableConvertButtonDeclaration);
-
-
-        convertBtnDeclaration.addEventListener('click', () => {
-            if (selectedPdfFileSingleDecl && labelCountInputDecl.value > 0) {
-                processDeclarationPdf(selectedPdfFileSingleDecl, parseInt(labelCountInputDecl.value));
-            }
-        });
-
-        async function processDeclarationPdf(pdfFile, totalLabelsToProcess) {
-            toolDeclaration.classList.add('hidden');
-            loadingArea.classList.remove('hidden');
-            updateProgress(0, 0);
-
-            try {
-                progressText.textContent = 'Lendo o arquivo PDF...';
-                const pdfBytes = await pdfFile.arrayBuffer();
-                const sourceDoc = await PDFDocument.load(pdfBytes);
-                const finalPdfDoc = await PDFDocument.create();
-                
-                const totalSourcePages = sourceDoc.getPageCount();
-                const pagesPerLabelSheet = 4;
-                const totalLabelPages = Math.ceil(totalLabelsToProcess / pagesPerLabelSheet);
-
-                if (totalSourcePages < totalLabelPages + totalLabelsToProcess) {
-                     throw new Error(`O arquivo não tem páginas suficientes. Esperado: ${totalLabelPages} de etiquetas + ${totalLabelsToProcess} de declarações = ${totalLabelPages + totalLabelsToProcess} páginas. Encontrado: ${totalSourcePages}.`);
-                }
-
-                progressText.textContent = 'Extraindo etiquetas...';
-                const labelQuadrants = [];
-                const sourcePages = sourceDoc.getPages();
-                for (let i = 0; i < totalLabelPages; i++) {
-                    const page = sourcePages[i];
-                    if (labelQuadrants.length >= totalLabelsToProcess) break;
-                    const { width, height } = page.getSize();
-                    const quadrants = [
-                        { page, cropBox: { x: 0, y: height / 2, width: width / 2, height: height / 2 } },
-                        { page, cropBox: { x: 0, y: 0, width: width / 2, height: height / 2 } },
-                        { page, cropBox: { x: width / 2, y: height / 2, width: width / 2, height: height / 2 } },
-                        { page, cropBox: { x: width / 2, y: 0, width: width / 2, height: height / 2 } }
-                    ];
-                    for(const quad of quadrants) {
-                        if (labelQuadrants.length < totalLabelsToProcess) {
-                            labelQuadrants.push(quad);
-                        }
-                    }
-                }
-                
-                updateProgress(0, totalLabelsToProcess);
-
-                const CM_TO_POINTS = 28.3465;
-                const targetWidth = 10 * CM_TO_POINTS;
-                const targetHeight = 15 * CM_TO_POINTS;
-
-                for (let i = 0; i < totalLabelsToProcess; i++) {
-                    const { page: labelPage, cropBox: labelBox } = labelQuadrants[i];
-                    const newLabelPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
-                    const embeddedLabel = await finalPdfDoc.embedPage(labelPage, { left: labelBox.x, bottom: labelBox.y, right: labelBox.x + labelBox.width, top: labelBox.y + labelBox.height });
-                    newLabelPage.drawPage(embeddedLabel, { x: 0, y: 0, width: targetWidth, height: targetHeight });
-                    
-                    const declarationPageIndex = totalLabelPages + i;
-                    const [embeddedDecl] = await finalPdfDoc.copyPages(sourceDoc, [declarationPageIndex]);
-                    finalPdfDoc.addPage(embeddedDecl);
-                    
-                    updateProgress(i + 1, totalLabelsToProcess);
-                }
-
-                progressText.textContent = 'Finalizando o arquivo PDF...';
-                const finalPdfBytes = await finalPdfDoc.save();
-                createDownloadLink(finalPdfBytes, `${pdfFile.name.replace(/\.pdf$/i, '')}_organizado.pdf`, 'Baixar PDF Organizado');
-                
-                loadingArea.classList.add('hidden');
-                resultsArea.classList.remove('hidden');
-
-            } catch (error) {
-                console.error("Erro ao processar PDF de declaração:", error);
-                alert(`Ocorreu um erro: ${error.message}`);
-                showTool('declaration');
-            }
-        }
-
-        // --- LÓGICA DA FERRAMENTA 3: ETIQUETA + CHECKLIST ---
-        const pdfUploadAreaSingleCheck = document.getElementById('pdf-upload-area-single-check');
-        const pdfInputSingleCheck = document.getElementById('pdf-input-single-check');
-        const pdfUploadPromptSingleCheck = document.getElementById('pdf-upload-prompt-single-check');
-        const pdfFileInfoSingleCheck = document.getElementById('pdf-file-info-single-check');
-        const pdfFileNameElSingleCheck = document.getElementById('pdf-file-name-single-check');
-        const pdfRemoveFileBtnSingleCheck = document.getElementById('pdf-remove-file-single-check');
-        const labelCountInputCheck = document.getElementById('label-count-check');
-
-        const convertBtnChecklist = document.getElementById('convert-btn-checklist');
-        let selectedPdfFileSingleCheck = null;
 
         function checkEnableConvertButtonChecklist() {
-            convertBtnChecklist.disabled = !(selectedPdfFileSingleCheck && labelCountInputCheck.value > 0);
+            convertBtnCheck.disabled = !(selectedPdfFileCheck && labelCountInputCheck.value > 0);
         }
-
-        setupUploadArea(pdfUploadAreaSingleCheck, pdfInputSingleCheck, pdfUploadPromptSingleCheck, pdfFileInfoSingleCheck, pdfFileNameElSingleCheck, pdfRemoveFileBtnSingleCheck, 'pdf-single-check');
-        labelCountInputCheck.addEventListener('input', checkEnableConvertButtonChecklist);
-
-        convertBtnChecklist.addEventListener('click', () => {
-            if (selectedPdfFileSingleCheck && labelCountInputCheck.value > 0) {
-                processChecklistPdf(selectedPdfFileSingleCheck, parseInt(labelCountInputCheck.value));
+        
+        setupUploadArea(pdfUploadAreaDecl, pdfInputDecl, pdfUploadPromptDecl, pdfFileInfoDecl, pdfFileNameElDecl, pdfRemoveFileBtnDecl, (file) => {
+            selectedPdfFileDecl = file;
+            checkEnableConvertButtonDeclaration();
+        });
+        labelCountInputDecl.addEventListener('input', checkEnableConvertButtonDeclaration);
+        convertBtnDecl.addEventListener('click', () => {
+             if (selectedPdfFileDecl && labelCountInputDecl.value) {
+                processDeclarationPdf(selectedPdfFileDecl, parseInt(labelCountInputDecl.value, 10));
             }
         });
 
-        async function processChecklistPdf(pdfFile, totalItemsToProcess) {
-            toolChecklist.classList.add('hidden');
+        setupUploadArea(pdfUploadAreaCheck, pdfInputCheck, pdfUploadPromptCheck, pdfFileInfoCheck, pdfFileNameElCheck, pdfRemoveFileBtnCheck, (file) => {
+            selectedPdfFileCheck = file;
+            checkEnableConvertButtonChecklist();
+        });
+        labelCountInputCheck.addEventListener('input', checkEnableConvertButtonChecklist);
+        convertBtnCheck.addEventListener('click', () => {
+            if (selectedPdfFileCheck && labelCountInputCheck.value) {
+                processChecklistPdf(selectedPdfFileCheck, parseInt(labelCountInputCheck.value, 10));
+            }
+        });
+
+        // --- LÓGICA CORRIGIDA PARA ETIQUETA + DECLARAÇÃO ---
+        async function processDeclarationPdf(pdfFile, labelCount) {
+            document.getElementById('tool-declaration').classList.add('hidden');
             loadingArea.classList.remove('hidden');
-            updateProgress(0, 0);
+            updateProgress(0, labelCount);
 
             try {
-                progressText.textContent = 'Lendo o arquivo PDF...';
+                progressText.textContent = 'Lendo PDF...';
                 const pdfBytes = await pdfFile.arrayBuffer();
                 const sourceDoc = await PDFDocument.load(pdfBytes);
                 const finalPdfDoc = await PDFDocument.create();
                 
-                const totalSourcePages = sourceDoc.getPageCount();
-                const pagesPerSheet = 4;
-                const totalLabelPages = Math.ceil(totalItemsToProcess / pagesPerSheet);
-                const totalChecklistPages = totalLabelPages; 
+                const totalPages = sourceDoc.getPageCount();
+                const expectedLabelPages = Math.ceil(labelCount / 4);
+                const expectedDeclarationPages = labelCount;
+                const expectedTotalPages = expectedLabelPages + expectedDeclarationPages;
 
-                if (totalSourcePages < totalLabelPages + totalChecklistPages) {
-                     throw new Error(`O arquivo não tem páginas suficientes para ${totalItemsToProcess} etiquetas e checklists.`);
+                if (totalPages !== expectedTotalPages) {
+                    throw new Error(`Estrutura de PDF inválida. Para ${labelCount} etiquetas, o PDF precisa ter ${expectedLabelPages} pág. de etiquetas + ${expectedDeclarationPages} pág. de declaração, totalizando ${expectedTotalPages} páginas. O seu arquivo tem ${totalPages}.`);
                 }
 
-                progressText.textContent = 'Extraindo etiquetas e checklists...';
-                const sourcePages = sourceDoc.getPages();
-                
-                const extractQuadrants = (startPage, numPages, totalItems) => {
-                    const quadrants = [];
-                     for (let i = 0; i < numPages; i++) {
-                        const page = sourcePages[startPage + i];
-                        if (quadrants.length >= totalItems) break;
-                        const { width, height } = page.getSize();
-                        const pageQuadrants = [
-                            { page, cropBox: { x: 0, y: height / 2, width: width / 2, height: height / 2 } },
-                            { page, cropBox: { x: 0, y: 0, width: width / 2, height: height / 2 } },
-                            { page, cropBox: { x: width / 2, y: height / 2, width: width / 2, height: height / 2 } },
-                            { page, cropBox: { x: width / 2, y: 0, width: width / 2, height: height / 2 } }
-                        ];
-                        for(const quad of pageQuadrants) {
-                            if (quadrants.length < totalItems) {
-                                quadrants.push(quad);
-                            }
-                        }
-                    }
-                    return quadrants;
-                };
-
-                const labelQuadrants = extractQuadrants(0, totalLabelPages, totalItemsToProcess);
-                const checklistQuadrants = extractQuadrants(totalLabelPages, totalChecklistPages, totalItemsToProcess);
-                
-                updateProgress(0, totalItemsToProcess);
-
+                const { width: sourceWidth, height: sourceHeight } = sourceDoc.getPages()[0].getSize();
+                const quadrantWidth = sourceWidth / 2;
+                const quadrantHeight = sourceHeight / 2;
                 const CM_TO_POINTS = 28.3465;
                 const targetWidth = 10 * CM_TO_POINTS;
                 const targetHeight = 15 * CM_TO_POINTS;
 
-                for (let i = 0; i < totalItemsToProcess; i++) {
-                    const { page: labelPage, cropBox: labelBox } = labelQuadrants[i];
-                    const newLabelPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
-                    const embeddedLabel = await finalPdfDoc.embedPage(labelPage, { left: labelBox.x, bottom: labelBox.y, right: labelBox.x + labelBox.width, top: labelBox.y + labelBox.height });
-                    newLabelPage.drawPage(embeddedLabel, { x: 0, y: 0, width: targetWidth, height: targetHeight });
-                    
-                    const { page: checkPage, cropBox: checkLabelBox } = checklistQuadrants[i];
-                    const newCheckPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
-                    const embeddedCheck = await finalPdfDoc.embedPage(checkPage, { left: checkLabelBox.x, bottom: checkLabelBox.y, right: checkLabelBox.x + checkLabelBox.width, top: checkLabelBox.y + checkLabelBox.height });
-                    newCheckPage.drawPage(embeddedCheck, { x: 0, y: 0, width: targetWidth, height: targetHeight });
+                const quadrants = [
+                    { x: 0, y: sourceHeight / 2 }, { x: 0, y: 0 },
+                    { x: sourceWidth / 2, y: sourceHeight / 2 }, { x: sourceWidth / 2, y: 0 }
+                ];
 
-                    updateProgress(i + 1, totalItemsToProcess);
+                progressText.textContent = `Intercalando Declarações...`;
+                for (let i = 0; i < labelCount; i++) {
+                    // Pega a etiqueta recortada
+                    const sourceLabelPageIndex = Math.floor(i / 4);
+                    const quadrantIndex = i % 4;
+                    const sourceLabelPage = sourceDoc.getPages()[sourceLabelPageIndex];
+                    const quadrant = quadrants[quadrantIndex];
+
+                    const newLabelPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                    const embeddedLabel = await finalPdfDoc.embedPage(sourceLabelPage, {
+                        left: quadrant.x, bottom: quadrant.y,
+                        right: quadrant.x + quadrantWidth, top: quadrant.y + quadrantHeight
+                    });
+                    const scale = Math.min(targetWidth / embeddedLabel.width, targetHeight / embeddedLabel.height);
+                    newLabelPage.drawPage(embeddedLabel, {
+                        x: (targetWidth - embeddedLabel.width * scale) / 2,
+                        y: (targetHeight - embeddedLabel.height * scale) / 2,
+                        width: embeddedLabel.width * scale, height: embeddedLabel.height * scale
+                    });
+
+                    // Pega a página de declaração inteira
+                    const sourceDeclarationPageIndex = expectedLabelPages + i;
+                    const [copiedDeclarationPage] = await finalPdfDoc.copyPages(sourceDoc, [sourceDeclarationPageIndex]);
+                    finalPdfDoc.addPage(copiedDeclarationPage);
+                    
+                    updateProgress(i + 1, labelCount);
                 }
 
-                progressText.textContent = 'Finalizando o arquivo PDF...';
+                progressText.textContent = 'Salvando PDF final...';
                 const finalPdfBytes = await finalPdfDoc.save();
-                createDownloadLink(finalPdfBytes, `${pdfFile.name.replace(/\.pdf$/i, '')}_organizado.pdf`, 'Baixar PDF Organizado');
-                
+                const newFileName = `conversor_pampa_${labelCount}_etiquetas.pdf`;
+                createDownloadLink(finalPdfBytes, newFileName, `Baixar PDF com ${labelCount} etiquetas`);
+
                 loadingArea.classList.add('hidden');
                 resultsArea.classList.remove('hidden');
 
             } catch (error) {
-                console.error("Erro ao processar PDF de checklist:", error);
-                alert(`Ocorreu um erro: ${error.message}`);
-                showTool('checklist');
+                 console.error(`Erro ao processar PDF com Declaração:`, error);
+                progressText.textContent = `Erro: ${error.message}. Verifique a estrutura do arquivo.`;
+                progressBar.style.backgroundColor = '#ef4444';
             }
         }
-        
-        
-        // --- Função Genérica de Setup de Upload ---
-        function setupUploadArea(area, input, prompt, info, nameEl, removeBtn, type) {
+
+        // --- LÓGICA MANTIDA PARA ETIQUETA + CHECKLIST ---
+        async function processChecklistPdf(pdfFile, labelCount) {
+            const type = 'Checklist';
+            document.getElementById(`tool-${type.toLowerCase()}`).classList.add('hidden');
+            loadingArea.classList.remove('hidden');
+            updateProgress(0, labelCount);
+
+            try {
+                progressText.textContent = 'Lendo PDF...';
+                const pdfBytes = await pdfFile.arrayBuffer();
+                const sourceDoc = await PDFDocument.load(pdfBytes);
+                const finalPdfDoc = await PDFDocument.create();
+                
+                const totalPages = sourceDoc.getPageCount();
+                const expectedLabelPages = Math.ceil(labelCount / 4);
+                const expectedTotalPages = expectedLabelPages * 2;
+
+                if (totalPages !== expectedTotalPages) {
+                    throw new Error(`Número de páginas incompatível. Para ${labelCount} etiquetas (4 por pág), o PDF deveria ter ${expectedTotalPages} páginas (${expectedLabelPages} de etiquetas e ${expectedLabelPages} de ${type.toLowerCase()}). O seu tem ${totalPages}.`);
+                }
+
+                const { width: sourceWidth, height: sourceHeight } = sourceDoc.getPages()[0].getSize();
+                const quadrantWidth = sourceWidth / 2;
+                const quadrantHeight = sourceHeight / 2;
+                const CM_TO_POINTS = 28.3465;
+                const targetWidth = 10 * CM_TO_POINTS;
+                const targetHeight = 15 * CM_TO_POINTS;
+
+                const quadrants = [
+                    { x: 0, y: sourceHeight / 2 }, { x: 0, y: 0 },
+                    { x: sourceWidth / 2, y: sourceHeight / 2 }, { x: sourceWidth / 2, y: 0 }
+                ];
+
+                progressText.textContent = `Intercalando ${type}...`;
+                for (let i = 0; i < labelCount; i++) {
+                    const sourceLabelPageIndex = Math.floor(i / 4);
+                    const quadrantIndex = i % 4;
+                    const sourceContentPageIndex = expectedLabelPages + sourceLabelPageIndex;
+
+                    const sourceLabelPage = sourceDoc.getPages()[sourceLabelPageIndex];
+                    const sourceContentPage = sourceDoc.getPages()[sourceContentPageIndex];
+                    const quadrant = quadrants[quadrantIndex];
+
+                    const newLabelPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                    const embeddedLabel = await finalPdfDoc.embedPage(sourceLabelPage, {
+                        left: quadrant.x, bottom: quadrant.y,
+                        right: quadrant.x + quadrantWidth, top: quadrant.y + quadrantHeight
+                    });
+                    const scaleLabel = Math.min(targetWidth / embeddedLabel.width, targetHeight / embeddedLabel.height);
+                    newLabelPage.drawPage(embeddedLabel, {
+                        x: (targetWidth - embeddedLabel.width * scaleLabel) / 2,
+                        y: (targetHeight - embeddedLabel.height * scaleLabel) / 2,
+                        width: embeddedLabel.width * scaleLabel, height: embeddedLabel.height * scaleLabel
+                    });
+
+                    const newContentPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                    const embeddedContent = await finalPdfDoc.embedPage(sourceContentPage, {
+                        left: quadrant.x, bottom: quadrant.y,
+                        right: quadrant.x + quadrantWidth, top: quadrant.y + quadrantHeight
+                    });
+                    const scaleContent = Math.min(targetWidth / embeddedContent.width, targetHeight / embeddedContent.height);
+                    newContentPage.drawPage(embeddedContent, {
+                        x: (targetWidth - embeddedContent.width * scaleContent) / 2,
+                        y: (targetHeight - embeddedContent.height * scaleContent) / 2,
+                        width: embeddedContent.width * scaleContent, height: embeddedContent.height * scaleContent
+                    });
+                    
+                    updateProgress(i + 1, labelCount);
+                }
+
+                progressText.textContent = 'Salvando PDF final...';
+                const finalPdfBytes = await finalPdfDoc.save();
+                const newFileName = `conversor_pampa_${labelCount}_etiquetas.pdf`;
+                createDownloadLink(finalPdfBytes, newFileName, `Baixar PDF com ${labelCount} etiquetas`);
+
+                loadingArea.classList.add('hidden');
+                resultsArea.classList.remove('hidden');
+
+            } catch (error) {
+                 console.error(`Erro ao processar PDF com ${type}:`, error);
+                progressText.textContent = `Erro: ${error.message}. Tente novamente.`;
+                progressBar.style.backgroundColor = '#ef4444';
+            }
+        }
+
+        // --- FUNÇÕES GENÉRICAS DE UPLOAD ---
+        function setupUploadArea(area, input, prompt, info, nameEl, removeBtn, onFileSelectCallback) {
             area.addEventListener('click', () => input.click());
-            area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('border-blue-500', 'bg-gray-50'); });
-            area.addEventListener('dragleave', (e) => { e.preventDefault(); area.classList.remove('border-blue-500', 'bg-gray-50'); });
-            
-            const handleFile = (file) => {
-                const isPdf = file.type === 'application/pdf';
-                const isExcel = file.name.match(/\.(xlsx|xls)$/);
-
-                if (type.startsWith('pdf') && !isPdf) return;
-                if (type === 'excel' && !isExcel) return;
-
-                if (type === 'pdf-excel') { selectedPdfFileExcel = file; }
-                else if (type === 'excel') { selectedExcelFile = file; }
-                else if (type === 'pdf-single-decl') { selectedPdfFileSingleDecl = file; }
-                else if (type === 'pdf-single-check') { selectedPdfFileSingleCheck = file; }
-                
-                nameEl.textContent = file.name;
-                prompt.classList.add('hidden');
-                info.classList.remove('hidden');
-                
-                if (type === 'pdf-excel' || type === 'excel') checkEnableConvertButtonExcel();
-                if (type === 'pdf-single-decl') checkEnableConvertButtonDeclaration();
-                if (type === 'pdf-single-check') checkEnableConvertButtonChecklist();
-            };
-
+            area.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); area.classList.add('border-blue-500', 'bg-blue-50'); });
+            area.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); area.classList.remove('border-blue-500', 'bg-blue-50'); });
             area.addEventListener('drop', (e) => {
-                e.preventDefault();
-                area.classList.remove('border-blue-500', 'bg-gray-50');
-                if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+                e.preventDefault(); e.stopPropagation();
+                area.classList.remove('border-blue-500', 'bg-blue-50');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    handleFile(e.dataTransfer.files[0], input, prompt, info, nameEl, onFileSelectCallback);
+                }
             });
+            
             input.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) handleFile(e.target.files[0]);
+                if (input.files && input.files[0]) {
+                    handleFile(input.files[0], input, prompt, info, nameEl, onFileSelectCallback);
+                }
             });
+
             removeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (type === 'pdf-excel') { selectedPdfFileExcel = null; pdfInputExcel.value = ''; }
-                else if (type === 'excel') { selectedExcelFile = null; excelInput.value = ''; }
-                else if (type === 'pdf-single-decl') { selectedPdfFileSingleDecl = null; pdfInputSingleDecl.value = ''; }
-                else if (type === 'pdf-single-check') { selectedPdfFileSingleCheck = null; pdfInputSingleCheck.value = ''; }
-
-                prompt.classList.remove('hidden');
-                info.classList.add('hidden');
-
-                if (type === 'pdf-excel' || type === 'excel') checkEnableConvertButtonExcel();
-                if (type === 'pdf-single-decl') checkEnableConvertButtonDeclaration();
-                if (type === 'pdf-single-check') checkEnableConvertButtonChecklist();
+                resetUploadArea(area, input, prompt, info);
+                onFileSelectCallback(null);
             });
         }
+
+        function handleFile(file, input, prompt, info, nameEl, onFileSelectCallback) {
+            nameEl.textContent = file.name;
+            prompt.classList.add('hidden');
+            info.classList.remove('hidden');
+            onFileSelectCallback(file);
+        }
+
+        function resetUploadArea(area, input, prompt, info) {
+            input.value = '';
+            prompt.classList.remove('hidden');
+            info.classList.add('hidden');
+        }
+
     });
     </script>
 </body>
