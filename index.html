@@ -4,6 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pampa Soluções - Conversor de PDF</title>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z0RQQBTK8T"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Z0RQQBTK8T');
+    </script>
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1002701210055535"
+         crossorigin="anonymous"></script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -87,6 +102,18 @@
                 </button>
             </div>
         </form>
+        <div class="mt-6 text-center space-y-4">
+            <a href="https://wa.me/5537991316234" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-full px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-all shadow-sm">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 4.315 1.919 6.066l-1.225 4.485 4.635-1.218zM8.332 10.233c-.131-.26-.26-.263-.383-.263-.116 0-.249.001-.38.001-.131 0-.341.043-.518.234-.176.193-.661.652-.661 1.576 0 .924.675 1.823.769 1.954.093.13 1.328 2.118 3.231 2.87.536.208.96.33.96.425 0 .213.001.484-.043.553-.043.07-.248.043-.518-.043s-2.119-1.225-2.421-1.396c-.302-.17-.562-.192-.787-.109-.225.083-.464.26-.567.382-.103.123-.193.26-.282.403-.09.142-.17.143-.302.109-.131-.033-1.043-.463-1.985-1.225-.724-.584-1.224-1.303-1.363-1.532-.139-.23-.279-.353-.139-.661.14-.307.302-.382.403-.517.102-.135.142-.225.225-.383.083-.157.043-.28.001-.382-.043-.102-.341-.834-.465-.962s-.249-.109-.341-.109z"/></svg>
+                <span class="text-left">
+                    Dúvidas me chame no whatsapp
+                    <span class="block font-semibold">(37) 99131-6234</span>
+                </span>
+            </a>
+            <a href="https://pay.kiwify.com.br/qcxonee" target="_blank" rel="noopener noreferrer" class="block w-full text-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                Garanta seu acesso personalizado + Suporte Técnico por R$ 13,50 / mês - Assinatura Anual me chame no zap
+            </a>
+        </div>
     </div>
 
     <!-- Aplicação Principal (escondida) -->
@@ -103,6 +130,7 @@
             <button id="tab-excel" class="tab-button active">Etiqueta com Excel</button>
             <button id="tab-declaration" class="tab-button">Etiqueta + Declaração</button>
             <button id="tab-checklist" class="tab-button">Etiqueta + Checklist</button>
+            <button id="tab-single" class="tab-button">1 Só Etiqueta</button>
         </div>
         
         <!-- Ferramenta 1: Etiqueta com Excel -->
@@ -169,6 +197,9 @@
             </div>
             
              <div id="convert-button-container-declaration" class="text-center">
+                <div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm font-semibold rounded-lg">
+                    Confira sempre o número do RASTREIO em baixo pra ter certeza que está correto!!
+                </div>
                 <button id="convert-btn-declaration" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
                     Organizar Arquivo
                 </button>
@@ -178,7 +209,7 @@
         <!-- Ferramenta 3: Etiqueta + Checklist -->
         <div id="tool-checklist" class="hidden">
             <h1 class="text-2xl font-bold text-gray-800 text-center">Organizador de Etiqueta + Checklist</h1>
-            <p class="text-gray-500 mt-2 text-center">Informe o número de itens e envie o PDF para intercalar.</p>
+            <p class="text-gray-500 mt-2 text-center">Informe o número de etiquetas e envie o PDF para intercalar.</p>
 
             <div class="my-8">
                  <div id="pdf-upload-area-single-check" class="upload-box max-w-md mx-auto">
@@ -200,8 +231,40 @@
             </div>
             
              <div id="convert-button-container-checklist" class="text-center">
+                <div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm font-semibold rounded-lg">
+                    Confira sempre o número do pedido em baixo pra ter certeza que está correto!!
+                </div>
                 <button id="convert-btn-checklist" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
                     Organizar Arquivo
+                </button>
+            </div>
+        </div>
+
+        <!-- Ferramenta 4: 1 Só Etiqueta -->
+        <div id="tool-single" class="hidden">
+            <h1 class="text-2xl font-bold text-gray-800 text-center">Intercalador de PDFs (1 Etiqueta + 1 Declaração)</h1>
+            <p class="text-gray-500 mt-2 text-center">Envie múltiplos PDFs (cada um com 1 etiqueta e 1 declaração) para uni-los em um só arquivo.</p>
+
+            <div class="my-8">
+                 <div id="pdf-upload-area-multi" class="upload-box max-w-md mx-auto">
+                    <input type="file" id="pdf-input-multi" class="hidden" accept="application/pdf" multiple>
+                    <div id="pdf-upload-prompt-multi">
+                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">Enviar PDFs</span> ou arrastar</p>
+                    </div>
+                    <div id="pdf-file-info-multi" class="hidden text-center">
+                          <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-multi"></p>
+                          <button id="pdf-remove-file-multi" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                    </div>
+                </div>
+            </div>
+            
+             <div id="convert-button-container-multi" class="text-center">
+                <div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm font-semibold rounded-lg">
+                    Confira sempre o número do RASTREIO em baixo pra ter certeza que está correto!!
+                </div>
+                <button id="convert-btn-multi" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                    Juntar e Organizar Arquivos
                 </button>
             </div>
         </div>
@@ -286,18 +349,22 @@
         const tabExcel = document.getElementById('tab-excel');
         const tabDeclaration = document.getElementById('tab-declaration');
         const tabChecklist = document.getElementById('tab-checklist');
+        const tabSingle = document.getElementById('tab-single');
         const toolExcel = document.getElementById('tool-excel');
         const toolDeclaration = document.getElementById('tool-declaration');
         const toolChecklist = document.getElementById('tool-checklist');
+        const toolSingle = document.getElementById('tool-single');
 
         function showTool(toolToShow) {
             toolExcel.classList.add('hidden');
             toolDeclaration.classList.add('hidden');
             toolChecklist.classList.add('hidden');
+            toolSingle.classList.add('hidden');
             resetCommonUI();
             tabExcel.classList.remove('active');
             tabDeclaration.classList.remove('active');
             tabChecklist.classList.remove('active');
+            tabSingle.classList.remove('active');
 
             if (toolToShow === 'excel') {
                 toolExcel.classList.remove('hidden');
@@ -308,12 +375,16 @@
             } else if (toolToShow === 'checklist') {
                 toolChecklist.classList.remove('hidden');
                 tabChecklist.classList.add('active');
+            } else if (toolToShow === 'single') {
+                toolSingle.classList.remove('hidden');
+                tabSingle.classList.add('active');
             }
         }
 
         tabExcel.addEventListener('click', () => showTool('excel'));
         tabDeclaration.addEventListener('click', () => showTool('declaration'));
         tabChecklist.addEventListener('click', () => showTool('checklist'));
+        tabSingle.addEventListener('click', () => showTool('single'));
 
 
         // --- Elementos e Lógica Comuns ---
@@ -344,16 +415,21 @@
             resetUploadArea(pdfUploadAreaCheck, pdfInputCheck, pdfUploadPromptCheck, pdfFileInfoCheck);
             selectedPdfFileCheck = null;
             document.getElementById('label-count-check').value = '';
+
+            resetUploadArea(pdfUploadAreaMulti, pdfInputMulti, pdfUploadPromptMulti, pdfFileInfoMulti);
+            selectedPdfFilesMulti = null;
             
             // Reabilita os botões de conversão
             checkEnableConvertButtonExcel();
             checkEnableConvertButtonDeclaration();
             checkEnableConvertButtonChecklist();
+            checkEnableConvertButtonMulti();
 
             // Volta para a aba atual
             let currentTool = 'excel';
             if (tabDeclaration.classList.contains('active')) currentTool = 'declaration';
             if (tabChecklist.classList.contains('active')) currentTool = 'checklist';
+            if (tabSingle.classList.contains('active')) currentTool = 'single';
             showTool(currentTool);
         });
 
@@ -629,10 +705,12 @@
             }
         }
         
-        // --- LÓGICA DAS FERRAMENTAS 2 E 3 (DECLARAÇÃO E CHECKLIST) ---
+        // --- LÓGICA DAS FERRAMENTAS 2, 3 e 4 ---
         let selectedPdfFileDecl = null;
         let selectedPdfFileCheck = null;
+        let selectedPdfFilesMulti = null;
         
+        // Elementos Ferramenta 2
         const pdfUploadAreaDecl = document.getElementById('pdf-upload-area-single-decl');
         const pdfInputDecl = document.getElementById('pdf-input-single-decl');
         const pdfUploadPromptDecl = document.getElementById('pdf-upload-prompt-single-decl');
@@ -642,6 +720,7 @@
         const labelCountInputDecl = document.getElementById('label-count-decl');
         const convertBtnDecl = document.getElementById('convert-btn-declaration');
 
+        // Elementos Ferramenta 3
         const pdfUploadAreaCheck = document.getElementById('pdf-upload-area-single-check');
         const pdfInputCheck = document.getElementById('pdf-input-single-check');
         const pdfUploadPromptCheck = document.getElementById('pdf-upload-prompt-single-check');
@@ -651,6 +730,15 @@
         const labelCountInputCheck = document.getElementById('label-count-check');
         const convertBtnCheck = document.getElementById('convert-btn-checklist');
 
+        // Elementos Ferramenta 4
+        const pdfUploadAreaMulti = document.getElementById('pdf-upload-area-multi');
+        const pdfInputMulti = document.getElementById('pdf-input-multi');
+        const pdfUploadPromptMulti = document.getElementById('pdf-upload-prompt-multi');
+        const pdfFileInfoMulti = document.getElementById('pdf-file-info-multi');
+        const pdfFileNameElMulti = document.getElementById('pdf-file-name-multi');
+        const pdfRemoveFileBtnMulti = document.getElementById('pdf-remove-file-multi');
+        const convertBtnMulti = document.getElementById('convert-btn-multi');
+
         function checkEnableConvertButtonDeclaration() {
             convertBtnDecl.disabled = !(selectedPdfFileDecl && labelCountInputDecl.value > 0);
         }
@@ -659,6 +747,11 @@
             convertBtnCheck.disabled = !(selectedPdfFileCheck && labelCountInputCheck.value > 0);
         }
         
+        function checkEnableConvertButtonMulti() {
+            convertBtnMulti.disabled = !(selectedPdfFilesMulti && selectedPdfFilesMulti.length > 0);
+        }
+        
+        // Setup Ferramenta 2
         setupUploadArea(pdfUploadAreaDecl, pdfInputDecl, pdfUploadPromptDecl, pdfFileInfoDecl, pdfFileNameElDecl, pdfRemoveFileBtnDecl, (file) => {
             selectedPdfFileDecl = file;
             checkEnableConvertButtonDeclaration();
@@ -670,6 +763,7 @@
             }
         });
 
+        // Setup Ferramenta 3
         setupUploadArea(pdfUploadAreaCheck, pdfInputCheck, pdfUploadPromptCheck, pdfFileInfoCheck, pdfFileNameElCheck, pdfRemoveFileBtnCheck, (file) => {
             selectedPdfFileCheck = file;
             checkEnableConvertButtonChecklist();
@@ -681,7 +775,17 @@
             }
         });
 
-        // --- LÓGICA CORRIGIDA PARA ETIQUETA + DECLARAÇÃO ---
+        // Setup Ferramenta 4
+        setupUploadArea(pdfUploadAreaMulti, pdfInputMulti, pdfUploadPromptMulti, pdfFileInfoMulti, pdfFileNameElMulti, pdfRemoveFileBtnMulti, (files) => {
+            selectedPdfFilesMulti = files;
+            checkEnableConvertButtonMulti();
+        });
+        convertBtnMulti.addEventListener('click', () => {
+            if (selectedPdfFilesMulti && selectedPdfFilesMulti.length > 0) {
+                processMultiPdfSingleLabel(selectedPdfFilesMulti);
+            }
+        });
+
         async function processDeclarationPdf(pdfFile, labelCount) {
             document.getElementById('tool-declaration').classList.add('hidden');
             loadingArea.classList.remove('hidden');
@@ -757,7 +861,6 @@
             }
         }
 
-        // --- LÓGICA MANTIDA PARA ETIQUETA + CHECKLIST ---
         async function processChecklistPdf(pdfFile, labelCount) {
             const type = 'Checklist';
             document.getElementById(`tool-${type.toLowerCase()}`).classList.add('hidden');
@@ -842,23 +945,108 @@
             }
         }
 
+        async function processMultiPdfSingleLabel(files) {
+            const type = '1 Só Etiqueta';
+            document.getElementById('tool-single').classList.add('hidden');
+            loadingArea.classList.remove('hidden');
+            const totalFiles = files.length;
+            updateProgress(0, totalFiles);
+
+            try {
+                progressText.textContent = 'Criando PDF final...';
+                const finalPdfDoc = await PDFDocument.create();
+
+                const CM_TO_POINTS = 28.3465;
+                const targetWidth = 10 * CM_TO_POINTS;
+                const targetHeight = 15 * CM_TO_POINTS;
+
+                for (let i = 0; i < totalFiles; i++) {
+                    const file = files[i];
+                    progressText.textContent = `Processando arquivo ${i + 1} de ${totalFiles}: ${file.name}`;
+                    const pdfBytes = await file.arrayBuffer();
+                    const sourceDoc = await PDFDocument.load(pdfBytes);
+
+                    if (sourceDoc.getPageCount() < 2) {
+                        throw new Error(`O arquivo "${file.name}" tem menos de 2 páginas. Cada arquivo precisa de 1 pág. de etiqueta e 1 pág. de declaração.`);
+                    }
+
+                    // 1. Recortar a etiqueta do primeiro quadrante da primeira página
+                    const sourceLabelPage = sourceDoc.getPages()[0];
+                    const { width: sourceWidth, height: sourceHeight } = sourceLabelPage.getSize();
+                    const quadrantWidth = sourceWidth / 2;
+                    const quadrantHeight = sourceHeight / 2;
+                    const quadrant = { x: 0, y: sourceHeight / 2 }; // Quadrante superior esquerdo
+
+                    const newLabelPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                    const embeddedLabel = await finalPdfDoc.embedPage(sourceLabelPage, {
+                        left: quadrant.x,
+                        bottom: quadrant.y,
+                        right: quadrant.x + quadrantWidth,
+                        top: quadrant.y + quadrantHeight
+                    });
+                    const scale = Math.min(targetWidth / embeddedLabel.width, targetHeight / embeddedLabel.height);
+                    newLabelPage.drawPage(embeddedLabel, {
+                        x: (targetWidth - embeddedLabel.width * scale) / 2,
+                        y: (targetHeight - embeddedLabel.height * scale) / 2,
+                        width: embeddedLabel.width * scale,
+                        height: embeddedLabel.height * scale
+                    });
+
+                    // 2. Copiar a segunda página (declaração) inteira
+                    const [copiedDeclarationPage] = await finalPdfDoc.copyPages(sourceDoc, [1]);
+                    finalPdfDoc.addPage(copiedDeclarationPage);
+                    
+                    updateProgress(i + 1, totalFiles);
+                }
+
+                progressText.textContent = 'Salvando PDF final...';
+                const finalPdfBytes = await finalPdfDoc.save();
+                const newFileName = `conversor_pampa_${totalFiles}_etiquetas.pdf`;
+                createDownloadLink(finalPdfBytes, newFileName, `Baixar PDF com ${totalFiles} etiquetas`);
+
+                loadingArea.classList.add('hidden');
+                resultsArea.classList.remove('hidden');
+
+            } catch (error) {
+                console.error(`Erro ao processar múltiplos PDFs:`, error);
+                progressText.textContent = `Erro: ${error.message}.`;
+                progressBar.style.backgroundColor = '#ef4444';
+            }
+        }
+
         // --- FUNÇÕES GENÉRICAS DE UPLOAD ---
         function setupUploadArea(area, input, prompt, info, nameEl, removeBtn, onFileSelectCallback) {
             area.addEventListener('click', () => input.click());
             area.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); area.classList.add('border-blue-500', 'bg-blue-50'); });
             area.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); area.classList.remove('border-blue-500', 'bg-blue-50'); });
-            area.addEventListener('drop', (e) => {
-                e.preventDefault(); e.stopPropagation();
-                area.classList.remove('border-blue-500', 'bg-blue-50');
-                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    handleFile(e.dataTransfer.files[0], input, prompt, info, nameEl, onFileSelectCallback);
+            
+            const handleFiles = (files) => {
+                if (input.multiple) {
+                    if (files && files.length > 0) {
+                        nameEl.textContent = `${files.length} arquivo(s) selecionado(s)`;
+                        prompt.classList.add('hidden');
+                        info.classList.remove('hidden');
+                        onFileSelectCallback(files);
+                    }
+                } else {
+                    if (files && files[0]) {
+                        nameEl.textContent = files[0].name;
+                        prompt.classList.add('hidden');
+                        info.classList.remove('hidden');
+                        onFileSelectCallback(files[0]);
+                    }
                 }
+            };
+
+            area.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                area.classList.remove('border-blue-500', 'bg-blue-50');
+                handleFiles(e.dataTransfer.files);
             });
             
             input.addEventListener('change', (e) => {
-                if (input.files && input.files[0]) {
-                    handleFile(input.files[0], input, prompt, info, nameEl, onFileSelectCallback);
-                }
+                handleFiles(input.files);
             });
 
             removeBtn.addEventListener('click', (e) => {
@@ -866,13 +1054,6 @@
                 resetUploadArea(area, input, prompt, info);
                 onFileSelectCallback(null);
             });
-        }
-
-        function handleFile(file, input, prompt, info, nameEl, onFileSelectCallback) {
-            nameEl.textContent = file.name;
-            prompt.classList.add('hidden');
-            info.classList.remove('hidden');
-            onFileSelectCallback(file);
         }
 
         function resetUploadArea(area, input, prompt, info) {
