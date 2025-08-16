@@ -41,8 +41,8 @@
             border-color: #3b82f6;
             background-color: #f9fafb;
         }
-        #main-app {
-            display: none; /* A aplicação principal começa escondida */
+        #main-app, #login-screen {
+            display: none; /* Ambos começam escondidos para evitar piscar a tela */
         }
         .tab-button {
             padding: 0.5rem 1rem;
@@ -63,7 +63,7 @@
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen py-12">
 
-    <!-- Tela de Login -->
+    <!-- Tela de Login com Firebase -->
     <div id="login-screen" class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm mx-4">
         <div class="text-center mb-8">
             <h2 class="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 mb-2">
@@ -74,28 +74,30 @@
         </div>
         <form id="login-form">
             <div class="mb-4">
-                <label for="username" class="block text-sm font-medium text-gray-700">Usuário</label>
-                <input type="text" id="username" name="username" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                <label for="email" class="block text-sm font-medium text-gray-700">E-mail</label>
+                <input type="email" id="email" name="email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
             </div>
-            <div class="mb-6">
+            <div class="mb-2">
                 <label for="password" class="block text-sm font-medium text-gray-700">Senha</label>
                 <div class="relative mt-1">
                     <input type="password" id="password" name="password" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10" required>
-                    <button type="button" id="toggle-password" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
-                        <svg id="eye-open" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button type="button" id="toggle-password-visibility" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                        <svg id="eye-open-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                        <svg id="eye-closed" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg id="eye-closed-icon" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 .847 0 1.673.124 2.468.352M10.582 10.582a3 3 0 11-4.243 4.243M16.5 16.5l-1.5-1.5" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 2l20 20" />
                         </svg>
                     </button>
                 </div>
             </div>
-            <div id="error-message" class="hidden text-center text-sm text-red-600 mb-4">
-                Usuário ou senha inválidos.
+            <div class="text-right mb-4">
+                <a href="#" id="forgot-password-link" class="text-sm text-blue-600 hover:underline">Esqueceu a senha?</a>
             </div>
+            <div id="error-message" class="hidden text-center text-sm text-red-600 mb-4"></div>
+            <div id="success-message" class="hidden text-center text-sm text-green-600 mb-4"></div>
             <div>
                 <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     Entrar
@@ -119,10 +121,15 @@
     <!-- Aplicação Principal (escondida) -->
     <div id="main-app" class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-3xl mx-4">
         
-        <div class="text-center mb-4">
-            <h2 class="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
-                Pampa Soluções
-            </h2>
+        <div class="flex justify-between items-center mb-4">
+             <div class="text-center">
+                <h2 class="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+                    Pampa Soluções
+                </h2>
+             </div>
+             <div>
+                <button id="logout-btn" class="text-sm font-medium text-red-500 hover:text-red-700">Sair</button>
+             </div>
         </div>
 
         <!-- Abas de Navegação -->
@@ -302,51 +309,141 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+      import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+      import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyA949XvgFG-mEfthKQK4k_Gc_AhT4x0fGA",
+        authDomain: "conversor-pampa.firebaseapp.com",
+        projectId: "conversor-pampa",
+        storageBucket: "conversor-pampa.appspot.com",
+        messagingSenderId: "88472969827",
+        appId: "1:88472969827:web:60de271f7bde3249324e56",
+        measurementId: "G-DCH9PGSZ6B"
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // --- Lógica de Autenticação com Firebase ---
+      const loginScreen = document.getElementById('login-screen');
+      const mainApp = document.getElementById('main-app');
+      const loginForm = document.getElementById('login-form');
+      const errorMessage = document.getElementById('error-message');
+      const successMessage = document.getElementById('success-message');
+      const logoutBtn = document.getElementById('logout-btn');
+      const passwordInput = document.getElementById('password');
+      const togglePasswordBtn = document.getElementById('toggle-password-visibility');
+      const eyeOpenIcon = document.getElementById('eye-open-icon');
+      const eyeClosedIcon = document.getElementById('eye-closed-icon');
+      const forgotPasswordLink = document.getElementById('forgot-password-link');
+
+      // Observador do estado de autenticação
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          // Usuário está logado, agora vamos verificar a assinatura
+          const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const dataExpiracao = userData.dataExpiracao.toDate(); // Converte para objeto Date
+            const hoje = new Date();
+
+            if (dataExpiracao > hoje) {
+              // Assinatura válida
+              loginScreen.style.display = 'none';
+              mainApp.style.display = 'block';
+            } else {
+              // Assinatura expirada
+              errorMessage.textContent = 'Sua assinatura expirou. Por favor, renove para continuar.';
+              errorMessage.classList.remove('hidden');
+              signOut(auth); // Desloga o usuário
+            }
+          } else {
+            // Documento do usuário não encontrado (não deveria acontecer se a automação funcionar)
+            errorMessage.textContent = 'Não foi possível verificar sua assinatura. Contate o suporte.';
+            errorMessage.classList.remove('hidden');
+            signOut(auth);
+          }
+        } else {
+          // Usuário está deslogado
+          loginScreen.style.display = 'block';
+          mainApp.style.display = 'none';
+        }
+      });
+
+      // Evento de submit do formulário de login
+      loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = loginForm.email.value;
+        const password = loginForm.password.value;
+        
+        signInWithEmailAndPassword(auth, email, password)
+          .then((userCredential) => {
+            // Login bem-sucedido, o onAuthStateChanged cuidará de verificar a assinatura e mostrar o app
+            errorMessage.classList.add('hidden');
+            successMessage.classList.add('hidden');
+          })
+          .catch((error) => {
+            // Trata erros de login
+            console.error("Erro de login:", error.code, error.message);
+            errorMessage.textContent = 'E-mail ou senha inválidos.';
+            successMessage.classList.add('hidden');
+            errorMessage.classList.remove('hidden');
+          });
+      });
+
+      // Evento de clique no botão de logout
+      logoutBtn.addEventListener('click', () => {
+        signOut(auth).catch((error) => {
+          console.error("Erro ao sair:", error);
+        });
+      });
+
+      // Evento para mostrar/esconder senha
+      togglePasswordBtn.addEventListener('click', () => {
+          const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+          passwordInput.setAttribute('type', type);
+          eyeOpenIcon.classList.toggle('hidden');
+          eyeClosedIcon.classList.toggle('hidden');
+      });
+
+      // Evento para redefinir senha
+      forgotPasswordLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        const email = prompt("Por favor, digite o e-mail da sua conta para redefinir a senha:");
+        if (email) {
+            sendPasswordResetEmail(auth, email)
+                .then(() => {
+                    errorMessage.classList.add('hidden');
+                    successMessage.textContent = 'Se uma conta existir para este e-mail, um link de redefinição foi enviado.';
+                    successMessage.classList.remove('hidden');
+                })
+                .catch((error) => {
+                    console.error("Erro ao enviar e-mail de redefinição:", error);
+                    // Mostra a mesma mensagem de sucesso por segurança, para não revelar quais e-mails estão cadastrados.
+                    errorMessage.classList.add('hidden');
+                    successMessage.textContent = 'Se uma conta existir para este e-mail, um link de redefinição foi enviado.';
+                    successMessage.classList.remove('hidden');
+                });
+        }
+      });
+
+    </script>
+
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // Importa as funções necessárias das bibliotecas
         const { PDFDocument, rgb, StandardFonts } = PDFLib;
         const { read, utils } = XLSX;
-
-        // --- Lógica de Autenticação ---
-        const loginScreen = document.getElementById('login-screen');
-        const mainApp = document.getElementById('main-app');
-        const loginForm = document.getElementById('login-form');
-        const errorMessage = document.getElementById('error-message');
-        const passwordInput = document.getElementById('password');
-        const togglePasswordButton = document.getElementById('toggle-password');
-        const eyeOpenIcon = document.getElementById('eye-open');
-        const eyeClosedIcon = document.getElementById('eye-closed');
-
-        const allowedUsers = {
-            "pampa": "solucoes123",
-            "cliente": "teste",
-            "tales": "varella",
-            "fernando": "daiane",
-            "karina": "flavio",
-            "claudio": "sousa",
-        };
-
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const username = loginForm.username.value;
-            const password = passwordInput.value;
-
-            if (allowedUsers[username] && allowedUsers[username] === password) {
-                loginScreen.style.display = 'none';
-                mainApp.style.display = 'block';
-            } else {
-                errorMessage.style.display = 'block';
-            }
-        });
-
-        togglePasswordButton.addEventListener('click', () => {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            eyeOpenIcon.classList.toggle('hidden');
-            eyeClosedIcon.classList.toggle('hidden');
-        });
-
+        
         // --- Lógica de Navegação por Abas ---
         const tabExcel = document.getElementById('tab-excel');
         const tabDeclaration = document.getElementById('tab-declaration');
@@ -1028,7 +1125,7 @@
                         nameEl.textContent = `${files.length} arquivo(s) selecionado(s)`;
                         prompt.classList.add('hidden');
                         info.classList.remove('hidden');
-                        onFileSelectCallback(files);
+                        onFileSelectCallback(Array.from(files)); // Converte FileList para Array
                     }
                 } else {
                     if (files && files[0]) {
