@@ -4,21 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pampa Soluções - Conversor de PDF</title>
-
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z0RQQBTK8T"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-Z0RQQBTK8T');
-    </script>
-
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1002701210055535"
-         crossorigin="anonymous"></script>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -41,8 +26,8 @@
             border-color: #3b82f6;
             background-color: #f9fafb;
         }
-        #main-app, #login-screen {
-            display: none; /* Ambos começam escondidos para evitar piscar a tela */
+        #main-app {
+            display: none; /* A aplicação principal começa escondida */
         }
         .tab-button {
             padding: 0.5rem 1rem;
@@ -63,7 +48,7 @@
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen py-12">
 
-    <!-- Tela de Login com Firebase -->
+    <!-- Tela de Login -->
     <div id="login-screen" class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm mx-4">
         <div class="text-center mb-8">
             <h2 class="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 mb-2">
@@ -74,72 +59,43 @@
         </div>
         <form id="login-form">
             <div class="mb-4">
-                <label for="email" class="block text-sm font-medium text-gray-700">E-mail</label>
-                <input type="email" id="email" name="email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                <label for="username" class="block text-sm font-medium text-gray-700">Usuário</label>
+                <input type="text" id="username" name="username" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
             </div>
-            <div class="mb-2">
+            <div class="mb-6">
                 <label for="password" class="block text-sm font-medium text-gray-700">Senha</label>
                 <div class="relative mt-1">
                     <input type="password" id="password" name="password" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10" required>
-                    <button type="button" id="toggle-password-visibility" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
-                        <svg id="eye-open-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button type="button" id="toggle-password" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                        <svg id="eye-open" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                        <svg id="eye-closed-icon" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg id="eye-closed" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 .847 0 1.673.124 2.468.352M10.582 10.582a3 3 0 11-4.243 4.243M16.5 16.5l-1.5-1.5" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 2l20 20" />
                         </svg>
                     </button>
                 </div>
             </div>
-            <div class="text-right mb-4">
-                <a href="#" id="forgot-password-link" class="text-sm text-blue-600 hover:underline">Esqueceu a senha?</a>
+            <div id="error-message" class="hidden text-center text-sm text-red-600 mb-4">
+                Usuário ou senha inválidos.
             </div>
-            <div id="error-message" class="hidden text-center text-sm text-red-600 mb-4"></div>
-            <div id="success-message" class="hidden text-center text-sm text-green-600 mb-4"></div>
             <div>
                 <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     Entrar
                 </button>
             </div>
         </form>
-        
-        <div class="mt-8 pt-6 border-t">
-            <div class="bg-slate-50 border border-slate-200 rounded-lg p-6 text-center">
-                <h3 class="text-lg font-bold text-gray-900">Acesso Ilimitado</h3>
-                <p class="mt-2 text-3xl font-extrabold text-gray-900">R$ 13,50<span class="text-base font-medium text-gray-500">/mês</span></p>
-                <p class="text-xs text-gray-500">cobrança mensal</p>
-                <a href="https://pay.kiwify.com.br/qcxonee" target="_blank" rel="noopener noreferrer" class="mt-6 block w-full text-center py-3 px-4 border border-transparent rounded-md shadow-sm font-medium text-white bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    Assinar Agora
-                </a>
-                <ul class="mt-4 text-sm text-gray-600 space-y-2 text-left">
-                    <li class="flex items-center"><svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Uso ilimitado das ferramentas</li>
-                    <li class="flex items-center"><svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Suporte técnico via WhatsApp</li>
-                    <li class="flex items-center"><svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Atualizações e novas funções</li>
-                </ul>
-            </div>
-             <a href="https://wa.me/5537991316234" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center justify-center w-full px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-all shadow-sm">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 4.315 1.919 6.066l-1.225 4.485 4.635-1.218zM8.332 10.233c-.131-.26-.26-.263-.383-.263-.116 0-.249.001-.38.001-.131 0-.341.043-.518.234-.176.193-.661.652-.661 1.576 0 .924.675 1.823.769 1.954.093.13 1.328 2.118 3.231 2.87.536.208.96.33.96.425 0 .213.001.484-.043.553-.043.07-.248.043-.518-.043s-2.119-1.225-2.421-1.396c-.302-.17-.562-.192-.787-.109-.225.083-.464.26-.567.382-.103.123-.193.26-.282.403-.09.142-.17.143-.302.109-.131-.033-1.043-.463-1.985-1.225-.724-.584-1.224-1.303-1.363-1.532-.139-.23-.279-.353-.139-.661.14-.307.302-.382.403-.517.102-.135.142-.225.225-.383.083-.157.043-.28.001-.382-.043-.102-.341-.834-.465-.962s-.249-.109-.341-.109z"/></svg>
-                <span class="text-left">
-                    Dúvidas? Chame no WhatsApp
-                </span>
-            </a>
-        </div>
     </div>
 
     <!-- Aplicação Principal (escondida) -->
     <div id="main-app" class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-3xl mx-4">
         
-        <div class="flex justify-between items-center mb-4">
-             <div class="text-center">
-                <h2 class="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
-                    Pampa Soluções
-                </h2>
-             </div>
-             <div>
-                <button id="logout-btn" class="text-sm font-medium text-red-500 hover:text-red-700">Sair</button>
-             </div>
+        <div class="text-center mb-4">
+            <h2 class="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+                Pampa Soluções
+            </h2>
         </div>
 
         <!-- Abas de Navegação -->
@@ -147,7 +103,6 @@
             <button id="tab-excel" class="tab-button active">Etiqueta com Excel</button>
             <button id="tab-declaration" class="tab-button">Etiqueta + Declaração</button>
             <button id="tab-checklist" class="tab-button">Etiqueta + Checklist</button>
-            <button id="tab-single" class="tab-button">1 Só Etiqueta</button>
         </div>
         
         <!-- Ferramenta 1: Etiqueta com Excel -->
@@ -214,9 +169,6 @@
             </div>
             
              <div id="convert-button-container-declaration" class="text-center">
-                <div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm font-semibold rounded-lg">
-                    Confira sempre o número do RASTREIO em baixo pra ter certeza que está correto!!
-                </div>
                 <button id="convert-btn-declaration" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
                     Organizar Arquivo
                 </button>
@@ -226,7 +178,7 @@
         <!-- Ferramenta 3: Etiqueta + Checklist -->
         <div id="tool-checklist" class="hidden">
             <h1 class="text-2xl font-bold text-gray-800 text-center">Organizador de Etiqueta + Checklist</h1>
-            <p class="text-gray-500 mt-2 text-center">Informe o número de etiquetas e envie o PDF para intercalar.</p>
+            <p class="text-gray-500 mt-2 text-center">Informe o número de itens e envie o PDF para intercalar.</p>
 
             <div class="my-8">
                  <div id="pdf-upload-area-single-check" class="upload-box max-w-md mx-auto">
@@ -248,40 +200,8 @@
             </div>
             
              <div id="convert-button-container-checklist" class="text-center">
-                <div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm font-semibold rounded-lg">
-                    Confira sempre o número do pedido em baixo pra ter certeza que está correto!!
-                </div>
                 <button id="convert-btn-checklist" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
                     Organizar Arquivo
-                </button>
-            </div>
-        </div>
-
-        <!-- Ferramenta 4: 1 Só Etiqueta -->
-        <div id="tool-single" class="hidden">
-            <h1 class="text-2xl font-bold text-gray-800 text-center">Intercalador de PDFs (1 Etiqueta + 1 Declaração)</h1>
-            <p class="text-gray-500 mt-2 text-center">Envie múltiplos PDFs (cada um com 1 etiqueta e 1 declaração) para uni-los em um só arquivo.</p>
-
-            <div class="my-8">
-                 <div id="pdf-upload-area-multi" class="upload-box max-w-md mx-auto">
-                    <input type="file" id="pdf-input-multi" class="hidden" accept="application/pdf" multiple>
-                    <div id="pdf-upload-prompt-multi">
-                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">Enviar PDFs</span> ou arrastar</p>
-                    </div>
-                    <div id="pdf-file-info-multi" class="hidden text-center">
-                          <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-multi"></p>
-                          <button id="pdf-remove-file-multi" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
-                    </div>
-                </div>
-            </div>
-            
-             <div id="convert-button-container-multi" class="text-center">
-                <div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm font-semibold rounded-lg">
-                    Confira sempre o número do RASTREIO em baixo pra ter certeza que está correto!!
-                </div>
-                <button id="convert-btn-multi" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
-                    Juntar e Organizar Arquivos
                 </button>
             </div>
         </div>
@@ -319,160 +239,68 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-      import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-      import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-      // Your web app's Firebase configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyDOq2I-jTVQIH1TC-fSyMP_mGct1QCUqj0",
-        authDomain: "conversor-pampa-final.firebaseapp.com",
-        projectId: "conversor-pampa-final",
-        storageBucket: "conversor-pampa-final.appspot.com",
-        messagingSenderId: "1087135132776",
-        appId: "1:1087135132776:web:8016e212e972f776ac5fdd"
-      };
-
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-
-      // --- Lógica de Autenticação com Firebase ---
-      const loginScreen = document.getElementById('login-screen');
-      const mainApp = document.getElementById('main-app');
-      const loginForm = document.getElementById('login-form');
-      const errorMessage = document.getElementById('error-message');
-      const successMessage = document.getElementById('success-message');
-      const logoutBtn = document.getElementById('logout-btn');
-      const passwordInput = document.getElementById('password');
-      const togglePasswordBtn = document.getElementById('toggle-password-visibility');
-      const eyeOpenIcon = document.getElementById('eye-open-icon');
-      const eyeClosedIcon = document.getElementById('eye-closed-icon');
-      const forgotPasswordLink = document.getElementById('forgot-password-link');
-
-      // Observador do estado de autenticação
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          // Usuário está logado, agora vamos verificar a assinatura
-          const userDocRef = doc(db, "users", user.uid);
-          const userDoc = await getDoc(userDocRef);
-
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const dataExpiracao = userData.dataExpiracao.toDate(); // Converte para objeto Date
-            const hoje = new Date();
-
-            if (dataExpiracao > hoje) {
-              // Assinatura válida
-              loginScreen.style.display = 'none';
-              mainApp.style.display = 'block';
-            } else {
-              // Assinatura expirada
-              errorMessage.textContent = 'Sua assinatura expirou. Por favor, renove para continuar.';
-              errorMessage.classList.remove('hidden');
-              signOut(auth); // Desloga o usuário
-            }
-          } else {
-            // Documento do usuário não encontrado (não deveria acontecer se a automação funcionar)
-            errorMessage.textContent = 'Não foi possível verificar sua assinatura. Contate o suporte.';
-            errorMessage.classList.remove('hidden');
-            signOut(auth);
-          }
-        } else {
-          // Usuário está deslogado
-          loginScreen.style.display = 'block';
-          mainApp.style.display = 'none';
-        }
-      });
-
-      // Evento de submit do formulário de login
-      loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const email = loginForm.email.value;
-        const password = loginForm.password.value;
-        
-        signInWithEmailAndPassword(auth, email, password)
-          .then((userCredential) => {
-            // Login bem-sucedido, o onAuthStateChanged cuidará de verificar a assinatura e mostrar o app
-            errorMessage.classList.add('hidden');
-            successMessage.classList.add('hidden');
-          })
-          .catch((error) => {
-            // Trata erros de login
-            console.error("Erro de login:", error.code, error.message);
-            errorMessage.textContent = 'E-mail ou senha inválidos.';
-            successMessage.classList.add('hidden');
-            errorMessage.classList.remove('hidden');
-          });
-      });
-
-      // Evento de clique no botão de logout
-      logoutBtn.addEventListener('click', () => {
-        signOut(auth).catch((error) => {
-          console.error("Erro ao sair:", error);
-        });
-      });
-
-      // Evento para mostrar/esconder senha
-      togglePasswordBtn.addEventListener('click', () => {
-          const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-          passwordInput.setAttribute('type', type);
-          eyeOpenIcon.classList.toggle('hidden');
-          eyeClosedIcon.classList.toggle('hidden');
-      });
-
-      // Evento para redefinir senha
-      forgotPasswordLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        const email = prompt("Por favor, digite o e-mail da sua conta para redefinir a senha:");
-        if (email) {
-            sendPasswordResetEmail(auth, email)
-                .then(() => {
-                    errorMessage.classList.add('hidden');
-                    successMessage.textContent = 'Se uma conta existir para este e-mail, um link de redefinição foi enviado.';
-                    successMessage.classList.remove('hidden');
-                })
-                .catch((error) => {
-                    console.error("Erro ao enviar e-mail de redefinição:", error);
-                    // Mostra a mesma mensagem de sucesso por segurança, para não revelar quais e-mails estão cadastrados.
-                    errorMessage.classList.add('hidden');
-                    successMessage.textContent = 'Se uma conta existir para este e-mail, um link de redefinição foi enviado.';
-                    successMessage.classList.remove('hidden');
-                });
-        }
-      });
-
-    </script>
-
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // Importa as funções necessárias das bibliotecas
         const { PDFDocument, rgb, StandardFonts } = PDFLib;
         const { read, utils } = XLSX;
-        
+
+        // --- Lógica de Autenticação ---
+        const loginScreen = document.getElementById('login-screen');
+        const mainApp = document.getElementById('main-app');
+        const loginForm = document.getElementById('login-form');
+        const errorMessage = document.getElementById('error-message');
+        const passwordInput = document.getElementById('password');
+        const togglePasswordButton = document.getElementById('toggle-password');
+        const eyeOpenIcon = document.getElementById('eye-open');
+        const eyeClosedIcon = document.getElementById('eye-closed');
+
+        const allowedUsers = {
+            "pampa": "solucoes123",
+            "cliente": "teste",
+            "tales": "varella",
+            "fernando": "daiane",
+            "carlos": "carlos123",
+            "karina" "flavio",
+            "claudio": "sousa"
+        };
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = loginForm.username.value;
+            const password = passwordInput.value;
+
+            if (allowedUsers[username] && allowedUsers[username] === password) {
+                loginScreen.style.display = 'none';
+                mainApp.style.display = 'block';
+            } else {
+                errorMessage.style.display = 'block';
+            }
+        });
+
+        togglePasswordButton.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            eyeOpenIcon.classList.toggle('hidden');
+            eyeClosedIcon.classList.toggle('hidden');
+        });
+
         // --- Lógica de Navegação por Abas ---
         const tabExcel = document.getElementById('tab-excel');
         const tabDeclaration = document.getElementById('tab-declaration');
         const tabChecklist = document.getElementById('tab-checklist');
-        const tabSingle = document.getElementById('tab-single');
         const toolExcel = document.getElementById('tool-excel');
         const toolDeclaration = document.getElementById('tool-declaration');
         const toolChecklist = document.getElementById('tool-checklist');
-        const toolSingle = document.getElementById('tool-single');
 
         function showTool(toolToShow) {
             toolExcel.classList.add('hidden');
             toolDeclaration.classList.add('hidden');
             toolChecklist.classList.add('hidden');
-            toolSingle.classList.add('hidden');
             resetCommonUI();
             tabExcel.classList.remove('active');
             tabDeclaration.classList.remove('active');
             tabChecklist.classList.remove('active');
-            tabSingle.classList.remove('active');
 
             if (toolToShow === 'excel') {
                 toolExcel.classList.remove('hidden');
@@ -483,16 +311,12 @@
             } else if (toolToShow === 'checklist') {
                 toolChecklist.classList.remove('hidden');
                 tabChecklist.classList.add('active');
-            } else if (toolToShow === 'single') {
-                toolSingle.classList.remove('hidden');
-                tabSingle.classList.add('active');
             }
         }
 
         tabExcel.addEventListener('click', () => showTool('excel'));
         tabDeclaration.addEventListener('click', () => showTool('declaration'));
         tabChecklist.addEventListener('click', () => showTool('checklist'));
-        tabSingle.addEventListener('click', () => showTool('single'));
 
 
         // --- Elementos e Lógica Comuns ---
@@ -523,21 +347,16 @@
             resetUploadArea(pdfUploadAreaCheck, pdfInputCheck, pdfUploadPromptCheck, pdfFileInfoCheck);
             selectedPdfFileCheck = null;
             document.getElementById('label-count-check').value = '';
-
-            resetUploadArea(pdfUploadAreaMulti, pdfInputMulti, pdfUploadPromptMulti, pdfFileInfoMulti);
-            selectedPdfFilesMulti = null;
             
             // Reabilita os botões de conversão
             checkEnableConvertButtonExcel();
             checkEnableConvertButtonDeclaration();
             checkEnableConvertButtonChecklist();
-            checkEnableConvertButtonMulti();
 
             // Volta para a aba atual
             let currentTool = 'excel';
             if (tabDeclaration.classList.contains('active')) currentTool = 'declaration';
             if (tabChecklist.classList.contains('active')) currentTool = 'checklist';
-            if (tabSingle.classList.contains('active')) currentTool = 'single';
             showTool(currentTool);
         });
 
@@ -813,12 +632,10 @@
             }
         }
         
-        // --- LÓGICA DAS FERRAMENTAS 2, 3 e 4 ---
+        // --- LÓGICA DAS FERRAMENTAS 2 E 3 (DECLARAÇÃO E CHECKLIST) ---
         let selectedPdfFileDecl = null;
         let selectedPdfFileCheck = null;
-        let selectedPdfFilesMulti = null;
         
-        // Elementos Ferramenta 2
         const pdfUploadAreaDecl = document.getElementById('pdf-upload-area-single-decl');
         const pdfInputDecl = document.getElementById('pdf-input-single-decl');
         const pdfUploadPromptDecl = document.getElementById('pdf-upload-prompt-single-decl');
@@ -828,7 +645,6 @@
         const labelCountInputDecl = document.getElementById('label-count-decl');
         const convertBtnDecl = document.getElementById('convert-btn-declaration');
 
-        // Elementos Ferramenta 3
         const pdfUploadAreaCheck = document.getElementById('pdf-upload-area-single-check');
         const pdfInputCheck = document.getElementById('pdf-input-single-check');
         const pdfUploadPromptCheck = document.getElementById('pdf-upload-prompt-single-check');
@@ -838,15 +654,6 @@
         const labelCountInputCheck = document.getElementById('label-count-check');
         const convertBtnCheck = document.getElementById('convert-btn-checklist');
 
-        // Elementos Ferramenta 4
-        const pdfUploadAreaMulti = document.getElementById('pdf-upload-area-multi');
-        const pdfInputMulti = document.getElementById('pdf-input-multi');
-        const pdfUploadPromptMulti = document.getElementById('pdf-upload-prompt-multi');
-        const pdfFileInfoMulti = document.getElementById('pdf-file-info-multi');
-        const pdfFileNameElMulti = document.getElementById('pdf-file-name-multi');
-        const pdfRemoveFileBtnMulti = document.getElementById('pdf-remove-file-multi');
-        const convertBtnMulti = document.getElementById('convert-btn-multi');
-
         function checkEnableConvertButtonDeclaration() {
             convertBtnDecl.disabled = !(selectedPdfFileDecl && labelCountInputDecl.value > 0);
         }
@@ -855,11 +662,6 @@
             convertBtnCheck.disabled = !(selectedPdfFileCheck && labelCountInputCheck.value > 0);
         }
         
-        function checkEnableConvertButtonMulti() {
-            convertBtnMulti.disabled = !(selectedPdfFilesMulti && selectedPdfFilesMulti.length > 0);
-        }
-        
-        // Setup Ferramenta 2
         setupUploadArea(pdfUploadAreaDecl, pdfInputDecl, pdfUploadPromptDecl, pdfFileInfoDecl, pdfFileNameElDecl, pdfRemoveFileBtnDecl, (file) => {
             selectedPdfFileDecl = file;
             checkEnableConvertButtonDeclaration();
@@ -871,7 +673,6 @@
             }
         });
 
-        // Setup Ferramenta 3
         setupUploadArea(pdfUploadAreaCheck, pdfInputCheck, pdfUploadPromptCheck, pdfFileInfoCheck, pdfFileNameElCheck, pdfRemoveFileBtnCheck, (file) => {
             selectedPdfFileCheck = file;
             checkEnableConvertButtonChecklist();
@@ -883,17 +684,7 @@
             }
         });
 
-        // Setup Ferramenta 4
-        setupUploadArea(pdfUploadAreaMulti, pdfInputMulti, pdfUploadPromptMulti, pdfFileInfoMulti, pdfFileNameElMulti, pdfRemoveFileBtnMulti, (files) => {
-            selectedPdfFilesMulti = files;
-            checkEnableConvertButtonMulti();
-        });
-        convertBtnMulti.addEventListener('click', () => {
-            if (selectedPdfFilesMulti && selectedPdfFilesMulti.length > 0) {
-                processMultiPdfSingleLabel(selectedPdfFilesMulti);
-            }
-        });
-
+        // --- LÓGICA CORRIGIDA PARA ETIQUETA + DECLARAÇÃO ---
         async function processDeclarationPdf(pdfFile, labelCount) {
             document.getElementById('tool-declaration').classList.add('hidden');
             loadingArea.classList.remove('hidden');
@@ -969,6 +760,7 @@
             }
         }
 
+        // --- LÓGICA MANTIDA PARA ETIQUETA + CHECKLIST ---
         async function processChecklistPdf(pdfFile, labelCount) {
             const type = 'Checklist';
             document.getElementById(`tool-${type.toLowerCase()}`).classList.add('hidden');
@@ -1053,108 +845,23 @@
             }
         }
 
-        async function processMultiPdfSingleLabel(files) {
-            const type = '1 Só Etiqueta';
-            document.getElementById('tool-single').classList.add('hidden');
-            loadingArea.classList.remove('hidden');
-            const totalFiles = files.length;
-            updateProgress(0, totalFiles);
-
-            try {
-                progressText.textContent = 'Criando PDF final...';
-                const finalPdfDoc = await PDFDocument.create();
-
-                const CM_TO_POINTS = 28.3465;
-                const targetWidth = 10 * CM_TO_POINTS;
-                const targetHeight = 15 * CM_TO_POINTS;
-
-                for (let i = 0; i < totalFiles; i++) {
-                    const file = files[i];
-                    progressText.textContent = `Processando arquivo ${i + 1} de ${totalFiles}: ${file.name}`;
-                    const pdfBytes = await file.arrayBuffer();
-                    const sourceDoc = await PDFDocument.load(pdfBytes);
-
-                    if (sourceDoc.getPageCount() < 2) {
-                        throw new Error(`O arquivo "${file.name}" tem menos de 2 páginas. Cada arquivo precisa de 1 pág. de etiqueta e 1 pág. de declaração.`);
-                    }
-
-                    // 1. Recortar a etiqueta do primeiro quadrante da primeira página
-                    const sourceLabelPage = sourceDoc.getPages()[0];
-                    const { width: sourceWidth, height: sourceHeight } = sourceLabelPage.getSize();
-                    const quadrantWidth = sourceWidth / 2;
-                    const quadrantHeight = sourceHeight / 2;
-                    const quadrant = { x: 0, y: sourceHeight / 2 }; // Quadrante superior esquerdo
-
-                    const newLabelPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
-                    const embeddedLabel = await finalPdfDoc.embedPage(sourceLabelPage, {
-                        left: quadrant.x,
-                        bottom: quadrant.y,
-                        right: quadrant.x + quadrantWidth,
-                        top: quadrant.y + quadrantHeight
-                    });
-                    const scale = Math.min(targetWidth / embeddedLabel.width, targetHeight / embeddedLabel.height);
-                    newLabelPage.drawPage(embeddedLabel, {
-                        x: (targetWidth - embeddedLabel.width * scale) / 2,
-                        y: (targetHeight - embeddedLabel.height * scale) / 2,
-                        width: embeddedLabel.width * scale,
-                        height: embeddedLabel.height * scale
-                    });
-
-                    // 2. Copiar a segunda página (declaração) inteira
-                    const [copiedDeclarationPage] = await finalPdfDoc.copyPages(sourceDoc, [1]);
-                    finalPdfDoc.addPage(copiedDeclarationPage);
-                    
-                    updateProgress(i + 1, totalFiles);
-                }
-
-                progressText.textContent = 'Salvando PDF final...';
-                const finalPdfBytes = await finalPdfDoc.save();
-                const newFileName = `conversor_pampa_${totalFiles}_etiquetas.pdf`;
-                createDownloadLink(finalPdfBytes, newFileName, `Baixar PDF com ${totalFiles} etiquetas`);
-
-                loadingArea.classList.add('hidden');
-                resultsArea.classList.remove('hidden');
-
-            } catch (error) {
-                console.error(`Erro ao processar múltiplos PDFs:`, error);
-                progressText.textContent = `Erro: ${error.message}.`;
-                progressBar.style.backgroundColor = '#ef4444';
-            }
-        }
-
         // --- FUNÇÕES GENÉRICAS DE UPLOAD ---
         function setupUploadArea(area, input, prompt, info, nameEl, removeBtn, onFileSelectCallback) {
             area.addEventListener('click', () => input.click());
             area.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); area.classList.add('border-blue-500', 'bg-blue-50'); });
             area.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); area.classList.remove('border-blue-500', 'bg-blue-50'); });
-            
-            const handleFiles = (files) => {
-                if (input.multiple) {
-                    if (files && files.length > 0) {
-                        nameEl.textContent = `${files.length} arquivo(s) selecionado(s)`;
-                        prompt.classList.add('hidden');
-                        info.classList.remove('hidden');
-                        onFileSelectCallback(Array.from(files)); // Converte FileList para Array
-                    }
-                } else {
-                    if (files && files[0]) {
-                        nameEl.textContent = files[0].name;
-                        prompt.classList.add('hidden');
-                        info.classList.remove('hidden');
-                        onFileSelectCallback(files[0]);
-                    }
-                }
-            };
-
             area.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
+                e.preventDefault(); e.stopPropagation();
                 area.classList.remove('border-blue-500', 'bg-blue-50');
-                handleFiles(e.dataTransfer.files);
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    handleFile(e.dataTransfer.files[0], input, prompt, info, nameEl, onFileSelectCallback);
+                }
             });
             
             input.addEventListener('change', (e) => {
-                handleFiles(input.files);
+                if (input.files && input.files[0]) {
+                    handleFile(input.files[0], input, prompt, info, nameEl, onFileSelectCallback);
+                }
             });
 
             removeBtn.addEventListener('click', (e) => {
@@ -1162,6 +869,13 @@
                 resetUploadArea(area, input, prompt, info);
                 onFileSelectCallback(null);
             });
+        }
+
+        function handleFile(file, input, prompt, info, nameEl, onFileSelectCallback) {
+            nameEl.textContent = file.name;
+            prompt.classList.add('hidden');
+            info.classList.remove('hidden');
+            onFileSelectCallback(file);
         }
 
         function resetUploadArea(area, input, prompt, info) {
