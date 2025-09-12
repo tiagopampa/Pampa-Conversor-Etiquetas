@@ -45,7 +45,15 @@
             display: none; /* Ambos começam escondidos para evitar piscar a tela */
         }
         .tab-button {
-            padding: 0.5rem 1rem;
+            padding: 0.5rem;
+            width: 120px;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.2;
             border-radius: 0.5rem;
             font-weight: 500;
             cursor: pointer;
@@ -129,7 +137,7 @@
     </div>
 
     <!-- Aplicação Principal (escondida) -->
-    <div id="main-app" class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-3xl mx-4">
+    <div id="main-app" class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-4xl mx-4">
         
         <div class="flex justify-between items-center mb-4">
              <div class="text-center">
@@ -137,22 +145,26 @@
                     Pampa Soluções
                 </h2>
              </div>
-             <div>
+             <div class="flex items-center">
+                <span id="user-email-display" class="text-sm text-gray-500 mr-4 hidden md:inline"></span>
                 <button id="logout-btn" class="text-sm font-medium text-red-500 hover:text-red-700">Sair</button>
              </div>
         </div>
 
         <!-- Abas de Navegação -->
-        <div class="mb-8 flex justify-center space-x-2 md:space-x-4 border-b border-gray-200 pb-4">
-            <button id="tab-excel" class="tab-button active">Etiqueta com Excel</button>
-            <button id="tab-declaration" class="tab-button">Etiqueta + Declaração</button>
-            <button id="tab-checklist" class="tab-button">Etiqueta + Checklist</button>
-            <button id="tab-single" class="tab-button">1 Só Etiqueta</button>
+        <div class="mb-8 overflow-x-auto pb-4">
+            <div class="flex justify-center space-x-2 md:space-x-4 border-b border-gray-200">
+                <button id="tab-excel" class="tab-button active">Etiqueta com<br>Excel</button>
+                <button id="tab-declaration" class="tab-button">Etiqueta +<br>Declaração</button>
+                <button id="tab-melhor-envio" class="tab-button">Melhor Envio +<br>Declaração</button>
+                <button id="tab-checklist" class="tab-button">Etiqueta +<br>Checklist</button>
+                <button id="tab-multi-decl" class="tab-button">Vários Arquivos<br>Declaração</button>
+            </div>
         </div>
         
         <!-- Ferramenta 1: Etiqueta com Excel -->
         <div id="tool-excel">
-            <h1 class="text-2xl font-bold text-gray-800 text-center">Conversor de Etiquetas PDF</h1>
+            <h1 class="text-2xl font-bold text-gray-800 text-center">Juntar Etiqueta + Lista em 1 só Etiqueta</h1>
             <p class="text-gray-500 mt-2 text-center">Envie um PDF e uma planilha Excel para gerar etiquetas 10x15 com informações do produto.</p>
             
             <div id="upload-container-excel" class="grid md:grid-cols-2 gap-6 my-8">
@@ -223,6 +235,40 @@
             </div>
         </div>
         
+        <!-- Ferramenta NOVA: Melhor Envio + Declaração -->
+        <div id="tool-melhor-envio" class="hidden">
+            <h1 class="text-2xl font-bold text-gray-800 text-center">Organizador Melhor Envio + Declaração</h1>
+            <p class="text-gray-500 mt-2 text-center">Para etiquetas Melhor Envio. Informe o número de etiquetas e envie o PDF para intercalar.</p>
+
+            <div class="my-8">
+                 <div id="pdf-upload-area-melhor-envio" class="upload-box max-w-md mx-auto">
+                    <input type="file" id="pdf-input-melhor-envio" class="hidden" accept="application/pdf">
+                    <div id="pdf-upload-prompt-melhor-envio">
+                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">1. Enviar PDF Único</span></p>
+                    </div>
+                    <div id="pdf-file-info-melhor-envio" class="hidden text-center">
+                          <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-melhor-envio"></p>
+                          <button id="pdf-remove-file-melhor-envio" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="my-8">
+                <label for="label-count-melhor-envio" class="block text-sm font-medium text-gray-700 text-center mb-2">2. Informe o número exato de etiquetas</label>
+                <input type="number" id="label-count-melhor-envio" name="label-count-melhor-envio" min="1" class="mx-auto block w-full max-w-xs px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Ex: 7" required>
+            </div>
+            
+             <div id="convert-button-container-melhor-envio" class="text-center">
+                <div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm font-semibold rounded-lg">
+                    Confira sempre o número do RASTREIO em baixo pra ter certeza que está correto!!
+                </div>
+                <button id="convert-btn-melhor-envio" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                    Organizar Arquivo
+                </button>
+            </div>
+        </div>
+
         <!-- Ferramenta 3: Etiqueta + Checklist -->
         <div id="tool-checklist" class="hidden">
             <h1 class="text-2xl font-bold text-gray-800 text-center">Organizador de Etiqueta + Checklist</h1>
@@ -257,9 +303,9 @@
             </div>
         </div>
 
-        <!-- Ferramenta 4: 1 Só Etiqueta -->
-        <div id="tool-single" class="hidden">
-            <h1 class="text-2xl font-bold text-gray-800 text-center">Intercalador de PDFs (1 Etiqueta + 1 Declaração)</h1>
+        <!-- Ferramenta 4: Vários Arquivos Declaração -->
+        <div id="tool-multi-decl" class="hidden">
+            <h1 class="text-2xl font-bold text-gray-800 text-center">Intercalador de Vários Arquivos com Declaração</h1>
             <p class="text-gray-500 mt-2 text-center">Envie múltiplos PDFs (cada um com 1 etiqueta e 1 declaração) para uni-los em um só arquivo.</p>
 
             <div class="my-8">
@@ -348,6 +394,7 @@
       const errorMessage = document.getElementById('error-message');
       const successMessage = document.getElementById('success-message');
       const logoutBtn = document.getElementById('logout-btn');
+      const userEmailDisplay = document.getElementById('user-email-display');
       const passwordInput = document.getElementById('password');
       const togglePasswordBtn = document.getElementById('toggle-password-visibility');
       const eyeOpenIcon = document.getElementById('eye-open-icon');
@@ -358,34 +405,43 @@
       onAuthStateChanged(auth, async (user) => {
         if (user) {
           // Usuário está logado, agora vamos verificar a assinatura
-          const userDocRef = doc(db, "users", user.uid);
-          const userDoc = await getDoc(userDocRef);
+          try {
+              userEmailDisplay.textContent = user.email;
+              const userDocRef = doc(db, "users", user.uid);
+              const userDoc = await getDoc(userDocRef);
 
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const dataExpiracao = userData.dataExpiracao.toDate(); // Converte para objeto Date
-            const hoje = new Date();
+              if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const dataExpiracao = userData.dataExpiracao.toDate(); // Converte para objeto Date
+                const hoje = new Date();
 
-            if (dataExpiracao > hoje) {
-              // Assinatura válida
-              loginScreen.style.display = 'none';
-              mainApp.style.display = 'block';
-            } else {
-              // Assinatura expirada
-              errorMessage.textContent = 'Sua assinatura expirou. Por favor, renove para continuar.';
+                if (dataExpiracao > hoje) {
+                  // Assinatura válida
+                  loginScreen.style.display = 'none';
+                  mainApp.style.display = 'block';
+                } else {
+                  // Assinatura expirada
+                  errorMessage.textContent = 'Sua assinatura expirou. Por favor, renove para continuar.';
+                  errorMessage.classList.remove('hidden');
+                  signOut(auth); // Desloga o usuário
+                }
+              } else {
+                // Documento do usuário não encontrado (não deveria acontecer se a automação funcionar)
+                errorMessage.textContent = 'Não foi possível verificar sua assinatura. Contate o suporte.';
+                errorMessage.classList.remove('hidden');
+                signOut(auth);
+              }
+          } catch(err) {
+              console.error("Erro ao buscar dados do Firestore:", err);
+              errorMessage.textContent = 'Ocorreu um erro ao verificar sua conta. Tente novamente.';
               errorMessage.classList.remove('hidden');
-              signOut(auth); // Desloga o usuário
-            }
-          } else {
-            // Documento do usuário não encontrado (não deveria acontecer se a automação funcionar)
-            errorMessage.textContent = 'Não foi possível verificar sua assinatura. Contate o suporte.';
-            errorMessage.classList.remove('hidden');
-            signOut(auth);
+              signOut(auth);
           }
         } else {
           // Usuário está deslogado
           loginScreen.style.display = 'block';
           mainApp.style.display = 'none';
+          userEmailDisplay.textContent = '';
         }
       });
 
@@ -457,23 +513,28 @@
         // --- Lógica de Navegação por Abas ---
         const tabExcel = document.getElementById('tab-excel');
         const tabDeclaration = document.getElementById('tab-declaration');
+        const tabMelhorEnvio = document.getElementById('tab-melhor-envio');
         const tabChecklist = document.getElementById('tab-checklist');
-        const tabSingle = document.getElementById('tab-single');
+        const tabMultiDecl = document.getElementById('tab-multi-decl');
+        
         const toolExcel = document.getElementById('tool-excel');
         const toolDeclaration = document.getElementById('tool-declaration');
+        const toolMelhorEnvio = document.getElementById('tool-melhor-envio');
         const toolChecklist = document.getElementById('tool-checklist');
-        const toolSingle = document.getElementById('tool-single');
+        const toolMultiDecl = document.getElementById('tool-multi-decl');
 
         function showTool(toolToShow) {
             toolExcel.classList.add('hidden');
             toolDeclaration.classList.add('hidden');
+            toolMelhorEnvio.classList.add('hidden');
             toolChecklist.classList.add('hidden');
-            toolSingle.classList.add('hidden');
+            toolMultiDecl.classList.add('hidden');
             resetCommonUI();
             tabExcel.classList.remove('active');
             tabDeclaration.classList.remove('active');
+            tabMelhorEnvio.classList.remove('active');
             tabChecklist.classList.remove('active');
-            tabSingle.classList.remove('active');
+            tabMultiDecl.classList.remove('active');
 
             if (toolToShow === 'excel') {
                 toolExcel.classList.remove('hidden');
@@ -481,19 +542,23 @@
             } else if (toolToShow === 'declaration') {
                 toolDeclaration.classList.remove('hidden');
                 tabDeclaration.classList.add('active');
+            } else if (toolToShow === 'melhor-envio') {
+                toolMelhorEnvio.classList.remove('hidden');
+                tabMelhorEnvio.classList.add('active');
             } else if (toolToShow === 'checklist') {
                 toolChecklist.classList.remove('hidden');
                 tabChecklist.classList.add('active');
-            } else if (toolToShow === 'single') {
-                toolSingle.classList.remove('hidden');
-                tabSingle.classList.add('active');
+            } else if (toolToShow === 'multi-decl') {
+                toolMultiDecl.classList.remove('hidden');
+                tabMultiDecl.classList.add('active');
             }
         }
 
         tabExcel.addEventListener('click', () => showTool('excel'));
         tabDeclaration.addEventListener('click', () => showTool('declaration'));
+        tabMelhorEnvio.addEventListener('click', () => showTool('melhor-envio'));
         tabChecklist.addEventListener('click', () => showTool('checklist'));
-        tabSingle.addEventListener('click', () => showTool('single'));
+        tabMultiDecl.addEventListener('click', () => showTool('multi-decl'));
 
 
         // --- Elementos e Lógica Comuns ---
@@ -508,6 +573,9 @@
             loadingArea.classList.add('hidden');
             resultsArea.classList.add('hidden');
             downloadLinksContainer.innerHTML = '';
+            progressText.textContent = 'Iniciando...';
+            progressBar.style.width = '0%';
+            progressBar.style.backgroundColor = '#3b82f6';
         }
         
         startOverBtn.addEventListener('click', () => {
@@ -519,11 +587,15 @@
             
             resetUploadArea(pdfUploadAreaDecl, pdfInputDecl, pdfUploadPromptDecl, pdfFileInfoDecl);
             selectedPdfFileDecl = null;
-            document.getElementById('label-count-decl').value = '';
+            labelCountInputDecl.value = '';
+
+            resetUploadArea(pdfUploadAreaMelhorEnvio, pdfInputMelhorEnvio, pdfUploadPromptMelhorEnvio, pdfFileInfoMelhorEnvio);
+            selectedPdfFileMelhorEnvio = null;
+            labelCountInputMelhorEnvio.value = '';
 
             resetUploadArea(pdfUploadAreaCheck, pdfInputCheck, pdfUploadPromptCheck, pdfFileInfoCheck);
             selectedPdfFileCheck = null;
-            document.getElementById('label-count-check').value = '';
+            labelCountInputCheck.value = '';
 
             resetUploadArea(pdfUploadAreaMulti, pdfInputMulti, pdfUploadPromptMulti, pdfFileInfoMulti);
             selectedPdfFilesMulti = null;
@@ -531,14 +603,16 @@
             // Reabilita os botões de conversão
             checkEnableConvertButtonExcel();
             checkEnableConvertButtonDeclaration();
+            checkEnableConvertButtonMelhorEnvio();
             checkEnableConvertButtonChecklist();
             checkEnableConvertButtonMulti();
 
             // Volta para a aba atual
             let currentTool = 'excel';
             if (tabDeclaration.classList.contains('active')) currentTool = 'declaration';
+            if (tabMelhorEnvio.classList.contains('active')) currentTool = 'melhor-envio';
             if (tabChecklist.classList.contains('active')) currentTool = 'checklist';
-            if (tabSingle.classList.contains('active')) currentTool = 'single';
+            if (tabMultiDecl.classList.contains('active')) currentTool = 'multi-decl';
             showTool(currentTool);
         });
 
@@ -623,13 +697,39 @@
             return products;
         }
         
-        function wrapText(text, font, size, maxWidth, maxLines = 2) {
+        function chunkString(str, length) {
+            if (!str || typeof str !== 'string') return [];
+            return str.match(new RegExp(`.{1,${length}}`, 'g')) || [];
+        }
+
+        function wrapText(text, font, size, maxWidth, options = {}) {
+            const { forceBreak = false, maxLines = Infinity, addEllipsis = false } = options;
             if (!text) return [];
-            const words = text.split(' ');
+
             let lines = [];
+            const words = text.split(' ');
             let currentLine = '';
 
             for (const word of words) {
+                if (forceBreak && font.widthOfTextAtSize(word, size) > maxWidth) {
+                    if (currentLine.length > 0) {
+                        lines.push(currentLine);
+                        currentLine = '';
+                    }
+
+                    let tempLine = '';
+                    for (const char of word) {
+                        if (font.widthOfTextAtSize(tempLine + char, size) <= maxWidth) {
+                            tempLine += char;
+                        } else {
+                            lines.push(tempLine);
+                            tempLine = char;
+                        }
+                    }
+                    currentLine = tempLine; 
+                    continue; 
+                }
+
                 const testLine = currentLine ? `${currentLine} ${word}` : word;
                 if (font.widthOfTextAtSize(testLine, size) <= maxWidth) {
                     currentLine = testLine;
@@ -638,21 +738,24 @@
                     currentLine = word;
                 }
             }
-            lines.push(currentLine);
+            if (currentLine.length > 0) {
+                lines.push(currentLine);
+            }
 
             if (lines.length > maxLines) {
-                const allowedLines = lines.slice(0, maxLines);
-                let lastVisibleLine = allowedLines[maxLines - 1];
-
-                while (font.widthOfTextAtSize(lastVisibleLine + '...', size) > maxWidth && lastVisibleLine.length > 0) {
-                    lastVisibleLine = lastVisibleLine.slice(0, -1);
+                lines = lines.slice(0, maxLines);
+                if (addEllipsis) {
+                    let lastLine = lines[maxLines - 1];
+                    while (font.widthOfTextAtSize(lastLine + '...', size) > maxWidth && lastLine.length > 0) {
+                        lastLine = lastLine.slice(0, -1);
+                    }
+                    lines[maxLines - 1] = lastLine + '...';
                 }
-                allowedLines[maxLines - 1] = lastVisibleLine + '...';
-                return allowedLines;
             }
-            
+
             return lines;
         }
+
 
         async function processFilesExcel(pdfFile, excelFile) {
             toolExcel.classList.add('hidden');
@@ -681,9 +784,10 @@
                 const fonts = { helveticaFont, helveticaBoldFont };
                 const options = {
                     targetWidth, targetHeight, margin,
-                    colWidths: [115, 85, 25, 50],
-                    fontSize: 7.5,
-                    lineHeight: 8.5
+                    colWidths: [130, 70, 25, 50],
+                    fontSize: 7, 
+                    titleFontSize: 6.5,
+                    lineHeight: 8
                 };
 
                 let labelIndex = 0;
@@ -763,7 +867,7 @@
         }
 
         function drawProductTableOnPage(page, products, startY, fonts, options) {
-            const { targetWidth, margin, colWidths, fontSize, lineHeight } = options;
+            const { targetWidth, margin, colWidths, fontSize, titleFontSize, lineHeight } = options;
             const { helveticaFont, helveticaBoldFont } = fonts;
             
             const tableLeftX = margin / 2;
@@ -778,9 +882,11 @@
             let currentY = startY - lineHeight;
 
             for (const product of products) {
-                const nameLines = wrapText(product.productName || '', helveticaBoldFont, fontSize, colWidths[0] - 6, 2);
-                const variationLines = wrapText(product.variationName || '', helveticaFont, fontSize, colWidths[1] - 6, 2);
-                const entryLineCount = Math.max(nameLines.length, variationLines.length, 1);
+                const nameLines = wrapText(product.productName || '', helveticaBoldFont, titleFontSize, colWidths[0] - 6, { maxLines: 2, addEllipsis: true });
+                const variationLines = wrapText(product.variationName || '', helveticaFont, fontSize, colWidths[1] - 6, { forceBreak: true });
+                const skuLines = chunkString(product.sku || '', 10);
+                
+                const entryLineCount = Math.max(nameLines.length, variationLines.length, skuLines.length, 1);
                 const entryHeight = entryLineCount * lineHeight;
 
                 page.drawRectangle({
@@ -798,24 +904,32 @@
 
                 let lineY = currentY;
                 for(const line of nameLines) {
-                    page.drawText(line, { x: colPositions[0], y: lineY, font: helveticaBoldFont, size: fontSize, color: rgb(0, 0, 0) });
+                    page.drawText(line, { x: colPositions[0], y: lineY, font: helveticaBoldFont, size: titleFontSize, color: rgb(0, 0, 0) });
                     lineY -= lineHeight;
                 }
+                
                 lineY = currentY;
                 for(const line of variationLines) {
                     page.drawText(line, { x: colPositions[1], y: lineY, font: helveticaFont, size: fontSize, color: rgb(0, 0, 0) });
                     lineY -= lineHeight;
                 }
+
                 const singleLineY = currentY - ((entryLineCount - 1) * lineHeight / 2);
                 page.drawText(product.quantity || '', { x: colPositions[2], y: singleLineY, font: helveticaFont, size: fontSize, color: rgb(0, 0, 0) });
-                page.drawText(product.sku || '', { x: colPositions[3], y: singleLineY, font: helveticaFont, size: fontSize, color: rgb(0, 0, 0) });
+                
+                lineY = currentY;
+                for(const line of skuLines) {
+                    page.drawText(line, { x: colPositions[3], y: lineY, font: helveticaFont, size: fontSize, color: rgb(0, 0, 0) });
+                    lineY -= lineHeight;
+                }
                 
                 currentY -= entryHeight;
             }
         }
         
-        // --- LÓGICA DAS FERRAMENTAS 2, 3 e 4 ---
+        // --- LÓGICA DAS FERRAMENTAS 2, 3, 4 e 5 ---
         let selectedPdfFileDecl = null;
+        let selectedPdfFileMelhorEnvio = null;
         let selectedPdfFileCheck = null;
         let selectedPdfFilesMulti = null;
         
@@ -828,6 +942,16 @@
         const pdfRemoveFileBtnDecl = document.getElementById('pdf-remove-file-single-decl');
         const labelCountInputDecl = document.getElementById('label-count-decl');
         const convertBtnDecl = document.getElementById('convert-btn-declaration');
+
+        // Elementos Ferramenta Melhor Envio (NOVA)
+        const pdfUploadAreaMelhorEnvio = document.getElementById('pdf-upload-area-melhor-envio');
+        const pdfInputMelhorEnvio = document.getElementById('pdf-input-melhor-envio');
+        const pdfUploadPromptMelhorEnvio = document.getElementById('pdf-upload-prompt-melhor-envio');
+        const pdfFileInfoMelhorEnvio = document.getElementById('pdf-file-info-melhor-envio');
+        const pdfFileNameElMelhorEnvio = document.getElementById('pdf-file-name-melhor-envio');
+        const pdfRemoveFileBtnMelhorEnvio = document.getElementById('pdf-remove-file-melhor-envio');
+        const labelCountInputMelhorEnvio = document.getElementById('label-count-melhor-envio');
+        const convertBtnMelhorEnvio = document.getElementById('convert-btn-melhor-envio');
 
         // Elementos Ferramenta 3
         const pdfUploadAreaCheck = document.getElementById('pdf-upload-area-single-check');
@@ -852,6 +976,10 @@
             convertBtnDecl.disabled = !(selectedPdfFileDecl && labelCountInputDecl.value > 0);
         }
 
+        function checkEnableConvertButtonMelhorEnvio() {
+            convertBtnMelhorEnvio.disabled = !(selectedPdfFileMelhorEnvio && labelCountInputMelhorEnvio.value > 0);
+        }
+
         function checkEnableConvertButtonChecklist() {
             convertBtnCheck.disabled = !(selectedPdfFileCheck && labelCountInputCheck.value > 0);
         }
@@ -869,6 +997,18 @@
         convertBtnDecl.addEventListener('click', () => {
              if (selectedPdfFileDecl && labelCountInputDecl.value) {
                 processDeclarationPdf(selectedPdfFileDecl, parseInt(labelCountInputDecl.value, 10));
+            }
+        });
+
+        // Setup Ferramenta Melhor Envio (NOVA)
+        setupUploadArea(pdfUploadAreaMelhorEnvio, pdfInputMelhorEnvio, pdfUploadPromptMelhorEnvio, pdfFileInfoMelhorEnvio, pdfFileNameElMelhorEnvio, pdfRemoveFileBtnMelhorEnvio, (file) => {
+            selectedPdfFileMelhorEnvio = file;
+            checkEnableConvertButtonMelhorEnvio();
+        });
+        labelCountInputMelhorEnvio.addEventListener('input', checkEnableConvertButtonMelhorEnvio);
+        convertBtnMelhorEnvio.addEventListener('click', () => {
+             if (selectedPdfFileMelhorEnvio && labelCountInputMelhorEnvio.value) {
+                processMelhorEnvioPdf(selectedPdfFileMelhorEnvio, parseInt(labelCountInputMelhorEnvio.value, 10));
             }
         });
 
@@ -970,6 +1110,82 @@
             }
         }
 
+        async function processMelhorEnvioPdf(pdfFile, labelCount) {
+            document.getElementById('tool-melhor-envio').classList.add('hidden');
+            loadingArea.classList.remove('hidden');
+            updateProgress(0, labelCount);
+
+            try {
+                progressText.textContent = 'Lendo PDF...';
+                const pdfBytes = await pdfFile.arrayBuffer();
+                const sourceDoc = await PDFDocument.load(pdfBytes);
+                const finalPdfDoc = await PDFDocument.create();
+                
+                const totalPages = sourceDoc.getPageCount();
+                const expectedLabelPages = Math.ceil(labelCount / 4);
+                const expectedDeclarationPages = labelCount;
+                const expectedTotalPages = expectedLabelPages + expectedDeclarationPages;
+
+                if (totalPages !== expectedTotalPages) {
+                    throw new Error(`Estrutura de PDF inválida. Para ${labelCount} etiquetas, o PDF precisa ter ${expectedLabelPages} pág. de etiquetas + ${expectedDeclarationPages} pág. de declaração, totalizando ${expectedTotalPages} páginas. O seu arquivo tem ${totalPages}.`);
+                }
+
+                const { width: sourceWidth, height: sourceHeight } = sourceDoc.getPages()[0].getSize();
+                const quadrantWidth = sourceWidth / 2;
+                const quadrantHeight = sourceHeight / 2;
+                const CM_TO_POINTS = 28.3465;
+                const targetWidth = 10 * CM_TO_POINTS;
+                const targetHeight = 15 * CM_TO_POINTS;
+                
+                // Ordem de quadrantes para Melhor Envio
+                const quadrants = [
+                    { x: 0, y: sourceHeight / 2 },                 // 1. Superior Esquerdo
+                    { x: sourceWidth / 2, y: sourceHeight / 2 }, // 2. Superior Direito
+                    { x: 0, y: 0 },                                // 3. Inferior Esquerdo
+                    { x: sourceWidth / 2, y: 0 }                   // 4. Inferior Direito
+                ];
+
+                progressText.textContent = `Intercalando Declarações (Melhor Envio)...`;
+                for (let i = 0; i < labelCount; i++) {
+                    const sourceLabelPageIndex = Math.floor(i / 4);
+                    const quadrantIndex = i % 4;
+                    const sourceLabelPage = sourceDoc.getPages()[sourceLabelPageIndex];
+                    const quadrant = quadrants[quadrantIndex];
+
+                    const newLabelPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                    const embeddedLabel = await finalPdfDoc.embedPage(sourceLabelPage, {
+                        left: quadrant.x, bottom: quadrant.y,
+                        right: quadrant.x + quadrantWidth, top: quadrant.y + quadrantHeight
+                    });
+                    const scale = Math.min(targetWidth / embeddedLabel.width, targetHeight / embeddedLabel.height);
+                    newLabelPage.drawPage(embeddedLabel, {
+                        x: (targetWidth - embeddedLabel.width * scale) / 2,
+                        y: (targetHeight - embeddedLabel.height * scale) / 2,
+                        width: embeddedLabel.width * scale, height: embeddedLabel.height * scale
+                    });
+
+                    const sourceDeclarationPageIndex = expectedLabelPages + i;
+                    const [copiedDeclarationPage] = await finalPdfDoc.copyPages(sourceDoc, [sourceDeclarationPageIndex]);
+                    finalPdfDoc.addPage(copiedDeclarationPage);
+                    
+                    updateProgress(i + 1, labelCount);
+                }
+
+                progressText.textContent = 'Salvando PDF final...';
+                const finalPdfBytes = await finalPdfDoc.save();
+                const newFileName = `conversor_pampa_melhor_envio_${labelCount}_etiquetas.pdf`;
+                createDownloadLink(finalPdfBytes, newFileName, `Baixar PDF com ${labelCount} etiquetas`);
+
+                loadingArea.classList.add('hidden');
+                resultsArea.classList.remove('hidden');
+
+            } catch (error) {
+                 console.error(`Erro ao processar PDF com Declaração (Melhor Envio):`, error);
+                progressText.textContent = `Erro: ${error.message}. Verifique a estrutura do arquivo.`;
+                progressBar.style.backgroundColor = '#ef4444';
+            }
+        }
+
         async function processChecklistPdf(pdfFile, labelCount) {
             const type = 'Checklist';
             document.getElementById(`tool-${type.toLowerCase()}`).classList.add('hidden');
@@ -1055,8 +1271,8 @@
         }
 
         async function processMultiPdfSingleLabel(files) {
-            const type = '1 Só Etiqueta';
-            document.getElementById('tool-single').classList.add('hidden');
+            const type = 'Vários Arquivos Declaração';
+            document.getElementById('tool-multi-decl').classList.add('hidden');
             loadingArea.classList.remove('hidden');
             const totalFiles = files.length;
             updateProgress(0, totalFiles);
@@ -1155,7 +1371,7 @@
             });
             
             input.addEventListener('change', (e) => {
-                handleFiles(input.files);
+                handleFiles(e.target.files);
             });
 
             removeBtn.addEventListener('click', (e) => {
@@ -1175,3 +1391,4 @@
     </script>
 </body>
 </html>
+
