@@ -158,6 +158,7 @@
                 <button id="tab-declaration" class="tab-button">Etiqueta +<br>Declaração</button>
                 <button id="tab-melhor-envio" class="tab-button">Melhor Envio +<br>Declaração</button>
                 <button id="tab-checklist" class="tab-button">Etiqueta +<br>Checklist</button>
+                <button id="tab-super-frete" class="tab-button">Super Frete</button>
                 <button id="tab-multi-decl" class="tab-button">Vários Arquivos<br>Declaração</button>
             </div>
         </div>
@@ -235,7 +236,7 @@
             </div>
         </div>
         
-        <!-- Ferramenta NOVA: Melhor Envio + Declaração -->
+        <!-- Ferramenta: Melhor Envio + Declaração -->
         <div id="tool-melhor-envio" class="hidden">
             <h1 class="text-2xl font-bold text-gray-800 text-center">Organizador Melhor Envio + Declaração</h1>
             <p class="text-gray-500 mt-2 text-center">Para etiquetas Melhor Envio. Informe o número de etiquetas e envie o PDF para intercalar.</p>
@@ -302,8 +303,35 @@
                 </button>
             </div>
         </div>
+        
+        <!-- Ferramenta Super Frete (NOVA) -->
+        <div id="tool-super-frete" class="hidden">
+            <h1 class="text-2xl font-bold text-gray-800 text-center">Conversor de Etiquetas Super Frete</h1>
+            <p class="text-gray-500 mt-2 text-center">Envie múltiplos arquivos A4 do Super Frete para convertê-los em etiquetas 10x15.</p>
 
-        <!-- Ferramenta 4: Vários Arquivos Declaração -->
+            <div class="my-8">
+                 <div id="pdf-upload-area-super-frete" class="upload-box max-w-md mx-auto">
+                    <input type="file" id="pdf-input-super-frete" class="hidden" accept="application/pdf" multiple>
+                    <div id="pdf-upload-prompt-super-frete">
+                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">Enviar PDFs do Super Frete</span> ou arrastar</p>
+                    </div>
+                    <div id="pdf-file-info-super-frete" class="hidden text-center">
+                          <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-super-frete"></p>
+                          <button id="pdf-remove-file-super-frete" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                    </div>
+                </div>
+            </div>
+            
+             <div id="convert-button-container-super-frete" class="text-center">
+                <button id="convert-btn-super-frete" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                    Converter Arquivos
+                </button>
+            </div>
+        </div>
+
+
+        <!-- Ferramenta Vários Arquivos Declaração -->
         <div id="tool-multi-decl" class="hidden">
             <h1 class="text-2xl font-bold text-gray-800 text-center">Intercalador de Vários Arquivos com Declaração</h1>
             <p class="text-gray-500 mt-2 text-center">Envie múltiplos PDFs (cada um com 1 etiqueta e 1 declaração) para uni-los em um só arquivo.</p>
@@ -507,7 +535,7 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // Importa as funções necessárias das bibliotecas
-        const { PDFDocument, rgb, StandardFonts } = PDFLib;
+        const { PDFDocument, rgb, StandardFonts, degrees } = PDFLib;
         const { read, utils } = XLSX;
         
         // --- Lógica de Navegação por Abas ---
@@ -515,12 +543,14 @@
         const tabDeclaration = document.getElementById('tab-declaration');
         const tabMelhorEnvio = document.getElementById('tab-melhor-envio');
         const tabChecklist = document.getElementById('tab-checklist');
+        const tabSuperFrete = document.getElementById('tab-super-frete');
         const tabMultiDecl = document.getElementById('tab-multi-decl');
         
         const toolExcel = document.getElementById('tool-excel');
         const toolDeclaration = document.getElementById('tool-declaration');
         const toolMelhorEnvio = document.getElementById('tool-melhor-envio');
         const toolChecklist = document.getElementById('tool-checklist');
+        const toolSuperFrete = document.getElementById('tool-super-frete');
         const toolMultiDecl = document.getElementById('tool-multi-decl');
 
         function showTool(toolToShow) {
@@ -528,29 +558,28 @@
             toolDeclaration.classList.add('hidden');
             toolMelhorEnvio.classList.add('hidden');
             toolChecklist.classList.add('hidden');
+            toolSuperFrete.classList.add('hidden');
             toolMultiDecl.classList.add('hidden');
             resetCommonUI();
             tabExcel.classList.remove('active');
             tabDeclaration.classList.remove('active');
             tabMelhorEnvio.classList.remove('active');
             tabChecklist.classList.remove('active');
+            tabSuperFrete.classList.remove('active');
             tabMultiDecl.classList.remove('active');
 
-            if (toolToShow === 'excel') {
-                toolExcel.classList.remove('hidden');
-                tabExcel.classList.add('active');
-            } else if (toolToShow === 'declaration') {
-                toolDeclaration.classList.remove('hidden');
-                tabDeclaration.classList.add('active');
-            } else if (toolToShow === 'melhor-envio') {
-                toolMelhorEnvio.classList.remove('hidden');
-                tabMelhorEnvio.classList.add('active');
-            } else if (toolToShow === 'checklist') {
-                toolChecklist.classList.remove('hidden');
-                tabChecklist.classList.add('active');
-            } else if (toolToShow === 'multi-decl') {
-                toolMultiDecl.classList.remove('hidden');
-                tabMultiDecl.classList.add('active');
+            const toolsMap = {
+                'excel': { tool: toolExcel, tab: tabExcel },
+                'declaration': { tool: toolDeclaration, tab: tabDeclaration },
+                'melhor-envio': { tool: toolMelhorEnvio, tab: tabMelhorEnvio },
+                'checklist': { tool: toolChecklist, tab: tabChecklist },
+                'super-frete': { tool: toolSuperFrete, tab: tabSuperFrete },
+                'multi-decl': { tool: toolMultiDecl, tab: tabMultiDecl },
+            };
+
+            if (toolsMap[toolToShow]) {
+                toolsMap[toolToShow].tool.classList.remove('hidden');
+                toolsMap[toolToShow].tab.classList.add('active');
             }
         }
 
@@ -558,6 +587,7 @@
         tabDeclaration.addEventListener('click', () => showTool('declaration'));
         tabMelhorEnvio.addEventListener('click', () => showTool('melhor-envio'));
         tabChecklist.addEventListener('click', () => showTool('checklist'));
+        tabSuperFrete.addEventListener('click', () => showTool('super-frete'));
         tabMultiDecl.addEventListener('click', () => showTool('multi-decl'));
 
 
@@ -587,15 +617,18 @@
             
             resetUploadArea(pdfUploadAreaDecl, pdfInputDecl, pdfUploadPromptDecl, pdfFileInfoDecl);
             selectedPdfFileDecl = null;
-            labelCountInputDecl.value = '';
+            if(labelCountInputDecl) labelCountInputDecl.value = '';
 
             resetUploadArea(pdfUploadAreaMelhorEnvio, pdfInputMelhorEnvio, pdfUploadPromptMelhorEnvio, pdfFileInfoMelhorEnvio);
             selectedPdfFileMelhorEnvio = null;
-            labelCountInputMelhorEnvio.value = '';
+            if(labelCountInputMelhorEnvio) labelCountInputMelhorEnvio.value = '';
 
             resetUploadArea(pdfUploadAreaCheck, pdfInputCheck, pdfUploadPromptCheck, pdfFileInfoCheck);
             selectedPdfFileCheck = null;
-            labelCountInputCheck.value = '';
+            if(labelCountInputCheck) labelCountInputCheck.value = '';
+            
+            resetUploadArea(pdfUploadAreaSuperFrete, pdfInputSuperFrete, pdfUploadPromptSuperFrete, pdfFileInfoSuperFrete);
+            selectedPdfFilesSuperFrete = null;
 
             resetUploadArea(pdfUploadAreaMulti, pdfInputMulti, pdfUploadPromptMulti, pdfFileInfoMulti);
             selectedPdfFilesMulti = null;
@@ -605,6 +638,7 @@
             checkEnableConvertButtonDeclaration();
             checkEnableConvertButtonMelhorEnvio();
             checkEnableConvertButtonChecklist();
+            checkEnableConvertButtonSuperFrete();
             checkEnableConvertButtonMulti();
 
             // Volta para a aba atual
@@ -612,6 +646,7 @@
             if (tabDeclaration.classList.contains('active')) currentTool = 'declaration';
             if (tabMelhorEnvio.classList.contains('active')) currentTool = 'melhor-envio';
             if (tabChecklist.classList.contains('active')) currentTool = 'checklist';
+            if (tabSuperFrete.classList.contains('active')) currentTool = 'super-frete';
             if (tabMultiDecl.classList.contains('active')) currentTool = 'multi-decl';
             showTool(currentTool);
         });
@@ -927,13 +962,14 @@
             }
         }
         
-        // --- LÓGICA DAS FERRAMENTAS 2, 3, 4 e 5 ---
+        // --- LÓGICA DAS FERRAMENTAS ---
         let selectedPdfFileDecl = null;
         let selectedPdfFileMelhorEnvio = null;
         let selectedPdfFileCheck = null;
+        let selectedPdfFilesSuperFrete = null;
         let selectedPdfFilesMulti = null;
         
-        // Elementos Ferramenta 2
+        // Elementos Ferramenta 2: Declaração
         const pdfUploadAreaDecl = document.getElementById('pdf-upload-area-single-decl');
         const pdfInputDecl = document.getElementById('pdf-input-single-decl');
         const pdfUploadPromptDecl = document.getElementById('pdf-upload-prompt-single-decl');
@@ -943,7 +979,7 @@
         const labelCountInputDecl = document.getElementById('label-count-decl');
         const convertBtnDecl = document.getElementById('convert-btn-declaration');
 
-        // Elementos Ferramenta Melhor Envio (NOVA)
+        // Elementos Ferramenta: Melhor Envio
         const pdfUploadAreaMelhorEnvio = document.getElementById('pdf-upload-area-melhor-envio');
         const pdfInputMelhorEnvio = document.getElementById('pdf-input-melhor-envio');
         const pdfUploadPromptMelhorEnvio = document.getElementById('pdf-upload-prompt-melhor-envio');
@@ -953,7 +989,7 @@
         const labelCountInputMelhorEnvio = document.getElementById('label-count-melhor-envio');
         const convertBtnMelhorEnvio = document.getElementById('convert-btn-melhor-envio');
 
-        // Elementos Ferramenta 3
+        // Elementos Ferramenta 3: Checklist
         const pdfUploadAreaCheck = document.getElementById('pdf-upload-area-single-check');
         const pdfInputCheck = document.getElementById('pdf-input-single-check');
         const pdfUploadPromptCheck = document.getElementById('pdf-upload-prompt-single-check');
@@ -962,8 +998,17 @@
         const pdfRemoveFileBtnCheck = document.getElementById('pdf-remove-file-single-check');
         const labelCountInputCheck = document.getElementById('label-count-check');
         const convertBtnCheck = document.getElementById('convert-btn-checklist');
+        
+        // Elementos Ferramenta: Super Frete
+        const pdfUploadAreaSuperFrete = document.getElementById('pdf-upload-area-super-frete');
+        const pdfInputSuperFrete = document.getElementById('pdf-input-super-frete');
+        const pdfUploadPromptSuperFrete = document.getElementById('pdf-upload-prompt-super-frete');
+        const pdfFileInfoSuperFrete = document.getElementById('pdf-file-info-super-frete');
+        const pdfFileNameElSuperFrete = document.getElementById('pdf-file-name-super-frete');
+        const pdfRemoveFileBtnSuperFrete = document.getElementById('pdf-remove-file-super-frete');
+        const convertBtnSuperFrete = document.getElementById('convert-btn-super-frete');
 
-        // Elementos Ferramenta 4
+        // Elementos Ferramenta 4: Vários Arquivos
         const pdfUploadAreaMulti = document.getElementById('pdf-upload-area-multi');
         const pdfInputMulti = document.getElementById('pdf-input-multi');
         const pdfUploadPromptMulti = document.getElementById('pdf-upload-prompt-multi');
@@ -972,68 +1017,112 @@
         const pdfRemoveFileBtnMulti = document.getElementById('pdf-remove-file-multi');
         const convertBtnMulti = document.getElementById('convert-btn-multi');
 
-        function checkEnableConvertButtonDeclaration() {
-            convertBtnDecl.disabled = !(selectedPdfFileDecl && labelCountInputDecl.value > 0);
-        }
-
-        function checkEnableConvertButtonMelhorEnvio() {
-            convertBtnMelhorEnvio.disabled = !(selectedPdfFileMelhorEnvio && labelCountInputMelhorEnvio.value > 0);
-        }
-
-        function checkEnableConvertButtonChecklist() {
-            convertBtnCheck.disabled = !(selectedPdfFileCheck && labelCountInputCheck.value > 0);
-        }
-        
-        function checkEnableConvertButtonMulti() {
-            convertBtnMulti.disabled = !(selectedPdfFilesMulti && selectedPdfFilesMulti.length > 0);
-        }
+        function checkEnableConvertButtonDeclaration() { convertBtnDecl.disabled = !(selectedPdfFileDecl && labelCountInputDecl.value > 0); }
+        function checkEnableConvertButtonMelhorEnvio() { convertBtnMelhorEnvio.disabled = !(selectedPdfFileMelhorEnvio && labelCountInputMelhorEnvio.value > 0); }
+        function checkEnableConvertButtonChecklist() { convertBtnCheck.disabled = !(selectedPdfFileCheck && labelCountInputCheck.value > 0); }
+        function checkEnableConvertButtonSuperFrete() { convertBtnSuperFrete.disabled = !(selectedPdfFilesSuperFrete && selectedPdfFilesSuperFrete.length > 0); }
+        function checkEnableConvertButtonMulti() { convertBtnMulti.disabled = !(selectedPdfFilesMulti && selectedPdfFilesMulti.length > 0); }
         
         // Setup Ferramenta 2
-        setupUploadArea(pdfUploadAreaDecl, pdfInputDecl, pdfUploadPromptDecl, pdfFileInfoDecl, pdfFileNameElDecl, pdfRemoveFileBtnDecl, (file) => {
-            selectedPdfFileDecl = file;
-            checkEnableConvertButtonDeclaration();
-        });
+        setupUploadArea(pdfUploadAreaDecl, pdfInputDecl, pdfUploadPromptDecl, pdfFileInfoDecl, pdfFileNameElDecl, pdfRemoveFileBtnDecl, (file) => { selectedPdfFileDecl = file; checkEnableConvertButtonDeclaration(); });
         labelCountInputDecl.addEventListener('input', checkEnableConvertButtonDeclaration);
-        convertBtnDecl.addEventListener('click', () => {
-             if (selectedPdfFileDecl && labelCountInputDecl.value) {
-                processDeclarationPdf(selectedPdfFileDecl, parseInt(labelCountInputDecl.value, 10));
-            }
-        });
+        convertBtnDecl.addEventListener('click', () => { if (selectedPdfFileDecl && labelCountInputDecl.value) { processDeclarationPdf(selectedPdfFileDecl, parseInt(labelCountInputDecl.value, 10)); } });
 
-        // Setup Ferramenta Melhor Envio (NOVA)
-        setupUploadArea(pdfUploadAreaMelhorEnvio, pdfInputMelhorEnvio, pdfUploadPromptMelhorEnvio, pdfFileInfoMelhorEnvio, pdfFileNameElMelhorEnvio, pdfRemoveFileBtnMelhorEnvio, (file) => {
-            selectedPdfFileMelhorEnvio = file;
-            checkEnableConvertButtonMelhorEnvio();
-        });
+        // Setup Ferramenta Melhor Envio
+        setupUploadArea(pdfUploadAreaMelhorEnvio, pdfInputMelhorEnvio, pdfUploadPromptMelhorEnvio, pdfFileInfoMelhorEnvio, pdfFileNameElMelhorEnvio, pdfRemoveFileBtnMelhorEnvio, (file) => { selectedPdfFileMelhorEnvio = file; checkEnableConvertButtonMelhorEnvio(); });
         labelCountInputMelhorEnvio.addEventListener('input', checkEnableConvertButtonMelhorEnvio);
-        convertBtnMelhorEnvio.addEventListener('click', () => {
-             if (selectedPdfFileMelhorEnvio && labelCountInputMelhorEnvio.value) {
-                processMelhorEnvioPdf(selectedPdfFileMelhorEnvio, parseInt(labelCountInputMelhorEnvio.value, 10));
-            }
-        });
+        convertBtnMelhorEnvio.addEventListener('click', () => { if (selectedPdfFileMelhorEnvio && labelCountInputMelhorEnvio.value) { processMelhorEnvioPdf(selectedPdfFileMelhorEnvio, parseInt(labelCountInputMelhorEnvio.value, 10)); } });
 
         // Setup Ferramenta 3
-        setupUploadArea(pdfUploadAreaCheck, pdfInputCheck, pdfUploadPromptCheck, pdfFileInfoCheck, pdfFileNameElCheck, pdfRemoveFileBtnCheck, (file) => {
-            selectedPdfFileCheck = file;
-            checkEnableConvertButtonChecklist();
-        });
+        setupUploadArea(pdfUploadAreaCheck, pdfInputCheck, pdfUploadPromptCheck, pdfFileInfoCheck, pdfFileNameElCheck, pdfRemoveFileBtnCheck, (file) => { selectedPdfFileCheck = file; checkEnableConvertButtonChecklist(); });
         labelCountInputCheck.addEventListener('input', checkEnableConvertButtonChecklist);
-        convertBtnCheck.addEventListener('click', () => {
-            if (selectedPdfFileCheck && labelCountInputCheck.value) {
-                processChecklistPdf(selectedPdfFileCheck, parseInt(labelCountInputCheck.value, 10));
-            }
-        });
+        convertBtnCheck.addEventListener('click', () => { if (selectedPdfFileCheck && labelCountInputCheck.value) { processChecklistPdf(selectedPdfFileCheck, parseInt(labelCountInputCheck.value, 10)); } });
 
-        // Setup Ferramenta 4
-        setupUploadArea(pdfUploadAreaMulti, pdfInputMulti, pdfUploadPromptMulti, pdfFileInfoMulti, pdfFileNameElMulti, pdfRemoveFileBtnMulti, (files) => {
-            selectedPdfFilesMulti = files;
-            checkEnableConvertButtonMulti();
-        });
-        convertBtnMulti.addEventListener('click', () => {
-            if (selectedPdfFilesMulti && selectedPdfFilesMulti.length > 0) {
-                processMultiPdfSingleLabel(selectedPdfFilesMulti);
+        // Setup Ferramenta Super Frete
+        setupUploadArea(pdfUploadAreaSuperFrete, pdfInputSuperFrete, pdfUploadPromptSuperFrete, pdfFileInfoSuperFrete, pdfFileNameElSuperFrete, pdfRemoveFileBtnSuperFrete, (files) => { selectedPdfFilesSuperFrete = files; checkEnableConvertButtonSuperFrete(); });
+        convertBtnSuperFrete.addEventListener('click', () => { if (selectedPdfFilesSuperFrete && selectedPdfFilesSuperFrete.length > 0) { processSuperFretePdfs(selectedPdfFilesSuperFrete); } });
+
+        // Setup Ferramenta Vários Arquivos
+        setupUploadArea(pdfUploadAreaMulti, pdfInputMulti, pdfUploadPromptMulti, pdfFileInfoMulti, pdfFileNameElMulti, pdfRemoveFileBtnMulti, (files) => { selectedPdfFilesMulti = files; checkEnableConvertButtonMulti(); });
+        convertBtnMulti.addEventListener('click', () => { if (selectedPdfFilesMulti && selectedPdfFilesMulti.length > 0) { processMultiPdfSingleLabel(selectedPdfFilesMulti); } });
+        
+        async function processSuperFretePdfs(files) {
+            document.getElementById('tool-super-frete').classList.add('hidden');
+            loadingArea.classList.remove('hidden');
+            const totalFiles = files.length;
+            updateProgress(0, totalFiles);
+
+            try {
+                progressText.textContent = 'Criando PDF final...';
+                const finalPdfDoc = await PDFDocument.create();
+
+                const CM_TO_POINTS = 28.3465;
+                const targetWidth = 10 * CM_TO_POINTS;
+                const targetHeight = 15 * CM_TO_POINTS;
+                const labelCropWidth = 11 * CM_TO_POINTS; // Nova largura de corte
+
+                for (let i = 0; i < totalFiles; i++) {
+                    const file = files[i];
+                    progressText.textContent = `Processando arquivo ${i + 1} de ${totalFiles}: ${file.name}`;
+                    const pdfBytes = await file.arrayBuffer();
+                    const sourceDoc = await PDFDocument.load(pdfBytes);
+                    const sourcePage = sourceDoc.getPages()[0];
+                    const { width: sourceWidth, height: sourceHeight } = sourcePage.getSize();
+
+                    // 1. Etiqueta (recorte mais largo)
+                    const labelBox = { x: 0, y: sourceHeight / 2, width: Math.min(labelCropWidth, sourceWidth), height: sourceHeight / 2 };
+                    const newLabelPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                    const embeddedLabel = await finalPdfDoc.embedPage(sourcePage, {
+                        left: labelBox.x, bottom: labelBox.y,
+                        right: labelBox.x + labelBox.width, top: labelBox.y + labelBox.height
+                    });
+                    
+                    const scaleLabel = Math.min(targetWidth / embeddedLabel.width, targetHeight / embeddedLabel.height);
+                    
+                    newLabelPage.drawPage(embeddedLabel, {
+                        x: (targetWidth - embeddedLabel.width * scaleLabel) / 2,
+                        y: (targetHeight - embeddedLabel.height * scaleLabel) / 2,
+                        width: embeddedLabel.width * scaleLabel, height: embeddedLabel.height * scaleLabel
+                    });
+
+                    // 2. Declaração (metade inferior, rotacionada)
+                    const declBox = { x: 0, y: 0, width: sourceWidth, height: sourceHeight / 2 };
+                    const newDeclPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                    const embeddedDecl = await finalPdfDoc.embedPage(sourcePage, {
+                        left: declBox.x, bottom: declBox.y,
+                        right: declBox.x + declBox.width, top: declBox.y + declBox.height
+                    });
+                    
+                    const scaleDecl = Math.min(targetWidth / embeddedDecl.height, targetHeight / embeddedDecl.width);
+                    const scaledDeclWidth = embeddedDecl.width * scaleDecl;
+                    const scaledDeclHeight = embeddedDecl.height * scaleDecl;
+
+                    newDeclPage.drawPage(embeddedDecl, {
+                        x: (targetWidth - scaledDeclHeight) / 2,
+                        y: (targetHeight + scaledDeclWidth) / 2,
+                        width: scaledDeclWidth,
+                        height: scaledDeclHeight,
+                        rotate: degrees(-90)
+                    });
+
+                    updateProgress(i + 1, totalFiles);
+                }
+
+                progressText.textContent = 'Salvando PDF final...';
+                const finalPdfBytes = await finalPdfDoc.save();
+                const newFileName = `conversor_pampa_superfrete_${totalFiles}_etiquetas.pdf`;
+                createDownloadLink(finalPdfBytes, newFileName, `Baixar PDF com ${totalFiles} etiquetas`);
+
+                loadingArea.classList.add('hidden');
+                resultsArea.classList.remove('hidden');
+
+            } catch (error) {
+                console.error(`Erro ao processar PDFs do Super Frete:`, error);
+                progressText.textContent = `Erro: ${error.message}.`;
+                progressBar.style.backgroundColor = '#ef4444';
             }
-        });
+        }
+
 
         async function processDeclarationPdf(pdfFile, labelCount) {
             document.getElementById('tool-declaration').classList.add('hidden');
