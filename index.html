@@ -83,12 +83,12 @@
         <form id="login-form">
             <div class="mb-4">
                 <label for="email" class="block text-sm font-medium text-gray-700">E-mail</label>
-                <input type="email" id="email" name="email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                <input type="email" id="email" name="email" autocomplete="username" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
             </div>
             <div class="mb-2">
                 <label for="password" class="block text-sm font-medium text-gray-700">Senha</label>
                 <div class="relative mt-1">
-                    <input type="password" id="password" name="password" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10" required>
+                    <input type="password" id="password" name="password" autocomplete="current-password" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10" required>
                     <button type="button" id="toggle-password-visibility" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
                         <svg id="eye-open-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -146,7 +146,10 @@
                 </h2>
              </div>
              <div class="flex items-center">
-                <span id="user-email-display" class="text-sm text-gray-500 mr-4 hidden md:inline"></span>
+                <div class="text-right mr-4">
+                    <span id="user-email-display" class="text-sm text-gray-500 hidden md:block"></span>
+                    <span id="user-expiration-display" class="text-xs text-gray-400 hidden md:block"></span>
+                </div>
                 <button id="logout-btn" class="text-sm font-medium text-red-500 hover:text-red-700">Sair</button>
              </div>
         </div>
@@ -157,7 +160,6 @@
                 <button id="tab-excel" class="tab-button active">Etiqueta com<br>Excel</button>
                 <button id="tab-declaration" class="tab-button">Etiqueta +<br>Declaração</button>
                 <button id="tab-melhor-envio" class="tab-button">Melhor Envio +<br>Declaração</button>
-                <button id="tab-clique-retire" class="tab-button">Clique Retire +<br>Declaração</button>
                 <button id="tab-checklist" class="tab-button">Etiqueta +<br>Checklist</button>
                 <button id="tab-super-frete" class="tab-button">Super Frete</button>
                 <button id="tab-multi-decl" class="tab-button">Vários Arquivos<br>Declaração</button>
@@ -431,7 +433,7 @@
     <!-- Firebase SDK -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-      import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+      import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
       import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
       // Your web app's Firebase configuration
@@ -458,6 +460,7 @@
       const successMessage = document.getElementById('success-message');
       const logoutBtn = document.getElementById('logout-btn');
       const userEmailDisplay = document.getElementById('user-email-display');
+      const userExpirationDisplay = document.getElementById('user-expiration-display');
       const passwordInput = document.getElementById('password');
       const togglePasswordBtn = document.getElementById('toggle-password-visibility');
       const eyeOpenIcon = document.getElementById('eye-open-icon');
@@ -476,6 +479,11 @@
               if (userDoc.exists()) {
                 const userData = userDoc.data();
                 const dataExpiracao = userData.dataExpiracao.toDate(); // Converte para objeto Date
+                
+                // Formata e exibe a data de expiração
+                const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+                userExpirationDisplay.textContent = `Acesso expira em: ${dataExpiracao.toLocaleDateString('pt-BR', options)}`;
+
                 const hoje = new Date();
 
                 if (dataExpiracao > hoje) {
@@ -505,6 +513,7 @@
           loginScreen.style.display = 'block';
           mainApp.style.display = 'none';
           userEmailDisplay.textContent = '';
+          userExpirationDisplay.textContent = '';
         }
       });
 
@@ -514,14 +523,19 @@
         const email = loginForm.email.value;
         const password = loginForm.password.value;
         
-        signInWithEmailAndPassword(auth, email, password)
+        // Define a persistência da sessão para 'session', que desloga o usuário ao fechar a aba/navegador.
+        setPersistence(auth, browserSessionPersistence)
+          .then(() => {
+            // Após definir a persistência, tenta fazer o login
+            return signInWithEmailAndPassword(auth, email, password);
+          })
           .then((userCredential) => {
             // Login bem-sucedido, o onAuthStateChanged cuidará de verificar a assinatura e mostrar o app
             errorMessage.classList.add('hidden');
             successMessage.classList.add('hidden');
           })
           .catch((error) => {
-            // Trata erros de login
+            // Trata erros de login ou de definição de persistência
             console.error("Erro de login:", error.code, error.message);
             errorMessage.textContent = 'E-mail ou senha inválidos.';
             successMessage.classList.add('hidden');
@@ -577,7 +591,6 @@
         const tabExcel = document.getElementById('tab-excel');
         const tabDeclaration = document.getElementById('tab-declaration');
         const tabMelhorEnvio = document.getElementById('tab-melhor-envio');
-        const tabCliqueRetire = document.getElementById('tab-clique-retire');
         const tabChecklist = document.getElementById('tab-checklist');
         const tabSuperFrete = document.getElementById('tab-super-frete');
         const tabMultiDecl = document.getElementById('tab-multi-decl');
@@ -585,7 +598,6 @@
         const toolExcel = document.getElementById('tool-excel');
         const toolDeclaration = document.getElementById('tool-declaration');
         const toolMelhorEnvio = document.getElementById('tool-melhor-envio');
-        const toolCliqueRetire = document.getElementById('tool-clique-retire');
         const toolChecklist = document.getElementById('tool-checklist');
         const toolSuperFrete = document.getElementById('tool-super-frete');
         const toolMultiDecl = document.getElementById('tool-multi-decl');
@@ -594,7 +606,6 @@
             toolExcel.classList.add('hidden');
             toolDeclaration.classList.add('hidden');
             toolMelhorEnvio.classList.add('hidden');
-            toolCliqueRetire.classList.add('hidden');
             toolChecklist.classList.add('hidden');
             toolSuperFrete.classList.add('hidden');
             toolMultiDecl.classList.add('hidden');
@@ -607,7 +618,6 @@
                 'excel': { tool: toolExcel, tab: tabExcel },
                 'declaration': { tool: toolDeclaration, tab: tabDeclaration },
                 'melhor-envio': { tool: toolMelhorEnvio, tab: tabMelhorEnvio },
-                'clique-retire': { tool: toolCliqueRetire, tab: tabCliqueRetire },
                 'checklist': { tool: toolChecklist, tab: tabChecklist },
                 'super-frete': { tool: toolSuperFrete, tab: tabSuperFrete },
                 'multi-decl': { tool: toolMultiDecl, tab: tabMultiDecl },
@@ -622,7 +632,6 @@
         tabExcel.addEventListener('click', () => showTool('excel'));
         tabDeclaration.addEventListener('click', () => showTool('declaration'));
         tabMelhorEnvio.addEventListener('click', () => showTool('melhor-envio'));
-        tabCliqueRetire.addEventListener('click', () => showTool('clique-retire'));
         tabChecklist.addEventListener('click', () => showTool('checklist'));
         tabSuperFrete.addEventListener('click', () => showTool('super-frete'));
         tabMultiDecl.addEventListener('click', () => showTool('multi-decl'));
@@ -676,11 +685,6 @@
              resetUploadArea(pdfUploadAreaMelhorEnvio, pdfInputMelhorEnvio, pdfUploadPromptMelhorEnvio, pdfFileInfoMelhorEnvio);
              checkEnableConvertButtonMelhorEnvio();
             
-             selectedPdfFileCliqueRetire = null;
-             if(labelCountInputCliqueRetire) labelCountInputCliqueRetire.value = '';
-             resetUploadArea(pdfUploadAreaCliqueRetire, pdfInputCliqueRetire, pdfUploadPromptCliqueRetire, pdfFileInfoCliqueRetire);
-             checkEnableConvertButtonCliqueRetire();
-
              selectedPdfFileCheck = null;
              if(labelCountInputCheck) labelCountInputCheck.value = '';
              resetUploadArea(pdfUploadAreaCheck, pdfInputCheck, pdfUploadPromptCheck, pdfFileInfoCheck);
@@ -1007,7 +1011,6 @@
         // --- LÓGICA DAS FERRAMENTAS ---
         let selectedPdfFileDecl = null;
         let selectedPdfFileMelhorEnvio = null;
-        let selectedPdfFileCliqueRetire = null;
         let selectedPdfFileCheck = null;
         let selectedPdfFilesSuperFrete = null;
         let selectedPdfFilesMulti = null;
@@ -1031,16 +1034,6 @@
         const pdfRemoveFileBtnMelhorEnvio = document.getElementById('pdf-remove-file-melhor-envio');
         const labelCountInputMelhorEnvio = document.getElementById('label-count-melhor-envio');
         const convertBtnMelhorEnvio = document.getElementById('convert-btn-melhor-envio');
-
-        // Elementos Ferramenta: Clique Retire
-        const pdfUploadAreaCliqueRetire = document.getElementById('pdf-upload-area-clique-retire');
-        const pdfInputCliqueRetire = document.getElementById('pdf-input-clique-retire');
-        const pdfUploadPromptCliqueRetire = document.getElementById('pdf-upload-prompt-clique-retire');
-        const pdfFileInfoCliqueRetire = document.getElementById('pdf-file-info-clique-retire');
-        const pdfFileNameElCliqueRetire = document.getElementById('pdf-file-name-clique-retire');
-        const pdfRemoveFileBtnCliqueRetire = document.getElementById('pdf-remove-file-clique-retire');
-        const labelCountInputCliqueRetire = document.getElementById('label-count-clique-retire');
-        const convertBtnCliqueRetire = document.getElementById('convert-btn-clique-retire');
 
         // Elementos Ferramenta 3: Checklist
         const pdfUploadAreaCheck = document.getElementById('pdf-upload-area-single-check');
@@ -1072,7 +1065,6 @@
 
         function checkEnableConvertButtonDeclaration() { convertBtnDecl.disabled = !(selectedPdfFileDecl && labelCountInputDecl.value > 0); }
         function checkEnableConvertButtonMelhorEnvio() { convertBtnMelhorEnvio.disabled = !(selectedPdfFileMelhorEnvio && labelCountInputMelhorEnvio.value > 0); }
-        function checkEnableConvertButtonCliqueRetire() { convertBtnCliqueRetire.disabled = !(selectedPdfFileCliqueRetire && labelCountInputCliqueRetire.value > 0); }
         function checkEnableConvertButtonChecklist() { convertBtnCheck.disabled = !(selectedPdfFileCheck && labelCountInputCheck.value > 0); }
         function checkEnableConvertButtonSuperFrete() { convertBtnSuperFrete.disabled = !(selectedPdfFilesSuperFrete && selectedPdfFilesSuperFrete.length > 0); }
         function checkEnableConvertButtonMulti() { convertBtnMulti.disabled = !(selectedPdfFilesMulti && selectedPdfFilesMulti.length > 0); }
@@ -1087,12 +1079,6 @@
         labelCountInputMelhorEnvio.addEventListener('input', checkEnableConvertButtonMelhorEnvio);
         convertBtnMelhorEnvio.addEventListener('click', () => { if (selectedPdfFileMelhorEnvio && labelCountInputMelhorEnvio.value) { processDeclarationPdf(selectedPdfFileMelhorEnvio, parseInt(labelCountInputMelhorEnvio.value, 10), 'melhor-envio'); } });
         
-        // Setup Ferramenta Clique Retire
-        setupUploadArea(pdfUploadAreaCliqueRetire, pdfInputCliqueRetire, pdfUploadPromptCliqueRetire, pdfFileInfoCliqueRetire, pdfFileNameElCliqueRetire, pdfRemoveFileBtnCliqueRetire, (file) => { selectedPdfFileCliqueRetire = file; checkEnableConvertButtonCliqueRetire(); });
-        labelCountInputCliqueRetire.addEventListener('input', checkEnableConvertButtonCliqueRetire);
-        convertBtnCliqueRetire.addEventListener('click', () => { if (selectedPdfFileCliqueRetire && labelCountInputCliqueRetire.value) { processDeclarationPdf(selectedPdfFileCliqueRetire, parseInt(labelCountInputCliqueRetire.value, 10), 'clique-retire'); } });
-
-
         // Setup Ferramenta 3
         setupUploadArea(pdfUploadAreaCheck, pdfInputCheck, pdfUploadPromptCheck, pdfFileInfoCheck, pdfFileNameElCheck, pdfRemoveFileBtnCheck, (file) => { selectedPdfFileCheck = file; checkEnableConvertButtonChecklist(); });
         labelCountInputCheck.addEventListener('input', checkEnableConvertButtonChecklist);
@@ -1218,10 +1204,6 @@
                     quadrants = [ { x: 0, y: sourceHeight / 2 }, { x: 0, y: 0 }, { x: sourceWidth / 2, y: sourceHeight / 2 }, { x: sourceWidth / 2, y: 0 } ];
                 }
                 
-                if (type === 'clique-retire') {
-                    quadrants = [ { x: 0, y: sourceHeight / 2 }, { x: 0, y: 0 }, { x: sourceWidth / 2, y: sourceHeight / 2 }, { x: sourceWidth / 2, y: 0 } ];
-                }
-
                 progressText.textContent = `Intercalando Declarações...`;
                 for (let i = 0; i < labelCount; i++) {
                     const sourceLabelPageIndex = Math.floor(i / 4);
@@ -1469,4 +1451,6 @@
     </script>
 </body>
 </html>
+
+
 
