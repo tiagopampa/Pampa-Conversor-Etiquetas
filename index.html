@@ -470,6 +470,15 @@
       // Observador do estado de autenticação
       onAuthStateChanged(auth, async (user) => {
         if (user) {
+          // --- NOVA LÓGICA DE VERIFICAÇÃO ---
+          // Verifica se o usuário já logou com o novo sistema de sessão.
+          // Se não houver a marca 'sessionTypeSet', significa que é uma sessão antiga e persistente.
+          if (!localStorage.getItem('sessionTypeSet')) {
+            signOut(auth); // Força o logout para que ele possa logar de novo com a regra certa.
+            return; // Interrompe a execução para evitar erros.
+          }
+          // --- FIM DA NOVA LÓGICA ---
+
           // Usuário está logado, agora vamos verificar a assinatura
           try {
               userEmailDisplay.textContent = user.email;
@@ -533,6 +542,11 @@
             // Login bem-sucedido, o onAuthStateChanged cuidará de verificar a assinatura e mostrar o app
             errorMessage.classList.add('hidden');
             successMessage.classList.add('hidden');
+            
+            // --- NOVA LÓGICA DE MARCAÇÃO ---
+            // Marca no localStorage que este usuário já fez login com a nova regra de sessão.
+            localStorage.setItem('sessionTypeSet', 'true');
+            // --- FIM DA NOVA LÓGICA ---
           })
           .catch((error) => {
             // Trata erros de login ou de definição de persistência
@@ -1451,6 +1465,7 @@
     </script>
 </body>
 </html>
+
 
 
 
