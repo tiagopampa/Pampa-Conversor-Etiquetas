@@ -47,19 +47,31 @@
         .tab-button {
             flex-grow: 1;
             flex-basis: 0; 
-            padding: 0.25rem 0.5rem; /* ALTERADO: Diminuí ainda mais a altura (de 0.5rem para 0.25rem) */
+            padding: 0.5rem; /* Padding ajustado */
             font-size: 0.8rem; 
-            line-height: 1.2;
+            /* line-height: 1.2; -> Movido para os filhos */
             font-weight: 600; 
             text-align: center;
             border-radius: 0.5rem; /* Cantos arredondados (efeito balão) */
             background-color: #f3f4f6; /* Fundo cinza claro para inativos */
             color: #4b5563; /* Texto cinza escuro para inativos */
             transition: all 0.2s;
-            white-space: pre-wrap;
+            /* white-space: pre-wrap; -> Removido, pois vamos usar flexbox */
             border: 1px solid #e5e7eb; /* Borda sutil */
             box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* Sombra sutil */
+            
+            /* NOVAS REGRAS FLEXBOX PARA FORÇAR A QUEBRA VERTICAL */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
+        /* Aplica a altura de linha correta aos filhos do botão */
+        .tab-button > span, .tab-button > div {
+             line-height: 1.2;
+             display: block; /* Garante que se comportem como blocos empilhados */
+        }
+        
         .tab-button.active { 
             background-color: #2563eb; /* Fundo azul para ativo */
             color: #ffffff; /* Texto branco para ativo */
@@ -94,75 +106,54 @@
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen py-12">
-
-    <!-- Tela de Login com Firebase -->
-    <div id="login-screen" class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm mx-4">
-        <div class="text-center mb-8">
-            <h2 class="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 mb-2">
-                Pampa Soluções
-            </h2>
-            <h1 class="text-2xl font-bold text-gray-800">Conversor de Etiquetas</h1>
-            <p class="text-gray-500 mt-2">Acesso Restrito</p>
-        </div>
-        <form id="login-form">
-            <div class="mb-4">
-                <label for="email" class="block text-sm font-medium text-gray-700">E-mail</label>
-                <input type="email" id="email" name="email" autocomplete="username" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+    <!-- Tela de Login -->
+    <div id="login-screen" class="w-full max-w-md mx-auto p-8">
+        <div class="bg-white shadow-xl rounded-2xl p-8">
+            <div class="text-center mb-10">
+                <h1 class="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Pampa Soluções</h1>
+                <p class="mt-2 text-sm text-gray-500">Faça login para acessar o conversor</p>
             </div>
-            <div class="mb-2">
-                <label for="password" class="block text-sm font-medium text-gray-700">Senha</label>
-                <div class="relative mt-1">
-                    <input type="password" id="password" name="password" autocomplete="current-password" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10" required>
-                    <button type="button" id="toggle-password-visibility" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
-                        <svg id="eye-open-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        <svg id="eye-closed-icon" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 .847 0 1.673.124 2.468.352M10.582 10.582a3 3 0 11-4.243 4.243M16.5 16.5l-1.5-1.5" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 2l20 20" />
-                        </svg>
-                    </button>
+            
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="email" class="block text-sm font-medium text-gray-700">E-mail</label>
+                    <input type="email" id="email" name="email" autocomplete="username" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
                 </div>
-            </div>
-            <div class="text-right mb-4">
-                <a href="#" id="forgot-password-link" class="text-sm text-blue-600 hover:underline">Esqueceu a senha?</a>
-            </div>
-            <div id="error-message" class="hidden text-center text-sm text-red-600 mb-4"></div>
-            <div id="success-message" class="hidden text-center text-sm text-green-600 mb-4"></div>
-            <div>
-                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <div class="mb-2">
+                    <label for="password" class="block text-sm font-medium text-gray-700">Senha</label>
+                    <div class="relative mt-1">
+                        <input type="password" id="password" name="password" autocomplete="current-password" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10" required>
+                        <button type="button" id="toggle-password-visibility" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                            <svg id="eye-open-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <svg id="eye-closed-icon" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 1.865 0 3.627.62 5.034 1.675M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.938 17.938l-11.875-11.875M9.9 4.24A9.955 9.955 0 0112 4c4.478 0 8.268 2.943 9.542 7a10.052 10.052 0 01-2.312 4.1M1.636 6.062a9.96 9.96 0 002.312 4.1m0 0a9.96 9.96 0 006.012 3.878" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                 <div class="text-right mb-4">
+                    <a href="#" id="forgot-password-link" class="text-sm font-medium text-blue-600 hover:text-blue-500">Esqueceu a senha?</a>
+                </div>
+                
+                <div id="error-message" class="hidden my-4 p-3 bg-red-100 border border-red-300 text-red-800 text-sm font-semibold rounded-lg"></div>
+                <div id="success-message" class="hidden my-4 p-3 bg-green-100 border border-green-300 text-green-800 text-sm font-semibold rounded-lg"></div>
+                
+                <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
                     Entrar
                 </button>
-            </div>
-        </form>
-        
-        <div class="mt-8 pt-6 border-t">
-            <div class="bg-slate-50 border border-slate-200 rounded-lg p-6 text-center">
-                <h3 class="text-lg font-bold text-gray-900">Acesso Ilimitado</h3>
-                <p class="mt-2 text-3xl font-extrabold text-gray-900">R$ 13,50<span class="text-base font-medium text-gray-500">/mês</span></p>
-                <p class="text-xs text-gray-500">cobrança mensal</p>
-                <a href="https://pay.kiwify.com.br/qcxonee" target="_blank" rel="noopener noreferrer" class="mt-6 block w-full text-center py-3 px-4 border border-transparent rounded-md shadow-sm font-medium text-white bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    Assinar Agora
-                </a>
-                <ul class="mt-4 text-sm text-gray-600 space-y-2 text-left">
-                    <li class="flex items-center"><svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Uso ilimitado das ferramentas</li>
-                    <li class="flex items-center"><svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Suporte técnico via WhatsApp</li>
-                    <li class="flex items-center"><svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Atualizações e novas funções</li>
-                </ul>
-            </div>
-             <a href="https://wa.me/5537991316234" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center justify-center w-full px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-all shadow-sm">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 4.315 1.919 6.066l-1.225 4.485 4.635-1.218zM8.332 10.233c-.131-.26-.26-.263-.383-.263-.116 0-.249.001-.38.001-.131 0-.341.043-.518.234-.176.193-.661.652-.661 1.576 0 .924.675 1.823.769 1.954.093.13 1.328 2.118 3.231 2.87.536.208.96.33.96.425 0 .213.001.484-.043.553-.043.07-.248.043-.518-.043s-2.119-1.225-2.421-1.396c-.302-.17-.562-.192-.787-.109-.225.083-.464.26-.567.382-.103.123-.193.26-.282.403-.09.142-.17.143-.302.109-.131-.033-1.043-.463-1.985-1.225-.724-.584-1.224-1.303-1.363-1.532-.139-.23-.279-.353-.139-.661.14-.307.302-.382.403-.517.102-.135.142-.225.225-.383.083-.157.043-.28.001-.382-.043-.102-.341-.834-.465-.962s-.249-.109-.341-.109z"/></svg>
-                <span class="text-left">
-                    Dúvidas? Chame no WhatsApp
-                </span>
-            </a>
+            </form>
         </div>
     </div>
 
-    <!-- Aplicação Principal (escondida) -->
-    <div id="main-app" class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-5xl mx-4">
+    <!-- Aplicação Principal -->
+    <div id="main-app" class="w-full max-w-5xl mx-auto p-4 md:p-8">
+      <div class="bg-white shadow-xl rounded-2xl p-6 md:p-8">
         
+        <!-- Cabeçalho Logado -->
         <div class="flex justify-between items-center mb-4">
              <div class="text-center">
                 <h2 class="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
@@ -184,31 +175,38 @@
             <div class="flex justify-center space-x-1 md:space-x-2">
                  <!-- 1. Etiqueta com Excel -->
                 <button id="tab-excel" class="tab-button active">
-                    <span class="shopee-badge">SHOPEE</span><br>Etiqueta com<br>Excel
+                    <span class="shopee-badge">SHOPEE</span>
+                    <div>Etiqueta com<br>Excel</div>
                 </button>
                 <!-- 2. Etiqueta + Declaração -->
                 <button id="tab-declaration" class="tab-button">
-                    <span class="shopee-badge">SHOPEE</span><br>Etiqueta +<br>Declaração
+                    <span class="shopee-badge">SHOPEE</span>
+                    <div>Etiqueta +<br>Declaração</div>
                 </button>
                 <!-- 3. Etiqueta + Checklist -->
                 <button id="tab-checklist" class="tab-button">
-                    <span class="shopee-badge">SHOPEE</span><br>Etiqueta +<br>Checklist
+                    <span class="shopee-badge">SHOPEE</span>
+                    <div>Etiqueta +<br>Checklist</div>
                 </button>
                 <!-- 4. Vários Arquivos Declaração -->
                 <button id="tab-multi-decl" class="tab-button">
-                    <span class="shopee-badge">SHOPEE</span><br>Vários Arquivos<br>com Declaração
+                    <span class="shopee-badge">SHOPEE</span>
+                    <div>Vários Arquivos<br>com Declaração</div>
                 </button>
                 <!-- 5. Melhor Envio + Declaração -->
                 <button id="tab-melhor-envio" class="tab-button">
-                    <span class="melhor-envio-badge">MELHOR ENVIO</span><br>+ Declaração
+                    <span class="melhor-envio-badge">MELHOR ENVIO</span>
+                    <div>+ Declaração</div>
                 </button>
                 <!-- 6. Super Frete -->
                 <button id="tab-super-frete" class="tab-button">
-                    <span class="super-frete-badge">SUPER FRETE</span><br>1 por Arquivo
+                    <span class="super-frete-badge">SUPER FRETE</span>
+                    <div>1 por Arquivo</div>
                 </button>
                 <!-- 7. Apenas Recortar (NOVO) -->
                 <button id="tab-recortar" class="tab-button">
-                    <span class="recortar-badge">RECORTE</span><br>Apenas Recortar<br>4 Etiquetas
+                    <span class="recortar-badge">RECORTE</span>
+                    <div>Apenas Recortar<br>4 Etiquetas</div>
                 </button>
             </div>
         </div>
@@ -1642,8 +1640,4 @@
     </script>
 </body>
 </html>
-
-
-
-
 
