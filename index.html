@@ -45,27 +45,51 @@
             display: none; /* Ambos começam escondidos para evitar piscar a tela */
         }
         .tab-button {
-            padding: 0.5rem;
-            width: 120px;
-            height: 60px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
+            flex-grow: 1;
+            flex-basis: 0; 
+            padding: 0.25rem 0.5rem; /* ALTERADO: Diminuí ainda mais a altura (de 0.5rem para 0.25rem) */
+            font-size: 0.8rem; 
             line-height: 1.2;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
+            font-weight: 600; 
+            text-align: center;
+            border-radius: 0.5rem; /* Cantos arredondados (efeito balão) */
+            background-color: #f3f4f6; /* Fundo cinza claro para inativos */
+            color: #4b5563; /* Texto cinza escuro para inativos */
+            transition: all 0.2s;
+            white-space: pre-wrap;
+            border: 1px solid #e5e7eb; /* Borda sutil */
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* Sombra sutil */
         }
-        .tab-button.active {
-            background-color: #3b82f6;
-            color: white;
+        .tab-button.active { 
+            background-color: #2563eb; /* Fundo azul para ativo */
+            color: #ffffff; /* Texto branco para ativo */
+            border-color: #2563eb;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); /* Sombra mais forte */
         }
-        .tab-button:not(.active) {
-            background-color: #e5e7eb;
-            color: #4b5563;
+        .tab-button:disabled { 
+            color: #9ca3af; 
+            background-color: #f9fafb;
+            border-color: #f3f4f6;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .shopee-badge {
+            font-size: 0.65rem; font-weight: 700; color: #ee4d2d;
+        }
+        .melhor-envio-badge {
+            font-size: 0.65rem; font-weight: 700; color: #f99f00;
+        }
+        .super-frete-badge {
+             font-size: 0.65rem; font-weight: 700; color: #4b32a8;
+        }
+        .recortar-badge {
+            font-size: 0.65rem; font-weight: 700; color: #16a34a;
+        }
+        .tab-button.active .shopee-badge,
+        .tab-button.active .melhor-envio-badge,
+        .tab-button.active .super-frete-badge,
+        .tab-button.active .recortar-badge {
+            color: #ffffff; /* Cor dos badges quando o botão está ativo */
         }
     </style>
 </head>
@@ -156,13 +180,36 @@
 
         <!-- Abas de Navegação -->
         <div class="mb-8 overflow-x-auto pb-4">
-            <div class="flex justify-center space-x-2 md:space-x-4 border-b border-gray-200">
-                <button id="tab-excel" class="tab-button active">Etiqueta com<br>Excel</button>
-                <button id="tab-declaration" class="tab-button">Etiqueta +<br>Declaração</button>
-                <button id="tab-melhor-envio" class="tab-button">Melhor Envio +<br>Declaração</button>
-                <button id="tab-checklist" class="tab-button">Etiqueta +<br>Checklist</button>
-                <button id="tab-super-frete" class="tab-button">Super Frete</button>
-                <button id="tab-multi-decl" class="tab-button">Vários Arquivos<br>Declaração</button>
+            <!-- Removida a borda de baixo para o novo estilo de botão -->
+            <div class="flex justify-center space-x-1 md:space-x-2">
+                 <!-- 1. Etiqueta com Excel -->
+                <button id="tab-excel" class="tab-button active">
+                    <span class="shopee-badge">SHOPEE</span><br>Etiqueta com<br>Excel
+                </button>
+                <!-- 2. Etiqueta + Declaração -->
+                <button id="tab-declaration" class="tab-button">
+                    <span class="shopee-badge">SHOPEE</span><br>Etiqueta +<br>Declaração
+                </button>
+                <!-- 3. Etiqueta + Checklist -->
+                <button id="tab-checklist" class="tab-button">
+                    <span class="shopee-badge">SHOPEE</span><br>Etiqueta +<br>Checklist
+                </button>
+                <!-- 4. Vários Arquivos Declaração -->
+                <button id="tab-multi-decl" class="tab-button">
+                    <span class="shopee-badge">SHOPEE</span><br>Vários Arquivos<br>com Declaração
+                </button>
+                <!-- 5. Melhor Envio + Declaração -->
+                <button id="tab-melhor-envio" class="tab-button">
+                    <span class="melhor-envio-badge">MELHOR ENVIO</span><br>+ Declaração
+                </button>
+                <!-- 6. Super Frete -->
+                <button id="tab-super-frete" class="tab-button">
+                    <span class="super-frete-badge">SUPER FRETE</span><br>1 por Arquivo
+                </button>
+                <!-- 7. Apenas Recortar (NOVO) -->
+                <button id="tab-recortar" class="tab-button">
+                    <span class="recortar-badge">RECORTE</span><br>Apenas Recortar<br>4 Etiquetas
+                </button>
             </div>
         </div>
         
@@ -397,6 +444,32 @@
             </div>
         </div>
 
+        <!-- Ferramenta 7: Apenas Recortar (NOVO) -->
+        <div id="tool-recortar" class="hidden">
+            <h1 class="text-2xl font-bold text-gray-800 text-center">Apenas Recortar 4 Etiquetas por Folha</h1>
+            <p class="text-gray-500 mt-2 text-center">Envie um PDF A4 para recortar todas as páginas em 4 etiquetas 10x15.</p>
+
+            <div class="my-8">
+                 <div id="pdf-upload-area-recortar" class="upload-box max-w-md mx-auto">
+                    <input type="file" id="pdf-input-recortar" class="hidden" accept="application/pdf">
+                    <div id="pdf-upload-prompt-recortar">
+                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">Enviar PDF</span> ou arrastar</p>
+                    </div>
+                    <div id="pdf-file-info-recortar" class="hidden text-center">
+                          <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-recortar"></p>
+                          <button id="pdf-remove-file-recortar" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                    </div>
+                </div>
+            </div>
+            
+             <div id="convert-button-container-recortar" class="text-center">
+                <button id="convert-btn-recortar" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                    Recortar Arquivo
+                </button>
+            </div>
+        </div>
+
 
         <!-- Área de Carregamento e Resultados (Comum) -->
         <div id="loading-area" class="hidden text-center mt-8">
@@ -532,21 +605,18 @@
         const email = loginForm.email.value;
         const password = loginForm.password.value;
         
-        // Define a persistência da sessão para 'session', que desloga o usuário ao fechar a aba/navegador.
         setPersistence(auth, browserSessionPersistence)
           .then(() => {
-            // Após definir a persistência, tenta fazer o login
+            // CORREÇÃO: Definimos a marca ANTES de fazer o login
+            // Isso garante que o onAuthStateChanged não nos deslogue por engano
+            localStorage.setItem('sessionTypeSet', 'true');
             return signInWithEmailAndPassword(auth, email, password);
           })
           .then((userCredential) => {
-            // Login bem-sucedido, o onAuthStateChanged cuidará de verificar a assinatura e mostrar o app
+            // Login bem-sucedido
             errorMessage.classList.add('hidden');
             successMessage.classList.add('hidden');
-            
-            // --- NOVA LÓGICA DE MARCAÇÃO ---
-            // Marca no localStorage que este usuário já fez login com a nova regra de sessão.
-            localStorage.setItem('sessionTypeSet', 'true');
-            // --- FIM DA NOVA LÓGICA ---
+            // A marca não precisa mais ser definida aqui
           })
           .catch((error) => {
             // Trata erros de login ou de definição de persistência
@@ -608,6 +678,7 @@
         const tabChecklist = document.getElementById('tab-checklist');
         const tabSuperFrete = document.getElementById('tab-super-frete');
         const tabMultiDecl = document.getElementById('tab-multi-decl');
+        const tabRecortar = document.getElementById('tab-recortar'); // NOVO
         
         const toolExcel = document.getElementById('tool-excel');
         const toolDeclaration = document.getElementById('tool-declaration');
@@ -615,6 +686,7 @@
         const toolChecklist = document.getElementById('tool-checklist');
         const toolSuperFrete = document.getElementById('tool-super-frete');
         const toolMultiDecl = document.getElementById('tool-multi-decl');
+        const toolRecortar = document.getElementById('tool-recortar'); // NOVO
 
         function showTool(toolToShow) {
             toolExcel.classList.add('hidden');
@@ -623,6 +695,7 @@
             toolChecklist.classList.add('hidden');
             toolSuperFrete.classList.add('hidden');
             toolMultiDecl.classList.add('hidden');
+            toolRecortar.classList.add('hidden'); // NOVO
             resetCommonUI();
             
             const allTabs = document.querySelectorAll('.tab-button');
@@ -635,6 +708,7 @@
                 'checklist': { tool: toolChecklist, tab: tabChecklist },
                 'super-frete': { tool: toolSuperFrete, tab: tabSuperFrete },
                 'multi-decl': { tool: toolMultiDecl, tab: tabMultiDecl },
+                'recortar': { tool: toolRecortar, tab: tabRecortar }, // NOVO
             };
 
             if (toolsMap[toolToShow]) {
@@ -649,6 +723,7 @@
         tabChecklist.addEventListener('click', () => showTool('checklist'));
         tabSuperFrete.addEventListener('click', () => showTool('super-frete'));
         tabMultiDecl.addEventListener('click', () => showTool('multi-decl'));
+        tabRecortar.addEventListener('click', () => showTool('recortar')); // NOVO
 
 
         // --- Elementos e Lógica Comuns ---
@@ -711,6 +786,11 @@
              selectedPdfFilesMulti = null;
              resetUploadArea(pdfUploadAreaMulti, pdfInputMulti, pdfUploadPromptMulti, pdfFileInfoMulti);
              checkEnableConvertButtonMulti();
+
+             // NOVO - Reset para Ferramenta 7
+             selectedPdfFileRecortar = null;
+             resetUploadArea(pdfUploadAreaRecortar, pdfInputRecortar, pdfUploadPromptRecortar, pdfFileInfoRecortar);
+             checkEnableConvertButtonRecortar();
         }
 
 
@@ -722,12 +802,24 @@
         
         function createDownloadLink(bytes, fileName, linkText) {
             const blob = new Blob([bytes], { type: 'application/pdf' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = fileName;
-            link.className = 'bg-blue-600 text-white p-4 rounded-lg flex items-center justify-center hover:bg-blue-700 transition-all text-lg font-semibold';
-            link.innerHTML = `<span>${linkText}</span><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>`;
-            downloadLinksContainer.appendChild(link);
+            const blobUrl = URL.createObjectURL(blob); // Criar a URL uma vez
+
+            // 1. Botão de Download (como antes)
+            const downloadLink = document.createElement('a');
+            downloadLink.href = blobUrl;
+            downloadLink.download = fileName; // Força o download
+            downloadLink.className = 'bg-blue-600 text-white p-4 rounded-lg flex items-center justify-center hover:bg-blue-700 transition-all text-lg font-semibold';
+            downloadLink.innerHTML = `<span>${linkText}</span><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>`;
+            
+            // 2. Botão de Visualizar (NOVO)
+            const viewLink = document.createElement('a');
+            viewLink.href = blobUrl;
+            viewLink.target = '_blank'; // Abre em nova aba
+            viewLink.className = 'bg-gray-100 text-gray-700 border border-gray-300 p-4 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-all text-lg font-semibold';
+            viewLink.innerHTML = `<span>Visualizar em nova aba</span><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`;
+
+            downloadLinksContainer.appendChild(downloadLink);
+            downloadLinksContainer.appendChild(viewLink);
         }
 
         // --- LÓGICA DA FERRAMENTA 1: ETIQUETA COM EXCEL ---
@@ -1028,6 +1120,7 @@
         let selectedPdfFileCheck = null;
         let selectedPdfFilesSuperFrete = null;
         let selectedPdfFilesMulti = null;
+        let selectedPdfFileRecortar = null; // NOVO
         
         // Elementos Ferramenta 2: Declaração
         const pdfUploadAreaDecl = document.getElementById('pdf-upload-area-single-decl');
@@ -1077,11 +1170,21 @@
         const pdfRemoveFileBtnMulti = document.getElementById('pdf-remove-file-multi');
         const convertBtnMulti = document.getElementById('convert-btn-multi');
 
+        // NOVO - Elementos Ferramenta 7: Recortar
+        const pdfUploadAreaRecortar = document.getElementById('pdf-upload-area-recortar');
+        const pdfInputRecortar = document.getElementById('pdf-input-recortar');
+        const pdfUploadPromptRecortar = document.getElementById('pdf-upload-prompt-recortar');
+        const pdfFileInfoRecortar = document.getElementById('pdf-file-info-recortar');
+        const pdfFileNameElRecortar = document.getElementById('pdf-file-name-recortar');
+        const pdfRemoveFileBtnRecortar = document.getElementById('pdf-remove-file-recortar');
+        const convertBtnRecortar = document.getElementById('convert-btn-recortar');
+
         function checkEnableConvertButtonDeclaration() { convertBtnDecl.disabled = !(selectedPdfFileDecl && labelCountInputDecl.value > 0); }
         function checkEnableConvertButtonMelhorEnvio() { convertBtnMelhorEnvio.disabled = !(selectedPdfFileMelhorEnvio && labelCountInputMelhorEnvio.value > 0); }
         function checkEnableConvertButtonChecklist() { convertBtnCheck.disabled = !(selectedPdfFileCheck && labelCountInputCheck.value > 0); }
         function checkEnableConvertButtonSuperFrete() { convertBtnSuperFrete.disabled = !(selectedPdfFilesSuperFrete && selectedPdfFilesSuperFrete.length > 0); }
         function checkEnableConvertButtonMulti() { convertBtnMulti.disabled = !(selectedPdfFilesMulti && selectedPdfFilesMulti.length > 0); }
+        function checkEnableConvertButtonRecortar() { convertBtnRecortar.disabled = !selectedPdfFileRecortar; } // NOVO
         
         // Setup Ferramenta 2
         setupUploadArea(pdfUploadAreaDecl, pdfInputDecl, pdfUploadPromptDecl, pdfFileInfoDecl, pdfFileNameElDecl, pdfRemoveFileBtnDecl, (file) => { selectedPdfFileDecl = file; checkEnableConvertButtonDeclaration(); });
@@ -1106,6 +1209,11 @@
         setupUploadArea(pdfUploadAreaMulti, pdfInputMulti, pdfUploadPromptMulti, pdfFileInfoMulti, pdfFileNameElMulti, pdfRemoveFileBtnMulti, (files) => { selectedPdfFilesMulti = files; checkEnableConvertButtonMulti(); });
         convertBtnMulti.addEventListener('click', () => { if (selectedPdfFilesMulti && selectedPdfFilesMulti.length > 0) { processMultiPdfSingleLabel(selectedPdfFilesMulti); } });
         
+        // NOVO - Setup Ferramenta 7: Recortar
+        setupUploadArea(pdfUploadAreaRecortar, pdfInputRecortar, pdfUploadPromptRecortar, pdfFileInfoRecortar, pdfFileNameElRecortar, pdfRemoveFileBtnRecortar, (file) => { selectedPdfFileRecortar = file; checkEnableConvertButtonRecortar(); });
+        convertBtnRecortar.addEventListener('click', () => { if (selectedPdfFileRecortar) { processSimpleCutPdf(selectedPdfFileRecortar); } });
+
+
         async function processSuperFretePdfs(files) {
             document.getElementById('tool-super-frete').classList.add('hidden');
             loadingArea.classList.remove('hidden');
@@ -1178,6 +1286,75 @@
 
             } catch (error) {
                 console.error(`Erro ao processar PDFs do Super Frete:`, error);
+                progressText.textContent = `Erro: ${error.message}.`;
+                progressBar.style.backgroundColor = '#ef4444';
+            }
+        }
+
+        // NOVO - Lógica da Ferramenta 7: Apenas Recortar
+        async function processSimpleCutPdf(pdfFile) {
+            document.getElementById('tool-recortar').classList.add('hidden');
+            loadingArea.classList.remove('hidden');
+            updateProgress(0, 0); // O total de páginas é desconhecido no início
+
+            try {
+                progressText.textContent = 'Lendo PDF...';
+                const pdfBytes = await pdfFile.arrayBuffer();
+                const sourceDoc = await PDFDocument.load(pdfBytes);
+                const finalPdfDoc = await PDFDocument.create();
+                
+                const totalSourcePages = sourceDoc.getPageCount();
+                const totalLabelsToProcess = totalSourcePages * 4;
+                updateProgress(0, totalLabelsToProcess);
+                
+                const CM_TO_POINTS = 28.3465;
+                const targetWidth = 10 * CM_TO_POINTS;
+                const targetHeight = 15 * CM_TO_POINTS;
+
+                let labelsProcessed = 0;
+                
+                for (let pageIndex = 0; pageIndex < totalSourcePages; pageIndex++) {
+                    progressText.textContent = `Processando página ${pageIndex + 1} de ${totalSourcePages}...`;
+                    const sourcePage = sourceDoc.getPages()[pageIndex];
+                    const { width: sourceWidth, height: sourceHeight } = sourcePage.getSize();
+                    const quadrantWidth = sourceWidth / 2;
+                    const quadrantHeight = sourceHeight / 2;
+                    
+                    const quadrants = [
+                        { x: 0, y: sourceHeight / 2 }, // Superior Esquerdo
+                        { x: 0, y: 0 },                 // Inferior Esquerdo
+                        { x: sourceWidth / 2, y: sourceHeight / 2 }, // Superior Direito
+                        { x: sourceWidth / 2, y: 0 }                  // Inferior Direito
+                    ];
+                    
+                    for (const quadrant of quadrants) {
+                        const newLabelPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
+                        const embeddedLabel = await finalPdfDoc.embedPage(sourcePage, {
+                            left: quadrant.x, bottom: quadrant.y,
+                            right: quadrant.x + quadrantWidth, top: quadrant.y + quadrantHeight
+                        });
+                        const scale = Math.min(targetWidth / embeddedLabel.width, targetHeight / embeddedLabel.height);
+                        newLabelPage.drawPage(embeddedLabel, {
+                            x: (targetWidth - embeddedLabel.width * scale) / 2,
+                            y: (targetHeight - embeddedLabel.height * scale) / 2,
+                            width: embeddedLabel.width * scale, height: embeddedLabel.height * scale
+                        });
+                        
+                        labelsProcessed++;
+                        updateProgress(labelsProcessed, totalLabelsToProcess);
+                    }
+                }
+
+                progressText.textContent = 'Salvando PDF final...';
+                const finalPdfBytes = await finalPdfDoc.save();
+                const newFileName = `conversor_pampa_recortado_${labelsProcessed}_etiquetas.pdf`;
+                createDownloadLink(finalPdfBytes, newFileName, `Baixar PDF com ${labelsProcessed} etiquetas`);
+
+                loadingArea.classList.add('hidden');
+                resultsArea.classList.remove('hidden');
+
+            } catch (error) {
+                 console.error(`Erro ao recortar PDF:`, error);
                 progressText.textContent = `Erro: ${error.message}.`;
                 progressBar.style.backgroundColor = '#ef4444';
             }
@@ -1465,6 +1642,7 @@
     </script>
 </body>
 </html>
+
 
 
 
