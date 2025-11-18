@@ -19,64 +19,65 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1002701210055535"
          crossorigin="anonymous"></script>
 
+    <!-- Bibliotecas -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PDF-LIB -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    
+    <!-- CORREÇÃO: Usando CDNJS para XLSX (Estável) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" xintegrity="sha512-r98/5DyLFk7n7P5sY5poMIWp0QqwRzw2t9fXp5m+1J4rW/y3aTy6k5/0+1/275rW85598" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <!-- PDF.js (Necessário para a ferramenta Recortar) -->
+    <script src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+        body { font-family: 'Inter', sans-serif; }
         .upload-box {
-            border: 2px dashed #d1d5db;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
+            border: 2px dashed #d1d5db; border-radius: 0.75rem; padding: 1.5rem;
+            text-align: center; cursor: pointer; transition: all 0.2s ease-in-out;
         }
-        .upload-box:hover {
-            border-color: #3b82f6;
-            background-color: #f9fafb;
-        }
-        #main-app, #login-screen {
-            display: none; /* Ambos começam escondidos para evitar piscar a tela */
-        }
+        .upload-box:hover { border-color: #3b82f6; background-color: #f9fafb; }
+        
+        /* --- ESTILO DOS BOTÕES --- */
         .tab-button {
             flex-grow: 1;
             flex-basis: 0; 
-            padding: 0.5rem; /* Padding ajustado */
+            padding: 0.5rem; 
             font-size: 0.8rem; 
-            /* line-height: 1.2; -> Movido para os filhos */
             font-weight: 600; 
             text-align: center;
-            border-radius: 0.5rem; /* Cantos arredondados (efeito balão) */
-            background-color: #f3f4f6; /* Fundo cinza claro para inativos */
-            color: #4b5563; /* Texto cinza escuro para inativos */
+            border-radius: 0.5rem; 
+            background-color: #f3f4f6; 
+            color: #4b5563; 
             transition: all 0.2s;
-            /* white-space: pre-wrap; -> Removido, pois vamos usar flexbox */
-            border: 1px solid #e5e7eb; /* Borda sutil */
-            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* Sombra sutil */
+            border: 1px solid #e5e7eb; 
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             
-            /* NOVAS REGRAS FLEXBOX PARA FORÇAR A QUEBRA VERTICAL */
+            /* Flexbox para garantir que o texto fique embaixo do badge */
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            gap: 4px;
         }
-        /* Aplica a altura de linha correta aos filhos do botão */
+
+        /* Garante que o texto e o badge ocupem a linha toda */
         .tab-button > span, .tab-button > div {
              line-height: 1.2;
-             display: block; /* Garante que se comportem como blocos empilhados */
+             display: block; 
+             width: 100%;
         }
         
         .tab-button.active { 
-            background-color: #2563eb; /* Fundo azul para ativo */
-            color: #ffffff; /* Texto branco para ativo */
+            background-color: #2563eb; 
+            color: #ffffff; 
             border-color: #2563eb;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); /* Sombra mais forte */
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); 
         }
         .tab-button:disabled { 
             color: #9ca3af; 
@@ -85,121 +86,118 @@
             cursor: not-allowed;
             box-shadow: none;
         }
-        .shopee-badge {
-            font-size: 0.65rem; font-weight: 700; color: #ee4d2d;
-        }
-        .melhor-envio-badge {
-            font-size: 0.65rem; font-weight: 700; color: #f99f00;
-        }
-        .super-frete-badge {
-             font-size: 0.65rem; font-weight: 700; color: #4b32a8;
-        }
-        .recortar-badge {
-            font-size: 0.65rem; font-weight: 700; color: #16a34a;
-        }
+        
+        /* Cores dos Badges */
+        .shopee-badge { font-size: 0.65rem; font-weight: 700; color: #ee4d2d; }
+        .melhor-envio-badge { font-size: 0.65rem; font-weight: 700; color: #f99f00; }
+        .super-frete-badge { font-size: 0.65rem; font-weight: 700; color: #4b32a8; }
+        .recortar-badge { font-size: 0.65rem; font-weight: 700; color: #16a34a; }
+        
+        /* Quando ativo, o texto do badge fica branco */
         .tab-button.active .shopee-badge,
         .tab-button.active .melhor-envio-badge,
         .tab-button.active .super-frete-badge,
         .tab-button.active .recortar-badge {
-            color: #ffffff; /* Cor dos badges quando o botão está ativo */
+            color: #ffffff; 
         }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen py-12">
-    <!-- Tela de Login -->
-    <div id="login-screen" class="w-full max-w-md mx-auto p-8">
-        <div class="bg-white shadow-xl rounded-2xl p-8">
-            <div class="text-center mb-10">
-                <h1 class="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Pampa Soluções</h1>
-                <p class="mt-2 text-sm text-gray-500">Faça login para acessar o conversor</p>
-            </div>
-            
-            <form id="login-form">
-                <div class="mb-4">
-                    <label for="email" class="block text-sm font-medium text-gray-700">E-mail</label>
-                    <input type="email" id="email" name="email" autocomplete="username" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
-                </div>
-                <div class="mb-2">
-                    <label for="password" class="block text-sm font-medium text-gray-700">Senha</label>
-                    <div class="relative mt-1">
-                        <input type="password" id="password" name="password" autocomplete="current-password" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10" required>
-                        <button type="button" id="toggle-password-visibility" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
-                            <svg id="eye-open-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                            <svg id="eye-closed-icon" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 1.865 0 3.627.62 5.034 1.675M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.938 17.938l-11.875-11.875M9.9 4.24A9.955 9.955 0 0112 4c4.478 0 8.268 2.943 9.542 7a10.052 10.052 0 01-2.312 4.1M1.636 6.062a9.96 9.96 0 002.312 4.1m0 0a9.96 9.96 0 006.012 3.878" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                 <div class="text-right mb-4">
-                    <a href="#" id="forgot-password-link" class="text-sm font-medium text-blue-600 hover:text-blue-500">Esqueceu a senha?</a>
-                </div>
-                
-                <div id="error-message" class="hidden my-4 p-3 bg-red-100 border border-red-300 text-red-800 text-sm font-semibold rounded-lg"></div>
-                <div id="success-message" class="hidden my-4 p-3 bg-green-100 border border-green-300 text-green-800 text-sm font-semibold rounded-lg"></div>
-                
-                <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
-                    Entrar
-                </button>
-            </form>
-        </div>
 
-        <!-- Bloco de Assinatura -->
-        <div class="bg-white shadow-xl rounded-2xl p-8 mt-8">
-            <h2 class="text-2xl font-bold text-center text-gray-800">Acesso Ilimitado</h2>
-            <p class="text-center text-4xl font-extrabold text-gray-900 my-2">
-                R$ 13,50<span class="text-xl font-medium text-gray-500">/mês</span>
-            </p>
-            <p class="text-center text-sm text-gray-500 mb-6">cobrança mensal</p>
+    <!-- Tela de Login (Wrapper para controle de visibilidade) -->
+    <!-- O ID login-screen fica aqui para controlar o show/hide sem conflito com o grid interno -->
+    <div id="login-screen" class="hidden w-full">
+        <div class="max-w-4xl mx-auto p-4 md:p-8 md:grid md:grid-cols-2 md:gap-8 md:items-start">
             
-            <a href="https://pay.kiwify.com.br/qcxonee" target="_blank" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-bold text-white bg-green-500 hover:bg-green-600 transition-all">
-                Assinar Agora
-            </a>
-            
-            <ul class="mt-6 space-y-3">
-                <li class="flex items-center">
-                    <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            <!-- Bloco de Login -->
+            <div class="bg-white shadow-xl rounded-2xl p-8">
+                <div class="text-center mb-10">
+                    <h1 class="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Pampa Soluções</h1>
+                    <p class="mt-2 text-sm text-gray-500">Faça login para acessar o conversor</p>
+                </div>
+                
+                <form id="login-form">
+                    <div class="mb-4">
+                        <label for="email" class="block text-sm font-medium text-gray-700">E-mail</label>
+                        <input type="email" id="email" name="email" autocomplete="username" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                    </div>
+                    <div class="mb-2">
+                        <label for="password" class="block text-sm font-medium text-gray-700">Senha</label>
+                        <div class="relative mt-1">
+                            <input type="password" id="password" name="password" autocomplete="current-password" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10" required>
+                            <button type="button" id="toggle-password-visibility" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                                <svg id="eye-open-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                <svg id="eye-closed-icon" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 1.865 0 3.627.62 5.034 1.675M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.938 17.938l-11.875-11.875M9.9 4.24A9.955 9.955 0 0112 4c4.478 0 8.268 2.943 9.542 7a10.052 10.052 0 01-2.312 4.1M1.636 6.062a9.96 9.96 0 002.312 4.1m0 0a9.96 9.96 0 006.012 3.878" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-right mb-4">
+                        <a href="#" id="forgot-password-link" class="text-sm font-medium text-blue-600 hover:text-blue-500">Esqueceu a senha?</a>
+                    </div>
+                    
+                    <div id="error-message" class="hidden my-4 p-3 bg-red-100 border border-red-300 text-red-800 text-sm font-semibold rounded-lg"></div>
+                    <div id="success-message" class="hidden my-4 p-3 bg-green-100 border border-green-300 text-green-800 text-sm font-semibold rounded-lg"></div>
+                    
+                    <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                        Entrar
+                    </button>
+                </form>
+            </div>
+
+            <!-- Bloco de Assinatura -->
+            <div class="bg-white shadow-xl rounded-2xl p-8 mt-8 md:mt-0">
+                <h2 class="text-2xl font-bold text-center text-gray-800">Acesso Ilimitado</h2>
+                <p class="text-center text-4xl font-extrabold text-gray-900 my-2">
+                    R$ 13,50<span class="text-xl font-medium text-gray-500">/mês</span>
+                </p>
+                <p class="text-center text-sm text-gray-500 mb-6">cobrança mensal</p>
+                
+                <a href="https://pay.kiwify.com.br/qcxonee" target="_blank" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-bold text-white bg-green-500 hover:bg-green-600 transition-all">
+                    Assinar Agora
+                </a>
+                
+                <ul class="mt-6 space-y-3">
+                    <li class="flex items-center">
+                        <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span class="text-gray-700">Uso ilimitado das ferramentas</span>
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span class="text-gray-700">Suporte técnico via WhatsApp</span>
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span class="text-gray-700">Atualizações e novas funções</span>
+                    </li>
+                </ul>
+                
+                <a href="https://api.whatsapp.com/send/?phone=5537991316234&text&type=phone_number&app_absent=0" target="_blank" class="w-full flex justify-center items-center py-3 px-4 border-2 border-green-600 text-green-600 rounded-lg shadow-sm text-lg font-bold hover:bg-green-50 transition-all mt-8">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
-                    <span class="text-gray-700">Uso ilimitado das ferramentas</span>
-                </li>
-                <li class="flex items-center">
-                    <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span class="text-gray-700">Suporte técnico via WhatsApp</span>
-                </li>
-                <li class="flex items-center">
-                    <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span class="text-gray-700">Atualizações e novas funções</span>
-                </li>
-            </ul>
-            
-            <a href="https://api.whatsapp.com/send/?phone=5537991316234&text&type=phone_number&app_absent=0" target="_blank" class="w-full flex justify-center items-center py-3 px-4 border-2 border-green-600 text-green-600 rounded-lg shadow-sm text-lg font-bold hover:bg-green-50 transition-all mt-8">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                <span>Dúvidas? Chame no WhatsApp</span>
-            </a>
+                    <span>Dúvidas? Chame no WhatsApp</span>
+                </a>
+            </div>
         </div>
     </div>
 
     <!-- Aplicação Principal -->
-    <div id="main-app" class="w-full max-w-5xl mx-auto p-4 md:p-8">
+    <div id="main-app" class="hidden w-full max-w-5xl mx-auto p-4 md:p-8">
       <div class="bg-white shadow-xl rounded-2xl p-6 md:p-8">
         
         <!-- Cabeçalho Logado -->
         <div class="flex justify-between items-center mb-4">
-             <div class="text-center">
+             <div class="text-left">
                 <h2 class="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
                     Pampa Soluções
                 </h2>
+                <p class="text-sm font-bold text-gray-600 -mt-1">Conversor de Etiquetas</p>
              </div>
              <div class="flex items-center">
                 <div class="text-right mr-4">
@@ -210,9 +208,8 @@
              </div>
         </div>
 
-        <!-- Abas de Navegação -->
+        <!-- Abas de Navegação (NOVO LAYOUT) -->
         <div class="mb-8 overflow-x-auto pb-4">
-            <!-- Removida a borda de baixo para o novo estilo de botão -->
             <div class="flex justify-center space-x-1 md:space-x-2">
                  <!-- 1. Etiqueta com Excel -->
                 <button id="tab-excel" class="tab-button active">
@@ -354,40 +351,6 @@
                     Confira sempre o número do RASTREIO em baixo pra ter certeza que está correto!!
                 </div>
                 <button id="convert-btn-melhor-envio" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
-                    Organizar Arquivo
-                </button>
-            </div>
-        </div>
-
-        <!-- Ferramenta: Clique Retire + Declaração -->
-        <div id="tool-clique-retire" class="hidden">
-            <h1 class="text-2xl font-bold text-gray-800 text-center">Organizador Clique Retire + Declaração</h1>
-            <p class="text-gray-500 mt-2 text-center">Para etiquetas Clique Retire. Informe o número de etiquetas e envie o PDF para intercalar.</p>
-
-            <div class="my-8">
-                 <div id="pdf-upload-area-clique-retire" class="upload-box max-w-md mx-auto">
-                    <input type="file" id="pdf-input-clique-retire" class="hidden" accept="application/pdf">
-                    <div id="pdf-upload-prompt-clique-retire">
-                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">1. Enviar PDF Único</span></p>
-                    </div>
-                    <div id="pdf-file-info-clique-retire" class="hidden text-center">
-                          <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-clique-retire"></p>
-                          <button id="pdf-remove-file-clique-retire" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="my-8">
-                <label for="label-count-clique-retire" class="block text-sm font-medium text-gray-700 text-center mb-2">2. Informe o número exato de etiquetas</label>
-                <input type="number" id="label-count-clique-retire" name="label-count-clique-retire" min="1" class="mx-auto block w-full max-w-xs px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Ex: 7" required>
-            </div>
-            
-             <div id="convert-button-container-clique-retire" class="text-center">
-                <div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm font-semibold rounded-lg">
-                    Confira sempre o número do RASTREIO em baixo pra ter certeza que está correto!!
-                </div>
-                <button id="convert-btn-clique-retire" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
                     Organizar Arquivo
                 </button>
             </div>
@@ -582,16 +545,10 @@
       // Observador do estado de autenticação
       onAuthStateChanged(auth, async (user) => {
         if (user) {
-          // --- NOVA LÓGICA DE VERIFICAÇÃO ---
-          // Verifica se o usuário já logou com o novo sistema de sessão.
-          // Se não houver a marca 'sessionTypeSet', significa que é uma sessão antiga e persistente.
           if (!localStorage.getItem('sessionTypeSet')) {
-            signOut(auth); // Força o logout para que ele possa logar de novo com a regra certa.
-            return; // Interrompe a execução para evitar erros.
+            signOut(auth);
+            return;
           }
-          // --- FIM DA NOVA LÓGICA ---
-
-          // Usuário está logado, agora vamos verificar a assinatura
           try {
               userEmailDisplay.textContent = user.email;
               const userDocRef = doc(db, "users", user.uid);
@@ -599,26 +556,23 @@
 
               if (userDoc.exists()) {
                 const userData = userDoc.data();
-                const dataExpiracao = userData.dataExpiracao.toDate(); // Converte para objeto Date
+                const dataExpiracao = userData.dataExpiracao.toDate();
                 
-                // Formata e exibe a data de expiração
                 const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
                 userExpirationDisplay.textContent = `Acesso expira em: ${dataExpiracao.toLocaleDateString('pt-BR', options)}`;
 
                 const hoje = new Date();
 
                 if (dataExpiracao > hoje) {
-                  // Assinatura válida
-                  loginScreen.style.display = 'none';
-                  mainApp.style.display = 'block';
+                  // Usa classes para mostrar/esconder, preservando o layout grid/flex
+                  loginScreen.classList.add('hidden');
+                  mainApp.classList.remove('hidden');
                 } else {
-                  // Assinatura expirada
                   errorMessage.textContent = 'Sua assinatura expirou. Por favor, renove para continuar.';
                   errorMessage.classList.remove('hidden');
-                  signOut(auth); // Desloga o usuário
+                  signOut(auth);
                 }
               } else {
-                // Documento do usuário não encontrado (não deveria acontecer se a automação funcionar)
                 errorMessage.textContent = 'Não foi possível verificar sua assinatura. Contate o suporte.';
                 errorMessage.classList.remove('hidden');
                 signOut(auth);
@@ -630,9 +584,9 @@
               signOut(auth);
           }
         } else {
-          // Usuário está deslogado
-          loginScreen.style.display = 'block';
-          mainApp.style.display = 'none';
+          // Usa classes para mostrar/esconder
+          loginScreen.classList.remove('hidden');
+          mainApp.classList.add('hidden');
           userEmailDisplay.textContent = '';
           userExpirationDisplay.textContent = '';
         }
@@ -646,19 +600,14 @@
         
         setPersistence(auth, browserSessionPersistence)
           .then(() => {
-            // CORREÇÃO: Definimos a marca ANTES de fazer o login
-            // Isso garante que o onAuthStateChanged não nos deslogue por engano
             localStorage.setItem('sessionTypeSet', 'true');
             return signInWithEmailAndPassword(auth, email, password);
           })
           .then((userCredential) => {
-            // Login bem-sucedido
             errorMessage.classList.add('hidden');
             successMessage.classList.add('hidden');
-            // A marca não precisa mais ser definida aqui
           })
           .catch((error) => {
-            // Trata erros de login ou de definição de persistência
             console.error("Erro de login:", error.code, error.message);
             errorMessage.textContent = 'E-mail ou senha inválidos.';
             successMessage.classList.add('hidden');
@@ -673,7 +622,6 @@
         });
       });
 
-      // Evento para mostrar/esconder senha
       togglePasswordBtn.addEventListener('click', () => {
           const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
           passwordInput.setAttribute('type', type);
@@ -681,7 +629,6 @@
           eyeClosedIcon.classList.toggle('hidden');
       });
 
-      // Evento para redefinir senha
       forgotPasswordLink.addEventListener('click', (e) => {
         e.preventDefault();
         const email = prompt("Por favor, digite o e-mail da sua conta para redefinir a senha:");
@@ -694,7 +641,6 @@
                 })
                 .catch((error) => {
                     console.error("Erro ao enviar e-mail de redefinição:", error);
-                    // Mostra a mesma mensagem de sucesso por segurança, para não revelar quais e-mails estão cadastrados.
                     errorMessage.classList.add('hidden');
                     successMessage.textContent = 'Se uma conta existir para este e-mail, um link de redefinição foi enviado.';
                     successMessage.classList.remove('hidden');
@@ -1681,4 +1627,3 @@
     </script>
 </body>
 </html>
-
