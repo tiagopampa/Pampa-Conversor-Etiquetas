@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conciliador Pampa - BETA</title>
+    
+    <!-- Bibliotecas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDK (Mesma versão do Conversor) -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+      import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+      import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+      // Configuração do Firebase (A MESMA do seu index.html)
+      const firebaseConfig = {
+        apiKey: "AIzaSyA949XvgFG-mEfthKQK4k_Gc_AhT4x0fGA",
+        authDomain: "conversor-pampa.firebaseapp.com",
+        projectId: "conversor-pampa",
+        storageBucket: "conversor-pampa.appspot.com",
+        messagingSenderId: "88472969827",
+        appId: "1:88472969827:web:60de271f7bde3249324e56",
+        measurementId: "G-DCH9PGSZ6B"
+      };
+
+      // Inicializa Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Função segura de redirecionamento
+      function redirectToLogin() {
+          try {
+              window.location.href = 'index.html';
+          } catch (e) {
+              console.warn("Redirecionamento falhou (normal em ambiente de teste):", e);
+              alert("Você seria redirecionado para o login (index.html).");
+          }
+      }
+
+      // --- Lógica de Proteção (O "Pulo do Gato") ---
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // Usuário está logado, verificamos a assinatura
+             try {
+                const userDocRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    const dataExpiracao = userData.dataExpiracao.toDate();
+                    const hoje = new Date();
+
+                    if (dataExpiracao > hoje) {
+                        // Tudo certo: Logado e Assinatura Ativa.
+                        // Remove a tela de carregamento e mostra o app
+                        const loadingScreen = document.getElementById('loading-screen');
+                        const appContent = document.getElementById('app-content');
+                        if(loadingScreen) loadingScreen.classList.add('hidden');
+                        if(appContent) appContent.classList.remove('hidden');
+                        
+                        // Preenche o e-mail do usuário
+                        const emailDisplay = document.getElementById('user-email');
+                        if(emailDisplay) emailDisplay.textContent = user.email;
+                    } else {
+                        // Assinatura expirada
+                        alert('Sua assinatura expirou. Redirecionando...');
+                        redirectToLogin();
+                    }
+                } else {
+                    // Erro de conta
+                    alert('Erro ao verificar conta. Redirecionando...');
+                    redirectToLogin();
+                }
+            } catch (e) {
+                console.error("Erro na verificação:", e);
+                redirectToLogin();
+            }
+        } else {
+          // NÃO está logado: Chuta de volta para o login
+          redirectToLogin();
+        }
+      });
+      
+      // Logout simples
+      const logoutBtn = document.getElementById('logout-btn');
+      if (logoutBtn) {
+          logoutBtn.addEventListener('click', () => {
+              signOut(auth).then(() => {
+                  redirectToLogin();
+              }).catch((error) => {
+                  console.error("Erro ao sair:", error);
+              });
+          });
+      }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.2s ease;
+        }
+        .drop-zone:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .card-summary {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Tela de Carregamento (Proteção visual enquanto verifica login) -->
+    <div id="loading-screen" class="fixed inset-0 bg-white flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-500 font-medium">Verificando acesso...</p>
+        </div>
+    </div>
+
+    <!-- Conteúdo do App (Inicia oculto) -->
+    <div id="app-content" class="hidden max-w-6xl mx-auto p-6">
+        
+        <!-- Cabeçalho -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <div>
+                <h1 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Conciliador Pampa <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded ml-2 align-middle">BETA V12</span></h1>
+                <p class="text-sm text-gray-500 mt-1">Conferência Automática de Recebíveis Shopee</p>
+            </div>
+            <div class="flex items-center gap-4 mt-4 md:mt-0">
+                <div class="text-right hidden sm:block">
+                    <p class="text-xs text-gray-400">Logado como</p>
+                    <p id="user-email" class="text-sm font-medium text-gray-700">...</p>
+                </div>
+                <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700 font-medium border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
+                    Sair
+                </button>
+            </div>
+        </div>
+
+        <!-- Área de Upload -->
+        <div class="grid md:grid-cols-2 gap-6 mb-8">
+            <!-- Card Shopee -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-gray-800 flex items-center">
+                        <span class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center mr-3 text-xs font-bold">1</span>
+                        Relatório Shopee
+                    </h3>
+                    <span class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded">Excel (.xlsx)</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">Do painel Shopee: "Minhas Rendas" > "Baixar"</p>
+                
+                <div id="drop-shopee" class="drop-zone rounded-lg p-8 text-center cursor-pointer relative">
+                    <input type="file" id="input-shopee" class="hidden" accept=".xlsx, .xls">
+                    <div id="content-shopee">
+                        <svg class="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                        <p class="text-sm text-gray-500">Clique para carregar</p>
+                    </div>
+                    <div id="file-shopee" class="hidden">
+                        <div class="flex items-center justify-center text-green-600 font-medium text-sm">
+                            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            <span id="name-shopee" class="truncate max-w-[200px]">arquivo.xlsx</span>
+                        </div>
+                        <button id="btn-remove-shopee" class="text-xs text-red-400 hover:text-red-600 mt-2 underline z-10 relative">Remover</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Bling -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-gray-800 flex items-center">
+                        <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3 text-xs font-bold">2</span>
+                        Relatório ERP (Bling/Tiny)
+                    </h3>
+                    <span class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded">Excel (.xlsx)</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">Relatório de vendas com Nº Pedido e Valor Total</p>
+                
+                <div id="drop-bling" class="drop-zone rounded-lg p-8 text-center cursor-pointer relative">
+                    <input type="file" id="input-bling" class="hidden" accept=".xlsx, .xls">
+                    <div id="content-bling">
+                        <svg class="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <p class="text-sm text-gray-500">Clique para carregar</p>
+                    </div>
+                    <div id="file-bling" class="hidden">
+                        <div class="flex items-center justify-center text-green-600 font-medium text-sm">
+                            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            <span id="name-bling" class="truncate max-w-[200px]">arquivo.xlsx</span>
+                        </div>
+                         <button id="btn-remove-bling" class="text-xs text-red-400 hover:text-red-600 mt-2 underline z-10 relative">Remover</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mb-10">
+            <button id="btn-conciliar" disabled class="bg-gray-300 text-gray-500 font-bold py-3 px-10 rounded-xl shadow-sm cursor-not-allowed transition-all transform active:scale-95 text-lg">
+                Iniciar Conciliação
+            </button>
+            <p id="status-msg" class="text-sm text-gray-400 mt-2 min-h-[20px]"></p>
+        </div>
+
+        <!-- Resultados -->
+        <div id="resultado-container" class="hidden space-y-8 animate-fade-in-up">
+            
+            <!-- Resumo Financeiro -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="card-summary p-5 rounded-xl">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Total Repassado (Shopee)</p>
+                    <p class="text-2xl font-bold text-green-600 mt-1" id="res-shopee">R$ 0,00</p>
+                </div>
+                <div class="card-summary p-5 rounded-xl">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Total Previsto (ERP)</p>
+                    <p class="text-2xl font-bold text-blue-600 mt-1" id="res-bling">R$ 0,00</p>
+                </div>
+                <div class="card-summary p-5 rounded-xl relative overflow-hidden">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Taxas/Descontos</p>
+                    <p class="text-2xl font-bold text-red-500 mt-1" id="res-diferenca">R$ 0,00</p>
+                    <div class="absolute right-0 top-0 h-full w-1 bg-red-500 opacity-20"></div>
+                </div>
+                 <div class="card-summary p-5 rounded-xl">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Status Geral</p>
+                    <p class="text-lg font-bold text-gray-700 mt-2" id="res-status">Calculando...</p>
+                </div>
+            </div>
+
+            <!-- Lista de Discrepâncias -->
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-700">Detalhes dos Pedidos</h3>
+                    <div class="flex gap-2">
+                         <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium" id="count-divergente">0 Divergentes</span>
+                         <span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium" id="count-ausente">0 Não Pagos</span>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-gray-500 font-medium border-b">
+                            <tr>
+                                <th class="px-6 py-3">Pedido</th>
+                                <th class="px-6 py-3">Data</th>
+                                <th class="px-6 py-3 text-right">Valor ERP (Venda)</th>
+                                <th class="px-6 py-3 text-right">Líquido Shopee</th>
+                                <th class="px-6 py-3 text-right">Taxas/Desc.</th>
+                                <th class="px-6 py-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-divergencias" class="divide-y divide-gray-100">
+                            <!-- Itens inseridos via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-4 bg-gray-50 text-center border-t border-gray-200">
+                    <p class="text-xs text-gray-400">Mostrando apenas pedidos com divergência ou não encontrados.</p>
+                </div>
+            </div>
+            
+            <div class="text-center pb-12">
+                 <button onclick="location.reload()" class="text-blue-600 font-medium hover:underline text-sm">Realizar nova conciliação</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SCRIPT DO CONCILIADOR (Lógica V12 - Robusta) -->
+    <script>
+        // Variáveis Globais
+        let shopeeFile = null;
+        let blingFile = null;
+
+        // Elementos DOM
+        const dropShopee = document.getElementById('drop-shopee');
+        const inputShopee = document.getElementById('input-shopee');
+        const fileShopee = document.getElementById('file-shopee');
+        const contentShopee = document.getElementById('content-shopee');
+        const nameShopee = document.getElementById('name-shopee');
+        const btnRemoveShopee = document.getElementById('btn-remove-shopee');
+
+        const dropBling = document.getElementById('drop-bling');
+        const inputBling = document.getElementById('input-bling');
+        const fileBling = document.getElementById('file-bling');
+        const contentBling = document.getElementById('content-bling');
+        const nameBling = document.getElementById('name-bling');
+        const btnRemoveBling = document.getElementById('btn-remove-bling');
+
+        const btnConciliar = document.getElementById('btn-conciliar');
+        const statusMsg = document.getElementById('status-msg');
+
+        // --- FUNÇÕES DE INTERFACE ---
+
+        function setupDragDrop(dropZone, input, fileDiv, contentDiv, nameSpan, setFileCallback, removeBtn) {
+            dropZone.addEventListener('click', (e) => {
+                if(e.target !== removeBtn) input.click();
+            });
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('bg-blue-50', 'border-blue-400');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('bg-blue-50', 'border-blue-400');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('bg-blue-50', 'border-blue-400');
+                if (e.dataTransfer.files.length) {
+                    handleFile(e.dataTransfer.files[0], fileDiv, contentDiv, nameSpan, setFileCallback);
+                }
+            });
+
+            input.addEventListener('change', () => {
+                if (input.files.length) {
+                    handleFile(input.files[0], fileDiv, contentDiv, nameSpan, setFileCallback);
+                }
+            });
+            
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Impede abrir o seletor de novo
+                // Reseta UI
+                fileDiv.classList.add('hidden');
+                contentDiv.classList.remove('hidden');
+                input.value = ''; // Limpa input
+                setFileCallback(null); // Limpa variável global
+                checkButtonState();
+            });
+        }
+
+        function handleFile(file, fileDiv, contentDiv, nameSpan, setFileCallback) {
+            nameSpan.textContent = file.name;
+            contentDiv.classList.add('hidden');
+            fileDiv.classList.remove('hidden');
+            setFileCallback(file);
+            checkButtonState();
+        }
+
+        function checkButtonState() {
+            if (shopeeFile && blingFile) {
+                btnConciliar.disabled = false;
+                btnConciliar.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                btnConciliar.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'shadow-md');
+                statusMsg.textContent = 'Pronto para conciliar!';
+                statusMsg.classList.add('text-green-500');
+            } else {
+                btnConciliar.disabled = true;
+                btnConciliar.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                btnConciliar.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'shadow-md');
+                statusMsg.textContent = '';
+            }
+        }
+
+        // Configurações iniciais
+        setupDragDrop(dropShopee, inputShopee, fileShopee, contentShopee, nameShopee, (f) => shopeeFile = f, btnRemoveShopee);
+        setupDragDrop(dropBling, inputBling, fileBling, contentBling, nameBling, (f) => blingFile = f, btnRemoveBling);
+
+        // --- LÓGICA DE NEGÓCIO V12 (O CÉREBRO) ---
+
+        btnConciliar.addEventListener('click', async () => {
+            btnConciliar.disabled = true;
+            btnConciliar.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processando...`;
+            
+            try {
+                // 1. Ler Arquivos
+                const dataShopee = await readExcel(shopeeFile);
+                const dataBling = await readExcel(blingFile);
+
+                // 2. Normalizar Dados (A Mágica acontece aqui)
+                const shopeeMap = processShopeeData(dataShopee);
+                const blingList = processBlingData(dataBling);
+
+                // 3. Cruzamento
+                const resultado = crossCheck(shopeeMap, blingList);
+
+                // 4. Exibir
+                renderResults(resultado);
+                
+                btnConciliar.innerHTML = 'Conciliação Concluída!';
+                statusMsg.textContent = 'Verifique os resultados abaixo.';
+
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao processar: ' + error.message);
+                btnConciliar.disabled = false;
+                btnConciliar.textContent = 'Tentar Novamente';
+            }
+        });
+
+        function readExcel(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+                    resolve(json);
+                };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // --- PROCESSADORES INTELIGENTES ---
+
+        // Função auxiliar para limpar ID do pedido
+        function cleanOrderId(id) {
+            if (!id) return '';
+            return String(id).trim().toUpperCase(); 
+        }
+
+        // Função auxiliar para limpar valores monetários
+        function parseMoney(value) {
+            if (typeof value === 'number') return value;
+            if (!value) return 0;
+            
+            // Remove R$, espaços e converte vírgula para ponto se necessário
+            let clean = String(value).replace('R$', '').replace(/\s/g, '');
+            
+            // Lógica para detectar formato brasileiro (1.000,00) vs internacional (1,000.00)
+            if (clean.includes(',') && clean.includes('.')) {
+                if (clean.indexOf(',') > clean.indexOf('.')) {
+                    // Formato 1.000,00 -> Remove ponto, troca vírgula por ponto
+                    clean = clean.replace(/\./g, '').replace(',', '.');
+                } else {
+                     // Formato 1,000.00 -> Remove vírgula
+                     clean = clean.replace(/,/g, '');
+                }
+            } else if (clean.includes(',')) {
+                // Apenas vírgula (100,00) -> Troca por ponto
+                clean = clean.replace(',', '.');
+            }
+            
+            return parseFloat(clean) || 0;
+        }
+        
+        // Processador Shopee: Cria um Mapa para busca rápida (O(1))
+        function processShopeeData(rows) {
+            const map = new Map();
+            
+            // Identificar colunas dinamicamente (V12)
+            if (rows.length < 1) return map;
+            const headers = rows[0].map(h => String(h).toLowerCase().trim());
+            
+            const idxId = headers.findIndex(h => h.includes('id do pedido') || h.includes('order sn'));
+            const idxValorLiq = headers.findIndex(h => h.includes('valor total liberado') || h.includes('total release amount') || h.includes('valor líquido')); // Ajustado para pegar o valor final real
+            
+            // Fallback para colunas fixas se não achar headers (caso o arquivo não tenha cabeçalho padrão)
+            // Mas o ideal é confiar no header.
+            
+            if (idxId === -1) throw new Error("Coluna 'ID do Pedido' não encontrada no arquivo Shopee.");
+
+            // Começa da linha 1 (pula header)
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const id = cleanOrderId(row[idxId]);
+                
+                if (!id) continue;
+
+                // Tenta pegar o valor. Se a coluna valor não existe, assume 0 (apenas para conferência de pagamento)
+                const valor = idxValorLiq !== -1 ? parseMoney(row[idxValorLiq]) : 0;
+                
+                // Se o pedido já existe (ex: duas linhas pro mesmo pedido), soma os valores
+                if (map.has(id)) {
+                    map.set(id, map.get(id) + valor);
+                } else {
+                    map.set(id, valor);
+                }
+            }
+            return map;
+        }
+
+        // Processador ERP (Bling/Tiny): Retorna lista para iteração
+        function processBlingData(rows) {
+            const list = [];
+            
+            if (rows.length < 1) return list;
+            const headers = rows[0].map(h => String(h).toLowerCase().trim());
+            
+            // Busca inteligente de colunas
+            let idxId = headers.findIndex(h => h.includes('número pedido') || h.includes('nº pedido') || h.includes('order id') || h.includes('id no canal'));
+            const idxValor = headers.findIndex(h => h.includes('total') || h.includes('valor') || h.includes('vlr'));
+            const idxData = headers.findIndex(h => h.includes('data'));
+            const idxSit = headers.findIndex(h => h.includes('situação') || h.includes('status')); // Opcional
+
+            if (idxId === -1) {
+                // Tenta achar qualquer coluna que pareça ID (que tenha números grandes e letras)
+                // Fallback simples: coluna A
+                idxId = 0; 
+            }
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const id = cleanOrderId(row[idxId]);
+                
+                if (!id) continue;
+                
+                // Filtro opcional: Ignorar cancelados se tiver coluna situação
+                if (idxSit !== -1) {
+                    const status = String(row[idxSit]).toLowerCase();
+                    if (status.includes('cancelado')) continue;
+                }
+
+                list.push({
+                    id: id,
+                    valor: idxValor !== -1 ? parseMoney(row[idxValor]) : 0,
+                    data: idxData !== -1 ? row[idxData] : '-'
+                });
+            }
+            return list;
+        }
+
+        // --- CRUZAMENTO DE DADOS ---
+        function crossCheck(shopeeMap, blingList) {
+            let totalShopee = 0;
+            let totalBling = 0;
+            let countDivergente = 0;
+            let countAusente = 0;
+            const divergencias = [];
+
+            blingList.forEach(pedido => {
+                totalBling += pedido.valor;
+                
+                if (shopeeMap.has(pedido.id)) {
+                    // Pedido PAGO pela Shopee
+                    const valorPago = shopeeMap.get(pedido.id);
+                    totalShopee += valorPago;
+                    
+                    // Cálculo da taxa real
+                    const diferenca = pedido.valor - valorPago; // Venda 100 - Recebido 80 = Taxa 20
+                    const margemErro = 0.05; // 5 centavos de tolerância
+
+                    // Opcional: Se quiser mostrar TODOS os pedidos, remova o IF abaixo.
+                    // Aqui mostramos apenas se houver diferença estranha (ex: recebeu MENOS que 70% do valor, o que indicaria erro, ou se quiser ver as taxas, mostre tudo)
+                    // V12: Vamos mostrar todos para o cliente ver as taxas? Não, foca na divergência/erro.
+                    // Mas taxa de marketplace é normal (~20%). Vamos listar como "Pago" mas mostrar os valores.
+                    
+                    // Lógica V12: Adicionar à lista apenas para visualização de conferência, 
+                    // mas marcar como 'Divergente' apenas se o valor pago for ZERO ou MUITO baixo (erro).
+                    // Para simplificar a BETA: Lista TUDO para o cliente conferir as taxas.
+                    
+                    divergencias.push({
+                        id: pedido.id,
+                        data: pedido.data,
+                        valorErp: pedido.valor,
+                        valorShopee: valorPago,
+                        status: 'Pago',
+                        taxa: diferenca
+                    });
+
+                } else {
+                    // Pedido NÃO encontrado na planilha da Shopee (Calote? Atraso? Outro período?)
+                    countAusente++;
+                    divergencias.push({
+                        id: pedido.id,
+                        data: pedido.data,
+                        valorErp: pedido.valor,
+                        valorShopee: 0,
+                        status: 'Não Pago / Não Encontrado',
+                        taxa: pedido.valor // "Prejuízo" total temporário
+                    });
+                }
+            });
+
+            // Ordenar: Não Pagos primeiro, depois por valor maior
+            divergencias.sort((a, b) => {
+                if (a.status !== b.status) return a.status === 'Não Pago / Não Encontrado' ? -1 : 1;
+                return b.valorErp - a.valorErp;
+            });
+
+            return {
+                totalShopee,
+                totalBling,
+                diferencaTotal: totalBling - totalShopee,
+                lista: divergencias,
+                countAusente
+            };
+        }
+
+        function formatMoney(val) {
+            return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function renderResults(res) {
+            document.getElementById('res-shopee').textContent = formatMoney(res.totalShopee);
+            document.getElementById('res-bling').textContent = formatMoney(res.totalBling);
+            document.getElementById('res-diferenca').textContent = formatMoney(res.diferencaTotal);
+            
+            document.getElementById('count-ausente').textContent = `${res.countAusente} Não Pagos`;
+            
+            const statusEl = document.getElementById('res-status');
+            if (res.countAusente === 0) {
+                statusEl.textContent = "Sucesso Total! Todos os pedidos do ERP foram encontrados.";
+                statusEl.classList.add('text-green-600');
+            } else {
+                statusEl.textContent = `Atenção: ${res.countAusente} pedidos do ERP não constam no repasse.`;
+                statusEl.classList.add('text-orange-500');
+            }
+
+            const tbody = document.getElementById('lista-divergencias');
+            tbody.innerHTML = '';
+
+            res.lista.forEach(item => {
+                // Renderizar apenas se não pago ou se houver algo notável. 
+                // Na V12 vamos renderizar os top 500 para não travar se for muito grande
+                
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors";
+                
+                let statusClass = 'bg-green-100 text-green-700';
+                if (item.status.includes('Não')) statusClass = 'bg-red-100 text-red-700 font-bold';
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-gray-900">${item.id}</td>
+                    <td class="px-6 py-4 text-gray-500">${item.data}</td>
+                    <td class="px-6 py-4 text-right font-medium">${formatMoney(item.valorErp)}</td>
+                    <td class="px-6 py-4 text-right text-green-600">${formatMoney(item.valorShopee)}</td>
+                    <td class="px-6 py-4 text-right text-red-400">-${formatMoney(item.taxa)}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-2 py-1 rounded-full text-xs ${statusClass}">${item.status}</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('resultado-container').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
