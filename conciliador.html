@@ -7,28 +7,175 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+      import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+      import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyA949XvgFG-mEfthKQK4k_Gc_AhT4x0fGA",
+        authDomain: "conversor-pampa.firebaseapp.com",
+        projectId: "conversor-pampa",
+        storageBucket: "conversor-pampa.appspot.com",
+        messagingSenderId: "88472969827",
+        appId: "1:88472969827:web:60de271f7bde3249324e56",
+        measurementId: "G-DCH9PGSZ6B"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Elementos de UI
+      const loadingScreen = document.getElementById('loading-screen');
+      const loginScreen = document.getElementById('login-screen');
+      const appContent = document.getElementById('app-content');
+      const loginForm = document.getElementById('login-form');
+      const errorMsg = document.getElementById('login-error');
+
+      // --- Lógica de Autenticação ---
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // Logado: Verificar Assinatura
+             try {
+                const userDocRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    const dataExpiracao = userData.dataExpiracao.toDate();
+                    const hoje = new Date();
+
+                    if (dataExpiracao > hoje) {
+                        // Sucesso: Mostrar App
+                        showApp(user.email);
+                    } else {
+                        showLogin('Sua assinatura expirou. Renove para acessar.');
+                        signOut(auth);
+                    }
+                } else {
+                    showLogin('Conta não encontrada.');
+                    signOut(auth);
+                }
+            } catch (e) {
+                console.error("Erro:", e);
+                showLogin('Erro ao verificar assinatura.');
+            }
+        } else {
+          // Não logado: Mostrar Login
+          showLogin();
+        }
+      });
+
+      function showApp(email) {
+          loadingScreen.classList.add('hidden');
+          loginScreen.classList.add('hidden');
+          appContent.classList.remove('hidden');
+          document.getElementById('user-email').textContent = email;
+      }
+
+      function showLogin(message = '') {
+          loadingScreen.classList.add('hidden');
+          appContent.classList.add('hidden');
+          loginScreen.classList.remove('hidden');
+          if(message) {
+              errorMsg.textContent = message;
+              errorMsg.classList.remove('hidden');
+          }
+      }
+
+      // Login Form Submit
+      loginForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const email = document.getElementById('email').value;
+          const password = document.getElementById('password').value;
+          
+          errorMsg.classList.add('hidden');
+          
+          setPersistence(auth, browserSessionPersistence)
+            .then(() => {
+                return signInWithEmailAndPassword(auth, email, password);
+            })
+            .catch((error) => {
+                errorMsg.textContent = "E-mail ou senha inválidos.";
+                errorMsg.classList.remove('hidden');
+            });
+      });
+      
+      // Logout
+      const logoutBtn = document.getElementById('logout-btn');
+      if (logoutBtn) {
+          logoutBtn.addEventListener('click', () => {
+              signOut(auth).then(() => window.location.reload());
+          });
+      }
+    </script>
+
     <style>
+        body { font-family: 'Inter', sans-serif; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         th { cursor: pointer; user-select: none; }
         th:hover { background-color: #e5e7eb; }
-        
         .badge-dev { background-color: #fff7ed; color: #c2410c; border: 1px solid #fdba74; }
-        
-        /* Estilo dos Botões de Filtro */
         .filter-btn { transition: all 0.2s; }
         .filter-btn.active { background-color: #2563eb; color: white; border-color: #2563eb; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3); }
         .filter-btn:not(.active):hover { background-color: #f3f4f6; }
-
-        /* Botão Exportar */
         .btn-export { background-color: #10b981; color: white; border: 1px solid #059669; transition: all 0.2s; }
         .btn-export:hover { background-color: #059669; shadow: lg; }
+        .drop-zone { border: 2px dashed #cbd5e1; transition: all 0.2s ease; }
+        .drop-zone:hover { border-color: #3b82f6; background-color: #eff6ff; }
+        .card-summary { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 1px solid #e2e8f0; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen p-6">
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
 
-    <div class="max-w-[1400px] mx-auto">
+    <!-- Tela de Carregamento -->
+    <div id="loading-screen" class="fixed inset-0 bg-white flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-500 font-medium">Carregando Conciliador...</p>
+        </div>
+    </div>
+
+    <!-- Tela de Login (NOVA) -->
+    <div id="login-screen" class="hidden fixed inset-0 bg-gray-50 flex items-center justify-center z-40 p-4">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Pampa Soluções</h1>
+                <p class="text-gray-500 mt-2 font-medium">Acesso ao Conciliador</p>
+            </div>
+            
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">E-mail</label>
+                    <input type="email" id="email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Senha</label>
+                    <input type="password" id="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                
+                <div id="login-error" class="hidden p-3 bg-red-100 text-red-700 text-sm rounded-md text-center"></div>
+                
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                    Entrar
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <a href="index.html" class="text-sm text-blue-600 hover:text-blue-800 hover:underline">
+                    &larr; Voltar para o Conversor de Etiquetas
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo do App (Inicia oculto) -->
+    <div id="app-content" class="hidden max-w-[1400px] mx-auto p-6">
         <header class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-5 rounded-lg shadow-sm border border-gray-200 gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-blue-800 flex items-center gap-2">
@@ -38,9 +185,18 @@
                     <i class="fas fa-tools"></i> Sistema em desenvolvimento, informe qualquer dúvida: <span class="font-bold flex items-center gap-1"><i class="fab fa-whatsapp"></i> (37) 99131-6234</span>
                 </p>
             </div>
-            <button onclick="window.location.reload()" class="text-sm text-gray-500 hover:text-red-600 flex items-center gap-2 transition px-3 py-2 border rounded hover:bg-gray-50">
-                <i class="fas fa-trash"></i> Limpar Tudo
-            </button>
+            <div class="flex items-center gap-4">
+                 <div class="text-right hidden sm:block">
+                    <p class="text-xs text-gray-400">Logado como</p>
+                    <p id="user-email" class="text-sm font-medium text-gray-700">...</p>
+                </div>
+                <button onclick="window.location.reload()" class="text-sm text-gray-500 hover:text-red-600 flex items-center gap-2 transition px-3 py-2 border rounded hover:bg-gray-50">
+                    <i class="fas fa-trash"></i> Limpar
+                </button>
+                 <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700 font-medium border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
+                    Sair
+                </button>
+            </div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
