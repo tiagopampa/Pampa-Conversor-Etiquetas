@@ -827,6 +827,20 @@
                 processFilesExcel(selectedPdfFileExcel, selectedExcelFile);
             }
         });
+        
+        // NOVA FUNÇÃO: Limpeza de texto (removendo espaços extras e quebras de linha)
+        function limparTexto(texto) {
+            if (typeof texto !== 'string') return texto;
+            return texto
+            // 1. Normaliza para NFD (Separa a letra do acento "escondido" que você descobriu)
+        .normalize('NFD')
+        // 2. Remove os caracteres de acentuação (combining marks)
+        .replace(/[\u0300-\u036f]/g, "")
+        // 3. Substituições manuais para garantir segurança total
+        .replace(/ç/g, "c").replace(/Ç/g, "C")
+        // 4. Remove qualquer caractere que não seja ASCII básico (segurança para WinAnsi)
+        .replace(/[^\x00-\x7F]/g, "");
+        }
 
         function parseMultiProductInfo(infoString) {
             if (!infoString || typeof infoString !== 'string') return [];
@@ -840,7 +854,8 @@
                 parts.forEach(part => {
                     const [key, ...valueParts] = part.split(':');
                     if (key && valueParts.length > 0) {
-                        const value = valueParts.join(':').trim();
+                        // ALTERAÇÃO: Usando limparTexto em vez de apenas trim()
+                        const value = limparTexto(valueParts.join(':'));
                         const cleanKey = key.trim();
                         if (cleanKey === 'Product Name') info.productName = value;
                         else if (cleanKey === 'Variation Name') info.variationName = value;
