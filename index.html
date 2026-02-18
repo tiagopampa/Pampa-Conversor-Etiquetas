@@ -839,7 +839,9 @@
         // 3. Substituições manuais para garantir segurança total
         .replace(/ç/g, "c").replace(/Ç/g, "C")
         // 4. Remove qualquer caractere que não seja ASCII básico (segurança para WinAnsi)
-        .replace(/[^\x00-\x7F]/g, "");
+        .replace(/[^\x00-\x7F]/g, "")
+        .replace(/\u00A0/g, " ")
+        .replace(/[^\x20-\x7E]/g, "");
         }
 
         function parseMultiProductInfo(infoString) {
