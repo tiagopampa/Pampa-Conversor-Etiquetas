@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pampa Soluções - Recorte Full</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z0RQQBTK8T"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z0RQQBTK8T');
+    </script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1002701210055535" crossorigin="anonymous"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .upload-box { border: 2px dashed #d1d5db; border-radius: 0.75rem; padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s ease-in-out; }
+        .upload-box:hover { border-color: #3b82f6; background-color: #f9fafb; }
+        .upload-box.drag-over { border-color: #3b82f6; background-color: #eff6ff; }
+        .tab-button { flex-grow: 1; flex-basis: 0; padding: 0.5rem; font-size: 0.8rem; font-weight: 600; text-align: center; border-radius: 0.5rem; background-color: #f3f4f6; color: #4b5563; transition: all 0.2s; border: 1px solid #e5e7eb; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; }
+        .tab-button > span, .tab-button > div { line-height: 1.2; display: block; width: 100%; }
+        .tab-button.active { background-color: #2563eb; color: #ffffff; border-color: #2563eb; }
+        .full-badge { font-size: 0.65rem; font-weight: 700; color: #f59e0b; }
+        .tab-button.active .full-badge { color: #fde68a; }
+        @keyframes pulse-bar { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .progress-pulse { animation: pulse-bar 1.5s ease-in-out infinite; }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen py-12">
+<div class="w-full max-w-5xl mx-auto p-4 md:p-8">
+  <div class="bg-white shadow-xl rounded-2xl p-6 md:p-8">
+
+    <div class="flex justify-between items-center mb-4">
+        <div class="text-left">
+            <h2 class="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Pampa Soluções</h2>
+            <p class="text-sm font-bold text-gray-600 -mt-1">Recorte para Full</p>
+        </div>
+        <a href="index.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition-all text-sm flex items-center shadow-sm">
+            <i class="fas fa-arrow-left mr-2"></i> Voltar ao Início
+        </a>
+    </div>
+
+    <div class="mb-8">
+        <div class="flex justify-center space-x-2">
+            <button id="tab-volumes" class="tab-button active">
+                <span class="full-badge">FULL ML</span>
+                <div>Etiquetas de<br>Volumes</div>
+            </button>
+            <button id="tab-produto" class="tab-button">
+                <span class="full-badge">FULL ML</span>
+                <div>Etiquetas de<br>Produto</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- VOLUMES -->
+    <div id="tool-volumes">
+        <h1 class="text-2xl font-bold text-gray-800 text-center">Recorte de Etiquetas de Volumes</h1>
+        <p class="text-gray-500 mt-2 text-center mb-6">Envie o PDF de volumes do Mercado Livre Full.</p>
+        <div class="my-6">
+            <div id="pdf-upload-area-volumes" class="upload-box max-w-md mx-auto">
+                <input type="file" id="pdf-input-volumes" class="hidden" accept="application/pdf">
+                <div id="pdf-upload-prompt-volumes">
+                    <i class="fas fa-file-pdf text-4xl text-gray-400 mb-2"></i>
+                    <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">Enviar PDF de Volumes</span> ou arrastar aqui</p>
+                </div>
+                <div id="pdf-file-info-volumes" class="hidden text-center">
+                    <i class="fas fa-file-pdf text-3xl text-blue-500 mb-1"></i>
+                    <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-volumes"></p>
+                    <button id="pdf-remove-volumes" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                </div>
+            </div>
+        </div>
+        <div class="text-center">
+            <button id="convert-btn-volumes" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                <i class="fas fa-cut mr-2"></i> Recortar Etiquetas de Volumes
+            </button>
+        </div>
+    </div>
+
+    <!-- PRODUTO -->
+    <div id="tool-produto" class="hidden">
+        <h1 class="text-2xl font-bold text-gray-800 text-center">Recorte de Etiquetas de Produto</h1>
+        <p class="text-gray-500 mt-2 text-center mb-6">Envie o PDF de etiquetas de produto do Mercado Livre Full.</p>
+        <div class="my-6">
+            <div id="pdf-upload-area-produto" class="upload-box max-w-md mx-auto">
+                <input type="file" id="pdf-input-produto" class="hidden" accept="application/pdf">
+                <div id="pdf-upload-prompt-produto">
+                    <i class="fas fa-file-pdf text-4xl text-gray-400 mb-2"></i>
+                    <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">Enviar PDF de Produto</span> ou arrastar aqui</p>
+                </div>
+                <div id="pdf-file-info-produto" class="hidden text-center">
+                    <i class="fas fa-file-pdf text-3xl text-blue-500 mb-1"></i>
+                    <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-produto"></p>
+                    <button id="pdf-remove-produto" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
+                </div>
+            </div>
+        </div>
+        <div class="text-center">
+            <button id="convert-btn-produto" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                <i class="fas fa-cut mr-2"></i> Recortar Etiquetas de Produto
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading-area" class="hidden text-center mt-8">
+        <div class="w-full bg-gray-200 rounded-full h-4 mb-2">
+            <div id="progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-300 progress-pulse" style="width: 0%"></div>
+        </div>
+        <p id="progress-text" class="text-sm text-gray-600 mt-2">Iniciando...</p>
+    </div>
+
+    <!-- Resultados -->
+    <div id="results-area" class="hidden mt-8">
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Download Pronto!</h2>
+        <div id="download-links" class="grid grid-cols-1 gap-4"></div>
+        <div class="mt-8 text-center">
+            <button id="start-over-btn" class="bg-gray-200 text-gray-800 font-bold py-3 px-8 rounded-lg hover:bg-gray-300 transition-all">Começar Novamente</button>
+        </div>
+    </div>
+
+    <div class="mt-12 text-center border-t border-gray-200 pt-6">
+        <div class="bg-slate-50 rounded-lg p-6">
+            <p class="text-gray-800 font-semibold mb-4">Vendemos ETIQUETAS e saquinhos de embalagem, venha cotar com a gente, garantimos o melhor preço no atacado.</p>
+            <a href="https://wa.me/5537991316234" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-all shadow-sm">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 4.315 1.919 6.066l-1.225 4.485 4.635-1.218z"/></svg>
+                <span>Chame no WhatsApp</span>
+            </a>
+        </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const { PDFDocument } = PDFLib;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
+
+    const tabVolumes  = document.getElementById('tab-volumes');
+    const tabProduto  = document.getElementById('tab-produto');
+    const toolVolumes = document.getElementById('tool-volumes');
+    const toolProduto = document.getElementById('tool-produto');
+    const loadingArea = document.getElementById('loading-area');
+    const resultsArea = document.getElementById('results-area');
+    const dlContainer = document.getElementById('download-links');
+    const progressBar = document.getElementById('progress-bar');
+    const progressTxt = document.getElementById('progress-text');
+    const startOver   = document.getElementById('start-over-btn');
+    let activeTool = 'volumes';
+
+    function showTool(name) {
+        activeTool = name;
+        toolVolumes.classList.toggle('hidden', name !== 'volumes');
+        toolProduto.classList.toggle('hidden', name !== 'produto');
+        tabVolumes.classList.toggle('active', name === 'volumes');
+        tabProduto.classList.toggle('active', name === 'produto');
+        resetUI();
+    }
+    tabVolumes.addEventListener('click', () => showTool('volumes'));
+    tabProduto.addEventListener('click', () => showTool('produto'));
+    startOver.addEventListener('click', () => { resetAllUploads(); showTool(activeTool); });
+
+    function resetUI() {
+        loadingArea.classList.add('hidden');
+        resultsArea.classList.add('hidden');
+        dlContainer.innerHTML = '';
+        progressTxt.textContent = 'Iniciando...';
+        progressBar.style.width = '0%';
+        progressBar.style.backgroundColor = '#3b82f6';
+    }
+
+    function setProgress(pct, msg) {
+        progressBar.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+        progressTxt.textContent = msg;
+    }
+
+    function addDownloadLink(bytes, fileName, label) {
+        const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+        const dl = document.createElement('a');
+        dl.href = url; dl.download = fileName;
+        dl.className = 'bg-blue-600 text-white p-4 rounded-lg flex items-center justify-center hover:bg-blue-700 transition-all text-lg font-semibold';
+        dl.innerHTML = `<span>${label}</span><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>`;
+        const vw = document.createElement('a');
+        vw.href = url; vw.target = '_blank';
+        vw.className = 'bg-gray-100 text-gray-700 border border-gray-300 p-4 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-all text-lg font-semibold';
+        vw.innerHTML = `<span>Visualizar em nova aba</span><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>`;
+        dlContainer.appendChild(dl);
+        dlContainer.appendChild(vw);
+    }
+
+    // ============================================================
+    // Renderiza página inteira num canvas (para análise de pixels)
+    // ============================================================
+    async function renderPage(pdfJsPage, scale) {
+        const vp = pdfJsPage.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(vp.width);
+        canvas.height = Math.round(vp.height);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        await pdfJsPage.render({ canvasContext: ctx, viewport: vp }).promise;
+        return canvas;
+    }
+
+    // ============================================================
+    // Verifica se uma linha Y do canvas tem conteúdo (pixels escuros)
+    // ============================================================
+    function rowHasContent(imgData, W, y, threshold = 0.5) {
+        let dark = 0;
+        for (let x = 0; x < W; x++) {
+            const i = (y * W + x) * 4;
+            if (imgData[i] < 200 || imgData[i+1] < 200 || imgData[i+2] < 200) dark++;
+        }
+        return (dark / W) > (threshold / 100);
+    }
+
+    // ============================================================
+    // Verifica se uma coluna X tem conteúdo
+    // ============================================================
+    function colHasContent(imgData, W, H, x, threshold = 0.5) {
+        let dark = 0;
+        for (let y = 0; y < H; y++) {
+            const i = (y * W + x) * 4;
+            if (imgData[i] < 200 || imgData[i+1] < 200 || imgData[i+2] < 200) dark++;
+        }
+        return (dark / H) > (threshold / 100);
+    }
+
+    // ============================================================
+    // Encontra faixas contíguas com conteúdo em projeção 1D
+    // Retorna array de [start, end] em pixels do canvas
+    // ============================================================
+    function findContentBands(proj, size, minBandPx, minGapPx) {
+        const bands = [];
+        let start = -1;
+        for (let i = 0; i <= size; i++) {
+            const hasContent = i < size ? proj[i] : false;
+            if (hasContent && start < 0) {
+                start = i;
+            } else if (!hasContent && start >= 0) {
+                // verifica se o gap seguinte é grande o suficiente para ser real
+                let gapEnd = i;
+                while (gapEnd < size && !proj[gapEnd]) gapEnd++;
+                const gapLen = gapEnd - i;
+                if (gapLen >= minGapPx || gapEnd >= size) {
+                    if (i - start >= minBandPx) bands.push([start, i - 1]);
+                    start = -1;
+                    i = gapEnd - 1;
+                }
+                // gap muito pequeno: ignora e continua na mesma banda
+            }
+        }
+        return bands;
+    }
+
+    // ============================================================
+    // Verifica se um tile (em pts PDF) tem conteúdo
+    // usando o canvas já renderizado
+    // ============================================================
+    function tileHasContent(imgData, W, canvasH, clipX, clipY, clipW, clipH, scale, pdfH) {
+        // Converte coords PDF para canvas
+        const cx = Math.round(clipX * scale);
+        const cy = Math.round((pdfH - clipY - clipH) * scale);
+        const cw = Math.round(clipW * scale);
+        const ch = Math.round(clipH * scale);
+        let dark = 0, total = 0;
+        for (let y = Math.max(0, cy); y < Math.min(canvasH, cy + ch); y++) {
+            for (let x = Math.max(0, cx); x < Math.min(W, cx + cw); x++) {
+                const i = (y * W + x) * 4;
+                if (imgData[i] < 230 || imgData[i+1] < 230 || imgData[i+2] < 230) dark++;
+                total++;
+            }
+        }
+        if (total === 0) return false;
+        return (dark / total) > 0.002; // >0.2% de pixels escuros = tem conteúdo
+    }
+
+    // ============================================================
+    // VOLUMES
+    //
+    // Formato: PDF A4 paisagem (~841×595 pts)
+    // Cada página tem 3 etiquetas lado a lado (colunas W/3).
+    // A borda visível define exatamente onde começa/termina cada etiqueta.
+    //
+    // Estratégia:
+    // 1. Renderiza a página num canvas
+    // 2. Projeta pixels em Y para achar o extent vertical da etiqueta
+    //    (a etiqueta tem borda superior/inferior bem definida)
+    // 3. Divide em 3 colunas iguais
+    // 4. Para cada coluna: verifica se tem conteúdo, extrai o bbox
+    //    exato (encontra a borda do retângulo pelos pixels)
+    // 5. Embeda o bbox exato e escala para PREENCHER o 10×15
+    //    usando stretch proporcional (sem margens brancas)
+    // ============================================================
+    let selectedVolumes = null;
+    setupUpload('pdf-upload-area-volumes','pdf-input-volumes','pdf-upload-prompt-volumes',
+        'pdf-file-info-volumes','pdf-file-name-volumes','pdf-remove-volumes',
+        f => { selectedVolumes = f; document.getElementById('convert-btn-volumes').disabled = !f; });
+    document.getElementById('convert-btn-volumes').addEventListener('click', () => {
+        if (selectedVolumes) processVolumes(selectedVolumes);
+    });
+
+    async function processVolumes(file) {
+        toolVolumes.classList.add('hidden');
+        loadingArea.classList.remove('hidden');
+        setProgress(5, 'Lendo arquivo...');
+        try {
+            const ab     = await file.arrayBuffer();
+            const srcDoc = await PDFDocument.load(ab);
+            const outDoc = await PDFDocument.create();
+            const CM = 28.3465;
+            const OW = 10 * CM;  // 283.47 pts
+            const OH = 15 * CM;  // 425.20 pts
+
+            // Posições reais das 3 etiquetas, medidas diretamente do PDF original via TeXML:
+            // Em A4 paisagem (841.89 x 595.28 pts):
+            //   Col x: [30.0, 295.1181, 560.2362]
+            //   y_bottom = 143.685,  y_top = 561.512
+            //   largura = 252.8504
+            const REF_W  = 841.89;
+            const REF_H  = 595.28;
+            const COL_X  = [30.0, 295.1181, 560.2362];
+            const CLIP_B = 143.685;
+            const CLIP_T = 561.512;
+            const ETQ_W  = 252.8504;
+
+            const nPages   = srcDoc.getPageCount();
+            let added = 0;
+            const pdfJsDoc = await pdfjsLib.getDocument({ data: ab.slice(0) }).promise;
+
+            for (let pi = 0; pi < nPages; pi++) {
+                setProgress(5 + (pi / nPages) * 90, `Processando página ${pi + 1} de ${nPages}...`);
+                const pg   = srcDoc.getPages()[pi];
+                const jsPg = await pdfJsDoc.getPage(pi + 1);
+                const { width: pdfW, height: pdfH } = pg.getSize();
+
+                // Escala proporcional caso página não seja exatamente A4
+                const sx = pdfW / REF_W;
+                const sy = pdfH / REF_H;
+
+                for (let col = 0; col < 3; col++) {
+                    const clipL = COL_X[col]  * sx;
+                    const clipR = (COL_X[col] + ETQ_W) * sx;
+                    const clipB = CLIP_B * sy;
+                    const clipT = CLIP_T * sy;
+
+                    // Verifica se coluna tem conteúdo (mini render)
+                    const sTest = 0.12;
+                    const vpH   = jsPg.getViewport({ scale: 1 }).height;
+                    const tcW   = Math.max(1, Math.round((clipR - clipL) * sTest));
+                    const tcH   = Math.max(1, Math.round((clipT - clipB) * sTest));
+                    const tc    = document.createElement('canvas');
+                    tc.width = tcW; tc.height = tcH;
+                    const ctx2  = tc.getContext('2d');
+                    ctx2.fillStyle = '#fff';
+                    ctx2.fillRect(0, 0, tcW, tcH);
+                    await jsPg.render({
+                        canvasContext: ctx2,
+                        viewport: jsPg.getViewport({ scale: sTest }),
+                        transform: [1, 0, 0, 1, -clipL * sTest, -(vpH - clipT) * sTest]
+                    }).promise;
+                    const d = ctx2.getImageData(0, 0, tcW, tcH).data;
+                    let dark = 0;
+                    for (let i = 0; i < d.length; i += 4) {
+                        if (d[i] < 200 && d[i+1] < 200 && d[i+2] < 200) dark++;
+                    }
+                    if (dark < 8) continue; // coluna em branco
+
+                    const newPg = outDoc.addPage([OW, OH]);
+                    const emb   = await outDoc.embedPage(pg, { left: clipL, bottom: clipB, right: clipR, top: clipT });
+                    const sc    = Math.min(OW / emb.width, OH / emb.height);
+                    newPg.drawPage(emb, {
+                        x: (OW - emb.width  * sc) / 2,
+                        y: (OH - emb.height * sc) / 2,
+                        width:  emb.width  * sc,
+                        height: emb.height * sc
+                    });
+                    added++;
+                }
+            }
+
+            if (!added) throw new Error('Nenhuma etiqueta encontrada. Verifique o arquivo.');
+            setProgress(100, 'Salvando PDF...');
+            const bytes = await outDoc.save();
+            addDownloadLink(bytes, `pampa_full_volumes_${added}_etiquetas.pdf`, `Baixar ${added} Etiqueta(s) de Volumes`);
+            loadingArea.classList.add('hidden');
+            resultsArea.classList.remove('hidden');
+        } catch(e) {
+            console.error(e);
+            progressTxt.textContent = `Erro: ${e.message}`;
+            progressBar.style.backgroundColor = '#ef4444';
+        }
+    }
+
+
+    // ============================================================
+    // PRODUTO
+    //
+    // Estratégia: scan inteligente por pixels escuros
+    // - Sempre 4 colunas de largura fixa (pdfW / 4)
+    // - Dentro de cada coluna, varre de cima para baixo procurando
+    //   o primeiro pixel escuro → marca como topo da etiqueta
+    // - A partir desse ponto, pega exatamente 25mm de altura
+    // - Avança o cursor além dessa etiqueta (pula pixels brancos)
+    // - Repete até o fim da página
+    // - Tamanho de saída fixo: 40mm × 25mm por etiqueta
+    //
+    // Isso garante que etiquetas adjacentes (sem gap) sejam separadas
+    // corretamente e que etiquetas em branco no final sejam ignoradas.
+    // ============================================================
+    let selectedProduto = null;
+    setupUpload('pdf-upload-area-produto','pdf-input-produto','pdf-upload-prompt-produto',
+        'pdf-file-info-produto','pdf-file-name-produto','pdf-remove-produto',
+        f => { selectedProduto = f; document.getElementById('convert-btn-produto').disabled = !f; });
+    document.getElementById('convert-btn-produto').addEventListener('click', () => {
+        if (selectedProduto) processProduto(selectedProduto);
+    });
+
+    async function processProduto(file) {
+        toolProduto.classList.add('hidden');
+        loadingArea.classList.remove('hidden');
+        setProgress(5, 'Lendo arquivo...');
+        try {
+            const ab     = await file.arrayBuffer();
+            const srcDoc = await PDFDocument.load(ab);
+            const outDoc = await PDFDocument.create();
+            const CM = 28.3465;
+            const OW = 4   * CM;  // 113.39 pts
+            const OH = 2.5 * CM;  // 70.87 pts
+
+            // Coordenadas medidas diretamente do stream do PDF original ML:
+            // Em A4 retrato (595.28 x 841.89 pts):
+            //   Col 0 x=35.1496, Col 1 x=163.7575, Col 2 x=292.3654, Col 3 x=420.9733
+            //   Passo entre colunas: 128.6079 pts
+            //   y_bottom linha 0 = 759.9685, altura etiqueta = 71.0079 pts
+            //   largura etiqueta = 113.9528 pts
+            const REF_PW  = 595.2756;
+            const REF_PH  = 841.8898;
+            const COL_X0  = 35.1496;    // x da col 0
+            const COL_STEP= 128.6079;   // passo real entre colunas
+            const ETQ_W   = 113.9528;
+            const ETQ_Y0  = 759.9685;   // y_bottom da linha 0 (coords PDF)
+            const ETQ_H   = 71.0079;   // altura do clip da etiqueta
+            const ROW_STEP = 82.9701;   // passo real entre linhas (etiqueta + gap 11.96)
+            const MAX_ROWS = 12;
+
+            const nPages   = srcDoc.getPageCount();
+            let added = 0;
+            const pdfJsDoc = await pdfjsLib.getDocument({ data: ab.slice(0) }).promise;
+
+            for (let pi = 0; pi < nPages; pi++) {
+                setProgress(5 + (pi / nPages) * 90, `Processando página ${pi + 1} de ${nPages}...`);
+                const pg   = srcDoc.getPages()[pi];
+                const jsPg = await pdfJsDoc.getPage(pi + 1);
+                const { width: pdfW, height: pdfH } = pg.getSize();
+
+                // Escala proporcional
+                const sx  = pdfW / REF_PW;
+                const sy  = pdfH / REF_PH;
+                const x0  = COL_X0   * sx;
+                const cs  = COL_STEP * sx;
+                const eW  = ETQ_W    * sx;
+                const eH  = ETQ_H    * sy;   // altura do clip
+                const rs  = ROW_STEP * sy;   // passo entre linhas
+                const y0  = ETQ_Y0   * sy;   // y_bottom da linha 0
+
+                const vpH = jsPg.getViewport({ scale: 1 }).height;
+
+                for (let row = 0; row < MAX_ROWS; row++) {
+                    const clipB = y0 - row * rs;
+                    const clipT = clipB + eH;   // clip de altura fixa 71pt
+                    if (clipT < 0 || clipB > pdfH) break;
+
+                    for (let col = 0; col < 4; col++) {
+                        const clipL = x0 + col * cs;
+                        const clipR = clipL + eW;
+
+                        // Verifica conteúdo com mini render
+                        const sTest = 0.3;
+                        const tcW   = Math.max(1, Math.round(eW * sTest));
+                        const tcH   = Math.max(1, Math.round(eH * sTest));
+                        const tc    = document.createElement('canvas');
+                        tc.width = tcW; tc.height = tcH;
+                        const ctx2  = tc.getContext('2d');
+                        ctx2.fillStyle = '#fff';
+                        ctx2.fillRect(0, 0, tcW, tcH);
+                        await jsPg.render({
+                            canvasContext: ctx2,
+                            viewport: jsPg.getViewport({ scale: sTest }),
+                            transform: [1, 0, 0, 1, -clipL * sTest, -(vpH - clipT) * sTest]
+                        }).promise;
+                        const d = ctx2.getImageData(0, 0, tcW, tcH).data;
+                        let dark = 0;
+                        for (let i = 0; i < d.length; i += 4) {
+                            if (d[i] < 200 && d[i+1] < 200 && d[i+2] < 200) dark++;
+                        }
+                        if (dark < 5) continue; // célula em branco
+
+                        const newPg = outDoc.addPage([OW, OH]);
+                        const emb   = await outDoc.embedPage(pg, {
+                            left:   Math.max(0, clipL),
+                            bottom: Math.max(0, clipB),
+                            right:  Math.min(pdfW, clipR),
+                            top:    Math.min(pdfH, clipT)
+                        });
+                        const sc = Math.min(OW / emb.width, OH / emb.height);
+                        newPg.drawPage(emb, {
+                            x: (OW - emb.width  * sc) / 2,
+                            y: (OH - emb.height * sc) / 2,
+                            width:  emb.width  * sc,
+                            height: emb.height * sc
+                        });
+                        added++;
+                    }
+                }
+            }
+
+            if (!added) throw new Error('Nenhuma etiqueta encontrada. Verifique o arquivo.');
+            setProgress(100, 'Salvando PDF...');
+            const bytes = await outDoc.save();
+            addDownloadLink(bytes, `pampa_full_produto_${added}_etiquetas.pdf`, `Baixar ${added} Etiqueta(s) de Produto`);
+            loadingArea.classList.add('hidden');
+            resultsArea.classList.remove('hidden');
+        } catch(e) {
+            console.error(e);
+            progressTxt.textContent = `Erro: ${e.message}`;
+            progressBar.style.backgroundColor = '#ef4444';
+        }
+    }
+
+
+
+    // ---- Helpers de Upload ----
+    function setupUpload(areaId, inputId, promptId, infoId, nameId, rmId, onSelect) {
+        const area   = document.getElementById(areaId);
+        const input  = document.getElementById(inputId);
+        const prompt = document.getElementById(promptId);
+        const info   = document.getElementById(infoId);
+        const nameEl = document.getElementById(nameId);
+        const rmBtn  = document.getElementById(rmId);
+        area.addEventListener('click', () => input.click());
+        area.addEventListener('dragover',  e => { e.preventDefault(); area.classList.add('drag-over'); });
+        area.addEventListener('dragleave', e => { e.preventDefault(); area.classList.remove('drag-over'); });
+        area.addEventListener('drop', e => { e.preventDefault(); area.classList.remove('drag-over'); handle(e.dataTransfer.files); });
+        input.addEventListener('change', e => handle(e.target.files));
+        rmBtn.addEventListener('click', e => {
+            e.stopPropagation(); input.value = '';
+            prompt.classList.remove('hidden'); info.classList.add('hidden'); onSelect(null);
+        });
+        function handle(files) {
+            if (!files || !files.length) return;
+            nameEl.textContent = files[0].name;
+            prompt.classList.add('hidden'); info.classList.remove('hidden');
+            onSelect(files[0]);
+        }
+    }
+
+    function resetAllUploads() {
+        selectedVolumes = null;
+        document.getElementById('pdf-input-volumes').value = '';
+        document.getElementById('pdf-upload-prompt-volumes').classList.remove('hidden');
+        document.getElementById('pdf-file-info-volumes').classList.add('hidden');
+        document.getElementById('convert-btn-volumes').disabled = true;
+        selectedProduto = null;
+        document.getElementById('pdf-input-produto').value = '';
+        document.getElementById('pdf-upload-prompt-produto').classList.remove('hidden');
+        document.getElementById('pdf-file-info-produto').classList.add('hidden');
+        document.getElementById('convert-btn-produto').disabled = true;
+    }
+});
+</script>
+</body>
+</html>
