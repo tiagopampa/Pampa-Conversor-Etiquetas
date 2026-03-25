@@ -201,37 +201,32 @@
                     <span class="shopee-badge">SHOPEE</span>
                     <div>Etiqueta com<br>Excel</div>
                 </button>
-                <!-- 2. Shopee Retirada + Excel -->
-                <button id="tab-retirada-excel" class="tab-button">
-                    <span class="shopee-badge">SHOPEE</span>
-                    <div>Retirada +<br>Excel</div>
-                </button>
-                <!-- 3. Etiqueta + Declaração -->
+                <!-- 2. Etiqueta + Declaração -->
                 <button id="tab-declaration" class="tab-button">
                     <span class="shopee-badge">SHOPEE</span>
                     <div>Etiqueta +<br>Declaração</div>
                 </button>
-                <!-- 4. Etiqueta + Checklist -->
+                <!-- 3. Etiqueta + Checklist -->
                 <button id="tab-checklist" class="tab-button">
                     <span class="shopee-badge">SHOPEE</span>
                     <div>Etiqueta +<br>Checklist</div>
                 </button>
-                <!-- 5. Vários Arquivos Declaração -->
+                <!-- 4. Vários Arquivos Declaração -->
                 <button id="tab-multi-decl" class="tab-button">
                     <span class="shopee-badge">SHOPEE</span>
                     <div>Vários Arquivos<br>com Declaração</div>
                 </button>
-                <!-- 6. Melhor Envio + Declaração -->
+                <!-- 5. Melhor Envio + Declaração -->
                 <button id="tab-melhor-envio" class="tab-button">
                     <span class="melhor-envio-badge">MELHOR ENVIO</span>
                     <div>+ Declaração</div>
                 </button>
-                <!-- 7. Super Frete -->
+                <!-- 6. Super Frete -->
                 <button id="tab-super-frete" class="tab-button">
                     <span class="super-frete-badge">SUPER FRETE</span>
                     <div>1 por Arquivo</div>
                 </button>
-                <!-- 8. Apenas Recortar -->
+                <!-- 7. Apenas Recortar (NOVO) -->
                 <button id="tab-recortar" class="tab-button">
                     <span class="recortar-badge">RECORTE</span>
                     <div>Apenas Recortar<br>4 Etiquetas</div>
@@ -268,7 +263,6 @@
                     </div>
                 </div>
             </div>
-            <div id="excel-mismatch-warning" class="hidden mb-4 p-3 bg-red-100 border border-red-400 text-red-800 text-sm font-semibold rounded-lg text-center"></div>
             <div id="convert-button-container-excel" class="text-center">
                  <div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm font-semibold rounded-lg">
                     Confira sempre o número do pedido em baixo pra ter certeza que está correto!!
@@ -464,47 +458,6 @@
         </div>
 
 
-        <!-- Ferramenta 8: Shopee Retirada + Excel -->
-        <div id="tool-retirada-excel" class="hidden">
-            <h1 class="text-2xl font-bold text-gray-800 text-center">Shopee Retirada + Excel</h1>
-            <p class="text-gray-500 mt-2 text-center">Para pedidos de Retirada pelo Comprador. Envie o PDF (já 10x15 por página) e o Excel para intercalar os dados do produto.</p>
-            
-            <div id="upload-container-retirada" class="grid md:grid-cols-2 gap-6 my-8">
-                <div id="pdf-upload-area-retirada" class="upload-box">
-                    <input type="file" id="pdf-input-retirada" class="hidden" accept="application/pdf">
-                    <div id="pdf-upload-prompt-retirada">
-                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-blue-600">Enviar PDF Retirada</span> ou arrastar</p>
-                        <p class="text-xs text-gray-400 mt-1">(Etiquetas já em 10x15, 1 por página)</p>
-                    </div>
-                    <div id="pdf-file-info-retirada" class="hidden text-center">
-                          <p class="text-sm font-medium text-gray-700 truncate" id="pdf-file-name-retirada"></p>
-                          <button id="pdf-remove-file-retirada" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
-                    </div>
-                </div>
-                <div id="excel-upload-area-retirada" class="upload-box">
-                    <input type="file" id="excel-input-retirada" class="hidden" accept=".xls,.xlsx">
-                    <div id="excel-upload-prompt-retirada">
-                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-green-600">Enviar Excel</span> ou arrastar</p>
-                    </div>
-                    <div id="excel-file-info-retirada" class="hidden text-center">
-                          <p class="text-sm font-medium text-gray-700 truncate" id="excel-file-name-retirada"></p>
-                          <button id="excel-remove-file-retirada" class="mt-1 text-xs text-red-500 hover:underline">Remover</button>
-                    </div>
-                </div>
-            </div>
-            <div id="retirada-mismatch-warning" class="hidden mb-4 p-3 bg-red-100 border border-red-400 text-red-800 text-sm font-semibold rounded-lg text-center"></div>
-            <div id="convert-button-container-retirada" class="text-center">
-                <div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm font-semibold rounded-lg">
-                    Confira sempre o número do pedido em baixo pra ter certeza que está correto!!
-                </div>
-                <button id="convert-btn-retirada" class="bg-orange-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-orange-600 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
-                    Converter Arquivos
-                </button>
-            </div>
-        </div>
-
         <!-- Área de Carregamento e Resultados (Comum) -->
         <div id="loading-area" class="hidden text-center mt-8">
             <div id="progress-container" class="w-full bg-gray-200 rounded-full h-4 mb-2">
@@ -696,7 +649,6 @@
         const tabSuperFrete = document.getElementById('tab-super-frete');
         const tabMultiDecl = document.getElementById('tab-multi-decl');
         const tabRecortar = document.getElementById('tab-recortar'); // NOVO
-        const tabRetiradaExcel = document.getElementById('tab-retirada-excel'); // NOVO
         
         const toolExcel = document.getElementById('tool-excel');
         const toolDeclaration = document.getElementById('tool-declaration');
@@ -705,7 +657,6 @@
         const toolSuperFrete = document.getElementById('tool-super-frete');
         const toolMultiDecl = document.getElementById('tool-multi-decl');
         const toolRecortar = document.getElementById('tool-recortar');
-        const toolRetiradaExcel = document.getElementById('tool-retirada-excel'); // NOVO
 
         function showTool(toolToShow) {
             toolExcel.classList.add('hidden');
@@ -715,7 +666,6 @@
             toolSuperFrete.classList.add('hidden');
             toolMultiDecl.classList.add('hidden');
             toolRecortar.classList.add('hidden');
-            toolRetiradaExcel.classList.add('hidden'); // NOVO
             resetCommonUI();
             
             const allTabs = document.querySelectorAll('.tab-button');
@@ -729,7 +679,6 @@
                 'super-frete': { tool: toolSuperFrete, tab: tabSuperFrete },
                 'multi-decl': { tool: toolMultiDecl, tab: tabMultiDecl },
                 'recortar': { tool: toolRecortar, tab: tabRecortar }, // NOVO
-                'retirada-excel': { tool: toolRetiradaExcel, tab: tabRetiradaExcel }, // NOVO
             };
 
             if (toolsMap[toolToShow]) {
@@ -745,7 +694,6 @@
         tabSuperFrete.addEventListener('click', () => showTool('super-frete'));
         tabMultiDecl.addEventListener('click', () => showTool('multi-decl'));
         tabRecortar.addEventListener('click', () => showTool('recortar')); // NOVO
-        tabRetiradaExcel.addEventListener('click', () => showTool('retirada-excel')); // NOVO
 
 
         // --- Elementos e Lógica Comuns ---
@@ -813,14 +761,6 @@
              selectedPdfFileRecortar = null;
              resetUploadArea(pdfUploadAreaRecortar, pdfInputRecortar, pdfUploadPromptRecortar, pdfFileInfoRecortar);
              checkEnableConvertButtonRecortar();
-
-             // NOVO - Reset para Ferramenta 8: Retirada + Excel
-             selectedPdfFileRetirada = null;
-             selectedExcelFileRetirada = null;
-             resetUploadArea(pdfUploadAreaRetirada, pdfInputRetirada, pdfUploadPromptRetirada, pdfFileInfoRetirada);
-             resetUploadArea(excelUploadAreaRetirada, excelInputRetirada, excelUploadPromptRetirada, excelFileInfoRetirada);
-             checkEnableConvertButtonRetirada();
-             document.getElementById('retirada-mismatch-warning').classList.add('hidden');
         }
 
 
@@ -991,7 +931,6 @@
 
         async function processFilesExcel(pdfFile, excelFile) {
             toolExcel.classList.add('hidden');
-            document.getElementById('excel-mismatch-warning').classList.add('hidden');
             loadingArea.classList.remove('hidden');
             updateProgress(0, 0);
 
@@ -1005,58 +944,6 @@
                 const excelData = utils.sheet_to_json(workbook.Sheets[sheetName]);
 
                 const sourceDoc = await PDFDocument.load(pdfBytes);
-                const totalExcelRows = excelData.length;
-
-                // --- VALIDAÇÃO: contar etiquetas reais no PDF (ignorar quadrantes em branco) ---
-                progressText.textContent = 'Contando etiquetas no PDF...';
-                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
-                const pdfJsDoc = await pdfjsLib.getDocument({ data: pdfBytes.slice(0) }).promise;
-                let totalRealLabels = 0;
-                const quadrantPositions = ['topLeft', 'bottomLeft', 'topRight', 'bottomRight'];
-                for (let p = 1; p <= pdfJsDoc.numPages; p++) {
-                    const page = await pdfJsDoc.getPage(p);
-                    const viewport = page.getViewport({ scale: 0.3 }); // escala baixa para ser rápido
-                    const canvasEl = document.createElement('canvas');
-                    canvasEl.width = Math.floor(viewport.width);
-                    canvasEl.height = Math.floor(viewport.height);
-                    const ctx = canvasEl.getContext('2d');
-                    await page.render({ canvasContext: ctx, viewport }).promise;
-                    const imgData = ctx.getImageData(0, 0, canvasEl.width, canvasEl.height);
-                    const w = canvasEl.width;
-                    const h = canvasEl.height;
-                    const halfW = Math.floor(w / 2);
-                    const halfH = Math.floor(h / 2);
-                    // Verifica os 4 quadrantes: [x0,y0,x1,y1]
-                    const regions = [
-                        [0, 0, halfW, halfH],           // topo-esquerdo
-                        [0, halfH, halfW, h],            // baixo-esquerdo
-                        [halfW, 0, w, halfH],            // topo-direito
-                        [halfW, halfH, w, h]             // baixo-direito
-                    ];
-                    for (const [rx0, ry0, rx1, ry1] of regions) {
-                        let hasContent = false;
-                        outer: for (let y = ry0; y < ry1; y += 3) {
-                            for (let x = rx0; x < rx1; x += 3) {
-                                const idx = (y * w + x) * 4;
-                                const r = imgData.data[idx], g = imgData.data[idx+1], b = imgData.data[idx+2];
-                                if (r < 240 || g < 240 || b < 240) { hasContent = true; break outer; }
-                            }
-                        }
-                        if (hasContent) totalRealLabels++;
-                    }
-                }
-
-                if (totalExcelRows !== totalRealLabels) {
-                    toolExcel.classList.remove('hidden');
-                    loadingArea.classList.add('hidden');
-                    progressBar.style.backgroundColor = '#3b82f6';
-                    const warn = document.getElementById('excel-mismatch-warning');
-                    warn.textContent = `⚠️ O PDF tem ${totalRealLabels} etiqueta(s), mas o Excel tem ${totalExcelRows} linha(s). Verifique os arquivos e tente novamente.`;
-                    warn.classList.remove('hidden');
-                    return;
-                }
-                // --- FIM DA VALIDAÇÃO ---
-
                 const finalPdfDoc = await PDFDocument.create();
                 const helveticaFont = await finalPdfDoc.embedFont(StandardFonts.Helvetica);
                 const helveticaBoldFont = await finalPdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -1221,8 +1108,6 @@
         let selectedPdfFilesSuperFrete = null;
         let selectedPdfFilesMulti = null;
         let selectedPdfFileRecortar = null; // NOVO
-        let selectedPdfFileRetirada = null; // NOVO
-        let selectedExcelFileRetirada = null; // NOVO
         
         // Elementos Ferramenta 2: Declaração
         const pdfUploadAreaDecl = document.getElementById('pdf-upload-area-single-decl');
@@ -1281,28 +1166,12 @@
         const pdfRemoveFileBtnRecortar = document.getElementById('pdf-remove-file-recortar');
         const convertBtnRecortar = document.getElementById('convert-btn-recortar');
 
-        // NOVO - Elementos Ferramenta 8: Shopee Retirada + Excel
-        const pdfUploadAreaRetirada = document.getElementById('pdf-upload-area-retirada');
-        const pdfInputRetirada = document.getElementById('pdf-input-retirada');
-        const pdfUploadPromptRetirada = document.getElementById('pdf-upload-prompt-retirada');
-        const pdfFileInfoRetirada = document.getElementById('pdf-file-info-retirada');
-        const pdfFileNameElRetirada = document.getElementById('pdf-file-name-retirada');
-        const pdfRemoveFileBtnRetirada = document.getElementById('pdf-remove-file-retirada');
-        const excelUploadAreaRetirada = document.getElementById('excel-upload-area-retirada');
-        const excelInputRetirada = document.getElementById('excel-input-retirada');
-        const excelUploadPromptRetirada = document.getElementById('excel-upload-prompt-retirada');
-        const excelFileInfoRetirada = document.getElementById('excel-file-info-retirada');
-        const excelFileNameElRetirada = document.getElementById('excel-file-name-retirada');
-        const excelRemoveFileBtnRetirada = document.getElementById('excel-remove-file-retirada');
-        const convertBtnRetirada = document.getElementById('convert-btn-retirada');
-
         function checkEnableConvertButtonDeclaration() { convertBtnDecl.disabled = !(selectedPdfFileDecl && labelCountInputDecl.value > 0); }
         function checkEnableConvertButtonMelhorEnvio() { convertBtnMelhorEnvio.disabled = !(selectedPdfFileMelhorEnvio && labelCountInputMelhorEnvio.value > 0); }
         function checkEnableConvertButtonChecklist() { convertBtnCheck.disabled = !(selectedPdfFileCheck && labelCountInputCheck.value > 0); }
         function checkEnableConvertButtonSuperFrete() { convertBtnSuperFrete.disabled = !(selectedPdfFilesSuperFrete && selectedPdfFilesSuperFrete.length > 0); }
         function checkEnableConvertButtonMulti() { convertBtnMulti.disabled = !(selectedPdfFilesMulti && selectedPdfFilesMulti.length > 0); }
         function checkEnableConvertButtonRecortar() { convertBtnRecortar.disabled = !selectedPdfFileRecortar; } // NOVO
-        function checkEnableConvertButtonRetirada() { convertBtnRetirada.disabled = !(selectedPdfFileRetirada && selectedExcelFileRetirada); } // NOVO
         
         // Setup Ferramenta 2
         setupUploadArea(pdfUploadAreaDecl, pdfInputDecl, pdfUploadPromptDecl, pdfFileInfoDecl, pdfFileNameElDecl, pdfRemoveFileBtnDecl, (file) => { selectedPdfFileDecl = file; checkEnableConvertButtonDeclaration(); });
@@ -1330,15 +1199,6 @@
         // NOVO - Setup Ferramenta 7: Recortar
         setupUploadArea(pdfUploadAreaRecortar, pdfInputRecortar, pdfUploadPromptRecortar, pdfFileInfoRecortar, pdfFileNameElRecortar, pdfRemoveFileBtnRecortar, (file) => { selectedPdfFileRecortar = file; checkEnableConvertButtonRecortar(); });
         convertBtnRecortar.addEventListener('click', () => { if (selectedPdfFileRecortar) { processSimpleCutPdf(selectedPdfFileRecortar); } });
-
-        // NOVO - Setup Ferramenta 8: Shopee Retirada + Excel
-        setupUploadArea(pdfUploadAreaRetirada, pdfInputRetirada, pdfUploadPromptRetirada, pdfFileInfoRetirada, pdfFileNameElRetirada, pdfRemoveFileBtnRetirada, (file) => { selectedPdfFileRetirada = file; checkEnableConvertButtonRetirada(); });
-        setupUploadArea(excelUploadAreaRetirada, excelInputRetirada, excelUploadPromptRetirada, excelFileInfoRetirada, excelFileNameElRetirada, excelRemoveFileBtnRetirada, (file) => { selectedExcelFileRetirada = file; checkEnableConvertButtonRetirada(); });
-        convertBtnRetirada.addEventListener('click', () => {
-            if (selectedPdfFileRetirada && selectedExcelFileRetirada) {
-                processRetiradaExcel(selectedPdfFileRetirada, selectedExcelFileRetirada);
-            }
-        });
 
 
         async function processSuperFretePdfs(files) {
@@ -1718,126 +1578,6 @@
         }
 
         // --- FUNÇÕES GENÉRICAS DE UPLOAD ---
-        // --- NOVA FUNÇÃO: Shopee Retirada + Excel ---
-        async function processRetiradaExcel(pdfFile, excelFile) {
-            document.getElementById('tool-retirada-excel').classList.add('hidden');
-            const mismatchWarning = document.getElementById('retirada-mismatch-warning');
-            mismatchWarning.classList.add('hidden');
-            loadingArea.classList.remove('hidden');
-            updateProgress(0, 0);
-
-            try {
-                progressText.textContent = 'Lendo arquivos...';
-                const [pdfBytes, excelBytes] = await Promise.all([pdfFile.arrayBuffer(), excelFile.arrayBuffer()]);
-
-                progressText.textContent = 'Processando dados...';
-                const workbook = read(excelBytes, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const excelData = utils.sheet_to_json(workbook.Sheets[sheetName]);
-
-                const sourceDoc = await PDFDocument.load(pdfBytes);
-                const totalPdfPages = sourceDoc.getPageCount();
-                const totalExcelRows = excelData.length;
-
-                // --- VALIDAÇÃO: 1 etiqueta por página ---
-                if (totalPdfPages !== totalExcelRows) {
-                    document.getElementById('tool-retirada-excel').classList.remove('hidden');
-                    loadingArea.classList.add('hidden');
-                    mismatchWarning.textContent = `⚠️ O PDF tem ${totalPdfPages} etiqueta(s), mas o Excel tem ${totalExcelRows} linha(s). Verifique os arquivos e tente novamente.`;
-                    mismatchWarning.classList.remove('hidden');
-                    return;
-                }
-
-                const finalPdfDoc = await PDFDocument.create();
-                const helveticaFont = await finalPdfDoc.embedFont(StandardFonts.Helvetica);
-                const helveticaBoldFont = await finalPdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-                const CM_TO_POINTS = 28.3465;
-                const targetWidth = 10 * CM_TO_POINTS;
-                const targetHeight = 15 * CM_TO_POINTS;
-                const margin = 10;
-
-                const fonts = { helveticaFont, helveticaBoldFont };
-                const options = {
-                    targetWidth, targetHeight, margin,
-                    colWidths: [130, 70, 25, 50],
-                    fontSize: 7,
-                    titleFontSize: 6.5,
-                    lineHeight: 8
-                };
-
-                // Ordenar por SKU assim como na função principal
-                const sourcePages = sourceDoc.getPages();
-                let combinedData = [];
-                for (let i = 0; i < totalPdfPages; i++) {
-                    const excelRow = excelData[i];
-                    const sortKey = parseMultiProductInfo(excelRow.product_info)[0]?.sku || '';
-                    combinedData.push({ pageIndex: i, excelRow, sortKey });
-                }
-                combinedData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-
-                updateProgress(0, totalPdfPages);
-                for (let i = 0; i < combinedData.length; i++) {
-                    const item = combinedData[i];
-                    const sourcePage = sourcePages[item.pageIndex];
-                    const { width: srcW, height: srcH } = sourcePage.getSize();
-
-                    const products = parseMultiProductInfo(item.excelRow.product_info);
-                    const orderId = item.excelRow.order_sn || 'N/A';
-
-                    const infoAreaHeight = targetHeight * 0.20;
-                    const labelAreaHeight = targetHeight - infoAreaHeight;
-
-                    const mainPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
-
-                    // Embeds a página inteira (já 10x15) na área superior da etiqueta
-                    const embeddedPage = await finalPdfDoc.embedPage(sourcePage, {
-                        left: 0, bottom: 0, right: srcW, top: srcH
-                    });
-                    const scale = Math.min(targetWidth / embeddedPage.width, labelAreaHeight / embeddedPage.height);
-                    mainPage.drawPage(embeddedPage, {
-                        x: (targetWidth - embeddedPage.width * scale) / 2,
-                        y: infoAreaHeight,
-                        width: embeddedPage.width * scale,
-                        height: embeddedPage.height * scale
-                    });
-
-                    const productsOnFirstPage = products.slice(0, 4);
-                    drawProductTableOnPage(mainPage, productsOnFirstPage, infoAreaHeight, fonts, options);
-                    mainPage.drawText(`*Conferir numero do pedido: ${orderId}`, {
-                        x: margin / 2, y: margin,
-                        font: helveticaFont, size: 7, color: rgb(0.2, 0.2, 0.2)
-                    });
-
-                    if (products.length > 4) {
-                        const remainingProducts = products.slice(4);
-                        const continuationPage = finalPdfDoc.addPage([targetWidth, targetHeight]);
-                        drawProductTableOnPage(continuationPage, remainingProducts, targetHeight - margin, fonts, options);
-                        continuationPage.drawText(`*Conferir numero do pedido: ${orderId}`, {
-                            x: margin / 2, y: margin,
-                            font: helveticaFont, size: 7, color: rgb(0.2, 0.2, 0.2)
-                        });
-                    }
-
-                    updateProgress(i + 1, totalPdfPages);
-                }
-
-                progressText.textContent = 'Salvando PDF...';
-                const finalPdfBytes = await finalPdfDoc.save();
-                const newFileName = `retirada_pampa_${totalPdfPages}_etiquetas.pdf`;
-                createDownloadLink(finalPdfBytes, newFileName, `Baixar PDF com ${totalPdfPages} etiquetas`);
-
-                loadingArea.classList.add('hidden');
-                resultsArea.classList.remove('hidden');
-
-            } catch (error) {
-                console.error('Erro ao processar Retirada + Excel:', error);
-                progressText.textContent = `Erro: ${error.message}. Tente novamente.`;
-                progressBar.style.backgroundColor = '#ef4444';
-            }
-        }
-        // --- FIM NOVA FUNÇÃO ---
-
         function setupUploadArea(area, input, prompt, info, nameEl, removeBtn, onFileSelectCallback) {
             area.addEventListener('click', () => input.click());
             area.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); area.classList.add('border-blue-500', 'bg-blue-50'); });
