@@ -455,7 +455,7 @@
   telas.vendas = async (el, estado) => {
     estado.mes ??= mesAtual(); estado.sit ??= 'todas'; estado.busca ??= '';
     el.innerHTML = `
-      <div class="topo"><h1>Vendas</h1><div class="topo-acoes"><button class="btn" data-csv>Exportar</button><button class="btn primario" data-nova>Nova venda</button></div></div>
+      <div class="topo"><h1>Vendas</h1><div class="topo-acoes">${pode('relatorios') ? '<button class="btn" data-csv>Exportar</button>' : ''}<button class="btn primario" data-nova>Nova venda</button></div></div>
       <div class="filtros">
         <label class="campo">Mês<input type="month" data-mes value="${estado.mes}"></label>
         <label class="campo">Situação<select data-sit>
@@ -470,7 +470,7 @@
     function lista() {
       const f = filtradas(), box = el.querySelector('[data-lista]');
       const tot = f.reduce((a, v) => ({ t: a.t + Number(v.total), s: a.s + Number(v.saldo) }), { t: 0, s: 0 });
-      box.innerHTML = `<p class="sub" style="margin:0 0 8px">${f.length} venda(s) · Total ${brl(tot.t)} · Em aberto ${brl(tot.s)}</p>
+      box.innerHTML = `<p class="sub" style="margin:0 0 8px">${f.length} venda(s)${pode('relatorios') ? ` · Total ${brl(tot.t)} · Em aberto ${brl(tot.s)}` : ''}</p>
       <div class="tabela-caixa">${f.length ? `<table class="responsiva"><thead><tr><th>Cliente</th><th>Data</th><th>Itens</th><th class="num">Total</th><th class="num">Saldo</th><th>Situação</th></tr></thead><tbody>
         ${f.map((v) => `<tr class="clicavel" data-id="${v.id}"><td class="principal">${esc(v.cliente_nome)}${v.descricao ? `<div class="sub">${esc(v.descricao)}</div>` : ''}</td>
           <td data-r="Data">${dataBr(v.data)}</td><td data-r="Itens"><span class="sub">${esc(v.itens_resumo)}</span></td><td class="num" data-r="Total">${brl(v.total)}</td><td class="num" data-r="Saldo">${brl(v.saldo)}</td><td data-r="Situação">${seloVenda(v.situacao)}</td></tr>`).join('')}
@@ -485,7 +485,8 @@
     el.querySelector('[data-sit]').onchange = (e) => { estado.sit = e.target.value; lista(); };
     el.querySelector('[data-busca]').oninput = (e) => { estado.busca = e.target.value; lista(); };
     el.querySelector('[data-nova]').onclick = () => formVenda(null, carregar).catch(erroTela);
-    el.querySelector('[data-csv]').onclick = () => baixarCsv(`vendas-${estado.mes}.csv`, ['Venda', 'Data', 'Cliente', 'Itens', 'Descrição', 'Total', 'Pago', 'Saldo', 'Situação'],
+    const exportarVendas = el.querySelector('[data-csv]');
+    if (exportarVendas) exportarVendas.onclick = () => baixarCsv(`vendas-${estado.mes}.csv`, ['Venda', 'Data', 'Cliente', 'Itens', 'Descrição', 'Total', 'Pago', 'Saldo', 'Situação'],
       filtradas().map((v) => [v.id, dataBr(v.data), v.cliente_nome, v.itens_resumo, v.descricao, Number(v.total), Number(v.pago), Number(v.saldo), v.situacao]));
     await carregar();
   };
@@ -1283,7 +1284,9 @@
   const icone = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICONES[n]}"/></svg>`;
   const MENU = [['inicio', 'Início'], ['vendas', 'Vendas'], ['receber', 'A receber'], ['clientes', 'Clientes'], ['produtos', 'Produtos'], ['contas', 'Contas'], ['compras', 'Compras'], ['relatorios', 'Relatórios'], ['usuarios', 'Usuários']];
   // Tela -> permissão necessária. O banco também recusa; aqui é só para não mostrar a tela.
-  const EXIGE = { contas: 'contas', conta: 'contas', compras: 'compras', relatorios: 'relatorios' };
+  // A tela Início mostra vendido, recebido e resultado, por isso segue a permissão de relatórios.
+  const EXIGE = { inicio: 'relatorios', contas: 'contas', conta: 'contas', compras: 'compras', relatorios: 'relatorios' };
+  const telaInicial = () => (pode('relatorios') ? 'inicio' : 'vendas');
   const liberada = (tela) => (tela === 'usuarios' ? master() : !EXIGE[tela] || pode(EXIGE[tela]));
   const BAIXO = [['inicio', 'Início'], ['vendas', 'Vendas'], ['receber', 'Receber'], ['clientes', 'Clientes'], ['mais', 'Mais']];
 
@@ -1299,18 +1302,18 @@
         <div class="rodape"><div class="usuario">${esc(email)}<br>${esc(acesso.nome)}</div><button class="nav-item" data-sair>${icone('sair')}Sair</button></div>
       </aside>
       <main class="conteudo" id="tela"></main>
-      <nav class="barra-baixo" aria-label="Navegação">${BAIXO.map(([k, r]) => `<a data-nav="${k}" href="#/${k}">${icone(k)}${r}</a>`).join('')}</nav>`;
+      <nav class="barra-baixo" aria-label="Navegação">${BAIXO.filter(([k]) => k === 'mais' || liberada(k)).map(([k, r]) => `<a data-nav="${k}" href="#/${k}">${icone(k)}${r}</a>`).join('')}</nav>`;
     area = document.getElementById('tela');
     raiz.querySelector('[data-sair]').onclick = () => api.sair();
   }
 
   async function mostrar() {
     if (!area) return;
-    const [, nome = 'inicio', id] = (location.hash || '#/inicio').split('/');
+    const [, nome = telaInicial(), id] = (location.hash || `#/${telaInicial()}`).split('/');
     const eDetalheCliente = nome === 'clientes' && id;
     const eExtrato = nome === 'contas' && id;
-    let tela = eDetalheCliente ? 'cliente' : eExtrato ? 'conta' : (telas[nome] ? nome : 'inicio');
-    if (!liberada(tela)) tela = 'inicio';
+    let tela = eDetalheCliente ? 'cliente' : eExtrato ? 'conta' : (telas[nome] ? nome : telaInicial());
+    if (!liberada(tela)) tela = telaInicial();
     const noMenu = eDetalheCliente ? 'clientes' : eExtrato ? 'contas' : tela;
     document.querySelectorAll('[data-nav]').forEach((a) => a.classList.toggle('ativo', a.dataset.nav === noMenu));
     const minha = ++sequencia;
