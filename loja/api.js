@@ -24,7 +24,16 @@
   }
 
   const rpc = (nome, args) => dados(sb.rpc(nome, args));
-  const LIMITE = 5000;
+
+  // O Supabase entrega no máximo 1.000 linhas por consulta; aqui busca em lotes até acabar.
+  async function todas(montar) {
+    const LOTE = 1000, linhas = [];
+    for (let i = 0; ; i += LOTE) {
+      const parte = await dados(montar().range(i, i + LOTE - 1));
+      linhas.push(...parte);
+      if (parte.length < LOTE) return linhas;
+    }
+  }
 
   // Criar login exige a chave de administrador, que fica na função do Supabase.
   async function chamarFuncao(corpo) {
@@ -60,11 +69,10 @@
     meuAcesso: () => rpc('meu_acesso'),
 
     // ---------- Cadastros ----------
-    clientes: (incluirArquivados = false) => {
-      let q = sb.from('clientes').select('*').order('nome').limit(LIMITE);
-      if (!incluirArquivados) q = q.eq('ativo', true);
-      return dados(q);
-    },
+    clientes: (incluirArquivados = false) => todas(() => {
+      const q = sb.from('clientes').select('*').order('nome').order('id');
+      return incluirArquivados ? q : q.eq('ativo', true);
+    }),
     cliente: (id) => dados(sb.from('clientes').select('*').eq('id', id).single()),
     salvarCliente: (id, c) => id
       ? dados(sb.from('clientes').update(c).eq('id', id).select().single())
@@ -91,27 +99,29 @@
       .order('data', { ascending: false }).order('id', { ascending: false }).limit(100)),
 
     // ---------- Vendas ----------
-    vendas: (de, ate) => dados(sb.from('vw_vendas').select('*').gte('data', de).lte('data', ate)
-      .order('data', { ascending: false }).order('id', { ascending: false }).limit(LIMITE)),
-    vendasDoCliente: (id) => dados(sb.from('vw_vendas').select('*').eq('cliente_id', id)
-      .order('data', { ascending: false }).order('id', { ascending: false }).limit(LIMITE)),
-    vendasEmAberto: () => dados(sb.from('vw_vendas').select('*').gt('saldo', 0).order('data').order('id').limit(LIMITE)),
+    vendas: (de, ate) => todas(() => sb.from('vw_vendas').select('*').gte('data', de).lte('data', ate)
+      .order('data', { ascending: false }).order('id', { ascending: false })),
+    vendasDoCliente: (id) => todas(() => sb.from('vw_vendas').select('*').eq('cliente_id', id)
+      .order('data', { ascending: false }).order('id', { ascending: false })),
+    vendasEmAberto: () => todas(() => sb.from('vw_vendas').select('*').gt('saldo', 0).order('data').order('id')),
     venda: (id) => dados(sb.from('vw_vendas').select('*').eq('id', id).single()),
     itensDaVenda: (id) => dados(sb.from('venda_itens').select('id,venda_id,produto_id,quantidade,preco_unitario').eq('venda_id', id).order('id')),
     pagamentosDaVenda: (id) => dados(sb.from('pagamentos').select('*').eq('venda_id', id).order('data').order('id')),
     salvarVenda: (id, v) => rpc('salvar_venda', {
       p_id: id, p_cliente_id: v.cliente_id, p_data: v.data, p_descricao: v.descricao,
       p_desconto: v.desconto, p_itens: v.itens, p_pagamento: v.pagamento || null,
+      p_com_nf: !!v.com_nf, p_numero_nf: v.numero_nf || null,
     }),
+    impostoDaVenda: (id) => rpc('imposto_da_venda', { p_id: id }),
     excluirVenda: (id) => rpc('excluir_venda', { p_id: id }),
     adicionarPagamento: (venda, data, forma, valor, conta) => rpc('adicionar_pagamento', { p_venda: venda, p_data: data, p_forma: forma, p_valor: valor, p_conta: conta }),
     excluirPagamento: (id) => rpc('excluir_pagamento', { p_id: id }),
     receberDoCliente: (cliente, data, forma, valor, conta) => rpc('receber_do_cliente', { p_cliente: cliente, p_data: data, p_forma: forma, p_valor: valor, p_conta: conta }),
-    clientesEmAberto: () => dados(sb.from('vw_clientes_em_aberto').select('*').order('saldo', { ascending: false }).limit(LIMITE)),
+    clientesEmAberto: () => todas(() => sb.from('vw_clientes_em_aberto').select('*').order('saldo', { ascending: false }).order('cliente_id')),
 
     // ---------- Compras ----------
-    compras: (de, ate) => dados(sb.from('vw_compras').select('*').gte('data', de).lte('data', ate)
-      .order('data', { ascending: false }).order('id', { ascending: false }).limit(LIMITE)),
+    compras: (de, ate) => todas(() => sb.from('vw_compras').select('*').gte('data', de).lte('data', ate)
+      .order('data', { ascending: false }).order('id', { ascending: false })),
     compra: (id) => dados(sb.from('vw_compras').select('*').eq('id', id).single()),
     itensDaCompra: (id) => dados(sb.from('compra_itens').select('*').eq('compra_id', id).order('id')),
     salvarCompra: (id, c) => rpc('salvar_compra', {
@@ -124,7 +134,7 @@
     contas: () => dados(sb.from('contas').select('id,nome,tipo,ativo').order('nome')),
     saldosDasContas: () => dados(sb.from('vw_contas').select('*').order('nome')),
     salvarConta: (id, c) => rpc('salvar_conta', { p_id: id, p_nome: c.nome, p_tipo: c.tipo, p_saldo_inicial: c.saldo_inicial, p_ativo: c.ativo }),
-    extrato: (conta, de, ate) => dados(sb.from('vw_extrato').select('*').eq('conta_id', conta).gte('data', de).lte('data', ate).order('data').order('id').limit(LIMITE)),
+    extrato: (conta, de, ate) => todas(() => sb.from('vw_extrato').select('*').eq('conta_id', conta).gte('data', de).lte('data', ate).order('data').order('origem').order('id')),
     saldoAntes: (conta, data) => rpc('saldo_conta_antes', { p_conta: conta, p_data: data }),
     lancamento: (id) => dados(sb.from('lancamentos').select('*').eq('id', id).single()),
     salvarLancamento: (id, l) => rpc('salvar_lancamento', {
@@ -133,6 +143,10 @@
     excluirLancamento: (id) => rpc('excluir_lancamento', { p_id: id }),
     transferir: (origem, destino, data, valor, descricao) => rpc('transferir', { p_origem: origem, p_destino: destino, p_data: data, p_valor: valor, p_descricao: descricao }),
     marcarConferido: (origem, id, conferido) => rpc('marcar_conferido', { p_origem: origem, p_id: id, p_conferido: conferido }),
+
+    // ---------- Configurações ----------
+    configuracoes: () => dados(sb.from('configuracoes').select('*').eq('id', 1).single()),
+    salvarAliquotaNf: (aliquota) => rpc('salvar_aliquota_nf', { p_aliquota: aliquota }),
 
     // ---------- Usuários ----------
     usuarios: () => rpc('listar_usuarios'),
@@ -146,5 +160,7 @@
     relClientes: (de, ate) => rpc('rel_clientes', { p_de: de, p_ate: ate }),
     relFormas: (de, ate) => rpc('rel_formas', { p_de: de, p_ate: ate }),
     relDespesas: (de, ate) => rpc('rel_despesas', { p_de: de, p_ate: ate }),
+    relNf: (de, ate) => rpc('rel_nf', { p_de: de, p_ate: ate }),
+    impostoPago: (de, ate) => rpc('imposto_pago_periodo', { p_de: de, p_ate: ate }),
   };
 })();

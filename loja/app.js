@@ -161,7 +161,7 @@
   }[p.situacao] || '');
 
   // ---------- Formulários de itens (venda e compra) ----------
-  function editorDeItens(host, { produtos, tipo, itensIniciais = [], semPrevia = false, aoMudar }) {
+  function editorDeItens(host, { produtos, tipo, itensIniciais = [], semPrevia = false, aliquotaNf = () => null, aoMudar }) {
     const campoValor = tipo === 'venda' ? 'preco_unitario' : 'custo_unitario';
     const candidatos = tipo === 'venda'
       ? produtos.filter((p) => p.ativo)
@@ -172,10 +172,13 @@
       const p = it.produto;
       if (!p) return '';
       if (tipo === 'venda') {
+        const a = aliquotaNf();
+        const sugerido = a !== null && p.preco_venda > 0 ? arred(p.preco_venda / (1 - a / 100)) : null;
+        const dica = sugerido === null ? '' : `<span class="item-nota">Sugerido com NF: <strong>${brl(sugerido)}</strong> <button type="button" class="link" data-usar="${paraCampo(sugerido)}">Usar</button></span>`;
         if (p.controla_estoque && it.quantidade > p.estoque + (it.qtdOriginal || 0)) {
-          return `<span class="item-nota aviso">Estoque atual: ${p.estoque}. A venda deixará o estoque negativo.</span>`;
+          return `<span class="item-nota aviso">Estoque atual: ${p.estoque}. A venda deixará o estoque negativo.</span>${dica ? `<br>${dica}` : ''}`;
         }
-        return p.controla_estoque ? `<span class="item-nota">Em estoque: ${p.estoque}</span>` : '';
+        return (p.controla_estoque ? `<span class="item-nota">Em estoque: ${p.estoque}</span>` : '') + (dica ? `${p.controla_estoque ? '<br>' : ''}${dica}` : '');
       }
       if (semPrevia) return '';
       // Prévia do novo custo médio. O valor final é calculado pelo banco.
@@ -215,6 +218,13 @@
             atualizarNota();
           },
         });
+        el.querySelector('[data-nota]').onclick = (e) => {
+          const b = e.target.closest('[data-usar]');
+          if (!b) return;
+          it.valorTxt = b.dataset.usar;
+          el.querySelector('[data-val]').value = it.valorTxt;
+          atualizarNota();
+        };
         el.querySelector('[data-qtd]').oninput = (e) => { it.quantidade = parseInt(e.target.value.replace(/\D/g, ''), 10) || 0; atualizarNota(); };
         el.querySelector('[data-val]').oninput = (e) => { it.valorTxt = e.target.value; atualizarNota(); };
         el.querySelector('[data-rem]').onclick = () => { itens.splice(i, 1); desenhar(); aoMudar(); };
@@ -228,6 +238,7 @@
     desenhar();
 
     return {
+      atualizar() { desenhar(); },
       adicionar() { itens.push({ produto: null, quantidade: 0, valorTxt: '' }); desenhar(); host.querySelector('.item-linha:last-child input')?.focus(); },
       subtotal: () => arred(itens.reduce((s, it) => s + it.quantidade * lerNumero(it.valorTxt), 0)),
       coletar() {
@@ -243,8 +254,10 @@
 
   // ---------- Venda: formulário ----------
   async function formVenda(id, aoSalvar) {
-    const [produtos, clientes, contas] = await Promise.all([api.produtos(true), api.clientes(), api.contas()]);
+    const [produtos, clientes, contas, config] = await Promise.all([api.produtos(true), api.clientes(), api.contas(), api.configuracoes()]);
     const venda = id ? await api.venda(id) : null;
+    const aliquota = Number(config.aliquota_nf);
+    let comNf = !!venda?.com_nf;
     const itensIni = id ? await api.itensDaVenda(id) : [];
     let cliente = venda?.cliente_id ? clientes.find((c) => c.id === venda.cliente_id) || { id: venda.cliente_id, nome: venda.cliente_nome } : null;
     let tipoDesc = 'reais';
@@ -256,6 +269,8 @@
           <label class="campo inteiro">Cliente (em branco = balcão)<div data-cliente></div></label>
           <label class="campo">Data<input type="date" data-data value="${venda?.data || hoje()}"></label>
           <label class="campo">Descrição (opcional)<input data-desc value="${esc(venda?.descricao)}" maxlength="200"></label>
+          <label class="check"><input type="checkbox" data-nf ${comNf ? 'checked' : ''}> Com NF</label>
+          <label class="campo" data-nf-campo ${comNf ? '' : 'hidden'}>Número da NF (opcional)<input data-nf-num value="${esc(venda?.numero_nf)}" maxlength="30"></label>
         </div>
         <div><h2>Itens</h2><div data-itens></div>
           <button type="button" class="btn" data-add style="width:100%">Adicionar item</button></div>
@@ -269,6 +284,7 @@
           <div class="linha-conta sub"><span>Subtotal</span><span data-sub></span></div>
           <div class="linha-conta sub"><span>Desconto</span><span data-dtotal></span></div>
           <div class="linha-conta grande"><span>Total</span><span data-total></span></div>
+          ${pode('relatorios') ? `<div class="linha-conta sub" data-imp-linha hidden><span>Imposto previsto (${numBr(aliquota)}%)</span><span data-imp></span></div>` : ''}
         </div>
         ${id ? `<p class="sub" style="margin:0">Já pago: ${brl(venda.pago)}. Pagamentos são lançados no detalhe da venda.</p>` : `
         <div class="cartao">
@@ -302,6 +318,8 @@
       d.querySelector('[data-sub]').textContent = brl(sub);
       d.querySelector('[data-dtotal]').textContent = brl(desc);
       d.querySelector('[data-total]').textContent = brl(tot);
+      const impLinha = d.querySelector('[data-imp-linha]');
+      if (impLinha) { impLinha.hidden = !comNf; d.querySelector('[data-imp]').textContent = brl(arred(tot * aliquota / 100)); }
       const resta = d.querySelector('[data-resta]');
       if (resta) {
         const falta = arred(tot - lerNumero(d.querySelector('[data-pago]').value));
@@ -310,8 +328,14 @@
           : '';
       }
     }
-    const editor = editorDeItens(d.querySelector('[data-itens]'), { produtos, tipo: 'venda', itensIniciais: itensIni, aoMudar: () => recalcular() });
+    const editor = editorDeItens(d.querySelector('[data-itens]'), { produtos, tipo: 'venda', itensIniciais: itensIni, aliquotaNf: () => (comNf ? aliquota : null), aoMudar: () => recalcular() });
     d.querySelector('[data-add]').onclick = () => editor.adicionar();
+    d.querySelector('[data-nf]').onchange = (e) => {
+      comNf = e.target.checked;
+      d.querySelector('[data-nf-campo]').hidden = !comNf;
+      editor.atualizar();
+      recalcular();
+    };
     d.querySelector('[data-desconto]').oninput = recalcular;
     d.querySelector('[data-tipo-desc]').onchange = (e) => { tipoDesc = e.target.value; recalcular(); };
     if (!id) {
@@ -334,6 +358,7 @@
       const dados = {
         cliente_id: cliente?.id ?? null, data: d.querySelector('[data-data]').value || hoje(),
         descricao: d.querySelector('[data-desc]').value, desconto, itens,
+        com_nf: comNf, numero_nf: comNf ? d.querySelector('[data-nf-num]').value : null,
       };
       if (!id) {
         const valor = lerNumero(d.querySelector('[data-pago]').value);
@@ -353,17 +378,20 @@
   // ---------- Venda: detalhe ----------
   async function detalheVenda(id, aoMudar) {
     const [v, itens, pags, produtos, contas] = await Promise.all([api.venda(id), api.itensDaVenda(id), api.pagamentosDaVenda(id), api.produtos(true), api.contas()]);
+    const imposto = v.com_nf && pode('relatorios') ? await api.impostoDaVenda(id) : null;
     const nomeConta = (cid) => contas.find((c) => c.id === cid)?.nome;
     const nomeProd = (pid) => produtos.find((p) => p.id === pid)?.nome || 'Produto';
     const d = janela({
       titulo: `Venda nº ${v.id}`,
       corpo: `<div class="pilha">
-        <div class="linha-conta"><div><strong>${esc(v.cliente_nome)}</strong><div class="sub">${dataBr(v.data)}${v.vendedor ? ' · por ' + esc(v.vendedor) : ''}</div></div>${seloVenda(v.situacao)}</div>
+        <div class="linha-conta"><div><strong>${esc(v.cliente_nome)}</strong><div class="sub">${dataBr(v.data)}${v.vendedor ? ' · por ' + esc(v.vendedor) : ''}</div></div><div>${v.com_nf ? '<span class="selo neutro">NF</span> ' : ''}${seloVenda(v.situacao)}</div></div>
+        ${v.numero_nf ? `<div class="sub">NF nº ${esc(v.numero_nf)}</div>` : ''}
         ${v.descricao ? `<div class="sub">${esc(v.descricao)}</div>` : ''}
         <div class="linhas">${itens.map((i) => `<div class="linha-conta"><span>${i.quantidade} x ${esc(nomeProd(i.produto_id))}<span class="sub"> a ${brl(i.preco_unitario)}</span></span><span class="num">${brl(i.quantidade * i.preco_unitario)}</span></div>`).join('')}</div>
         <div class="totais">
           ${v.desconto > 0 ? `<div class="linha-conta sub"><span>Desconto</span><span>${brl(v.desconto)}</span></div>` : ''}
           <div class="linha-conta"><span>Total</span><strong>${brl(v.total)}</strong></div>
+          ${imposto ? `<div class="linha-conta sub"><span>Imposto (${numBr(imposto.aliquota)}%)</span><span>${brl(imposto.imposto)}</span></div>` : ''}
           <div class="linha-conta"><span>Pago</span><span>${brl(v.pago)}</span></div>
           <div class="linha-conta grande"><span>Saldo</span><span>${brl(v.saldo)}</span></div>
         </div>
@@ -453,41 +481,64 @@
   };
 
   telas.vendas = async (el, estado) => {
-    estado.mes ??= mesAtual(); estado.sit ??= 'todas'; estado.busca ??= '';
+    estado.modo ??= 'mes'; estado.mes ??= mesAtual(); estado.ano ??= mesAtual().slice(0, 4);
+    estado.sit ??= 'todas'; estado.nf ??= ''; estado.busca ??= '';
+    const LOTE_TELA = 100;
+    let visiveis = LOTE_TELA;
     el.innerHTML = `
       <div class="topo"><h1>Vendas</h1><div class="topo-acoes">${pode('relatorios') ? '<button class="btn" data-csv>Exportar</button>' : ''}<button class="btn primario" data-nova>Nova venda</button></div></div>
       <div class="filtros">
-        <label class="campo">Mês<input type="month" data-mes value="${estado.mes}"></label>
+        <label class="campo">Período<select data-modo>${opcoes({ mes: 'Por mês', ano: 'Por ano', tudo: 'Tudo' }, estado.modo)}</select></label>
+        <label class="campo" data-campo-mes>Mês<input type="month" data-mes value="${estado.mes}"></label>
+        <label class="campo" data-campo-ano>Ano<input data-ano inputmode="numeric" maxlength="4" value="${estado.ano}"></label>
         <label class="campo">Situação<select data-sit>
           ${opcoes({ todas: 'Todas', pendentes: 'Com saldo em aberto', quitada: 'Quitadas' }, estado.sit)}</select></label>
-        <label class="campo">Buscar<input data-busca placeholder="Cliente, produto ou descrição" value="${esc(estado.busca)}"></label>
+        <label class="campo">Nota<select data-nf>${opcoes({ '': 'Com e sem NF', com: 'Com NF', sem: 'Sem NF' }, estado.nf)}</select></label>
+        <label class="campo">Buscar<input data-busca placeholder="Cliente, produto, descrição ou NF" value="${esc(estado.busca)}"></label>
       </div>
       <div data-lista><div class="vazio">Carregando…</div></div>`;
     let vendas = [];
+    const periodo = () => (estado.modo === 'mes' ? [`${estado.mes}-01`, fimDoMes(estado.mes)]
+      : estado.modo === 'ano' ? [`${estado.ano}-01-01`, `${estado.ano}-12-31`]
+        : ['2000-01-01', '2100-12-31']);
     const filtradas = () => vendas.filter((v) =>
       (estado.sit === 'todas' || (estado.sit === 'pendentes' ? v.saldo > 0 : v.situacao === 'quitada'))
-      && (!estado.busca || contem(`${v.cliente_nome} ${v.descricao || ''} ${v.itens_resumo || ''}`, estado.busca)));
+      && (!estado.nf || (estado.nf === 'com') === v.com_nf)
+      && (!estado.busca || contem(`${v.cliente_nome} ${v.descricao || ''} ${v.itens_resumo || ''} ${v.numero_nf || ''}`, estado.busca)));
     function lista() {
       const f = filtradas(), box = el.querySelector('[data-lista]');
-      const tot = f.reduce((a, v) => ({ t: a.t + Number(v.total), s: a.s + Number(v.saldo) }), { t: 0, s: 0 });
-      box.innerHTML = `<p class="sub" style="margin:0 0 8px">${f.length} venda(s)${pode('relatorios') ? ` · Total ${brl(tot.t)} · Em aberto ${brl(tot.s)}` : ''}</p>
+      const emAberto = f.reduce((a, v) => a + Number(v.saldo), 0);
+      const parte = f.slice(0, visiveis);
+      box.innerHTML = `<p class="sub" style="margin:0 0 8px">${f.length} venda(s) · Em aberto ${brl(emAberto)}</p>
       <div class="tabela-caixa">${f.length ? `<table class="responsiva"><thead><tr><th>Cliente</th><th>Data</th><th>Itens</th><th class="num">Total</th><th class="num">Saldo</th><th>Situação</th></tr></thead><tbody>
-        ${f.map((v) => `<tr class="clicavel" data-id="${v.id}"><td class="principal">${esc(v.cliente_nome)}${v.descricao ? `<div class="sub">${esc(v.descricao)}</div>` : ''}</td>
+        ${parte.map((v) => `<tr class="clicavel" data-id="${v.id}"><td class="principal">${esc(v.cliente_nome)}${v.com_nf ? ' <span class="selo neutro">NF</span>' : ''}${v.descricao ? `<div class="sub">${esc(v.descricao)}</div>` : ''}</td>
           <td data-r="Data">${dataBr(v.data)}</td><td data-r="Itens"><span class="sub">${esc(v.itens_resumo)}</span></td><td class="num" data-r="Total">${brl(v.total)}</td><td class="num" data-r="Saldo">${brl(v.saldo)}</td><td data-r="Situação">${seloVenda(v.situacao)}</td></tr>`).join('')}
-      </tbody></table>` : '<div class="vazio">Nenhuma venda encontrada.</div>'}</div>`;
+      </tbody></table>` : '<div class="vazio">Nenhuma venda encontrada.</div>'}</div>
+      ${f.length > parte.length ? `<div style="text-align:center;margin-top:12px"><button class="btn" data-mais>Mostrar mais (${f.length - parte.length} restantes)</button></div>` : ''}`;
       box.querySelectorAll('[data-id]').forEach((tr) => { tr.onclick = () => detalheVenda(+tr.dataset.id, carregar).catch(erroTela); });
+      const mais = box.querySelector('[data-mais]');
+      if (mais) mais.onclick = () => { visiveis += LOTE_TELA; lista(); };
     }
     async function carregar() {
-      vendas = await api.vendas(`${estado.mes}-01`, fimDoMes(estado.mes));
+      el.querySelector('[data-campo-mes]').hidden = estado.modo !== 'mes';
+      el.querySelector('[data-campo-ano]').hidden = estado.modo !== 'ano';
+      const [de, ate] = periodo();
+      vendas = await api.vendas(de, ate);
       lista();
     }
-    el.querySelector('[data-mes]').onchange = (e) => { if (e.target.value) { estado.mes = e.target.value; carregar().catch(erroTela); } };
-    el.querySelector('[data-sit]').onchange = (e) => { estado.sit = e.target.value; lista(); };
-    el.querySelector('[data-busca]').oninput = (e) => { estado.busca = e.target.value; lista(); };
+    const refazFiltro = (fn) => (e) => { fn(e); visiveis = LOTE_TELA; lista(); };
+    const recarrega = () => { visiveis = LOTE_TELA; carregar().catch(erroTela); };
+    el.querySelector('[data-modo]').onchange = (e) => { estado.modo = e.target.value; recarrega(); };
+    el.querySelector('[data-mes]').onchange = (e) => { if (e.target.value) { estado.mes = e.target.value; recarrega(); } };
+    el.querySelector('[data-ano]').onchange = (e) => { if (/^\d{4}$/.test(e.target.value)) { estado.ano = e.target.value; recarrega(); } };
+    el.querySelector('[data-sit]').onchange = refazFiltro((e) => { estado.sit = e.target.value; });
+    el.querySelector('[data-nf]').onchange = refazFiltro((e) => { estado.nf = e.target.value; });
+    el.querySelector('[data-busca]').oninput = refazFiltro((e) => { estado.busca = e.target.value; });
     el.querySelector('[data-nova]').onclick = () => formVenda(null, carregar).catch(erroTela);
     const exportarVendas = el.querySelector('[data-csv]');
-    if (exportarVendas) exportarVendas.onclick = () => baixarCsv(`vendas-${estado.mes}.csv`, ['Venda', 'Data', 'Cliente', 'Itens', 'Descrição', 'Total', 'Pago', 'Saldo', 'Situação'],
-      filtradas().map((v) => [v.id, dataBr(v.data), v.cliente_nome, v.itens_resumo, v.descricao, Number(v.total), Number(v.pago), Number(v.saldo), v.situacao]));
+    if (exportarVendas) exportarVendas.onclick = () => baixarCsv(`vendas-${estado.modo === 'mes' ? estado.mes : estado.modo === 'ano' ? estado.ano : 'todas'}.csv`,
+      ['Venda', 'Data', 'Cliente', 'Itens', 'Descrição', 'Total', 'Pago', 'Saldo', 'Situação', 'NF', 'Número da NF'],
+      filtradas().map((v) => [v.id, dataBr(v.data), v.cliente_nome, v.itens_resumo, v.descricao, Number(v.total), Number(v.pago), Number(v.saldo), v.situacao, v.com_nf ? 'Sim' : 'Não', v.numero_nf]));
     await carregar();
   };
 
@@ -894,7 +945,7 @@
   };
 
   // ---------- Contas ----------
-  const CATEGORIAS = ['Energia elétrica', 'Água', 'Internet', 'Telefone', 'Aluguel', 'Salários', 'Impostos', 'Contador', 'Frete', 'Manutenção', 'Retirada', 'Outros'];
+  const CATEGORIAS = ['Energia elétrica', 'Água', 'Internet', 'Telefone', 'Aluguel', 'Salários', 'Imposto de NF', 'Impostos', 'Contador', 'Frete', 'Manutenção', 'Retirada', 'Outros'];
 
   function formConta(c, aoSalvar) {
     const v = c || { tipo: 'banco', saldo_inicial: 0, ativo: true };
@@ -1166,7 +1217,7 @@
       <div class="topo"><h1>Relatórios</h1><div class="topo-acoes nao-imprimir"><button class="btn" data-csv>Exportar</button><button class="btn" data-imp>Imprimir</button></div></div>
       <div class="abas nao-imprimir">
         <button class="aba" data-aba="mensal">Mensal</button><button class="aba" data-aba="produtos">Por produto</button>
-        <button class="aba" data-aba="clientes">Por cliente</button><button class="aba" data-aba="formas">Recebimentos</button><button class="aba" data-aba="despesas">Despesas</button>
+        <button class="aba" data-aba="clientes">Por cliente</button><button class="aba" data-aba="formas">Recebimentos</button><button class="aba" data-aba="despesas">Despesas</button><button class="aba" data-aba="nf">Notas fiscais</button>
       </div>
       <div class="filtros nao-imprimir" data-filtros></div>
       <div data-corpo><div class="vazio">Carregando…</div></div>`;
@@ -1205,27 +1256,27 @@
       if (estado.aba === 'mensal') {
         const r = await api.relMensal(estado.ano);
         corpo.innerHTML = `<h2>${estado.ano}</h2>` + tabela(
-          '<th>Mês</th><th class="num">Vendas</th><th class="num">Vendido</th><th class="num">Custo</th><th class="num">Lucro bruto</th><th class="num">Despesas</th><th class="num">Resultado</th><th class="num">Recebido</th><th class="num">Em aberto</th>',
-          r.map((x) => `<tr><td class="principal">${MESES[x.mes - 1]}</td><td class="num" data-r="Vendas">${x.vendas}</td><td class="num" data-r="Vendido">${brl(x.vendido)}</td><td class="num" data-r="Custo">${brl(x.custo)}</td><td class="num" data-r="Lucro bruto">${brl(x.lucro)}</td><td class="num" data-r="Despesas">${brl(x.despesas)}</td><td class="num" data-r="Resultado">${brl(x.resultado)}</td><td class="num" data-r="Recebido">${brl(x.recebido)}</td><td class="num" data-r="Em aberto">${brl(x.em_aberto)}</td></tr>`).join(''),
-          `<td data-r="">Total</td><td class="num" data-r="Vendas">${somar(r, 'vendas')}</td><td class="num" data-r="Vendido">${brl(somar(r, 'vendido'))}</td><td class="num" data-r="Custo">${brl(somar(r, 'custo'))}</td><td class="num" data-r="Lucro bruto">${brl(somar(r, 'lucro'))}</td><td class="num" data-r="Despesas">${brl(somar(r, 'despesas'))}</td><td class="num" data-r="Resultado">${brl(somar(r, 'resultado'))}</td><td class="num" data-r="Recebido">${brl(somar(r, 'recebido'))}</td><td class="num" data-r="Em aberto">${brl(somar(r, 'em_aberto'))}</td>`);
-        exportar = () => baixarCsv(`relatorio-mensal-${estado.ano}.csv`, ['Mês', 'Vendas', 'Vendido', 'Custo', 'Lucro bruto', 'Despesas', 'Resultado', 'Recebido', 'Em aberto'],
-          r.map((x) => [MESES[x.mes - 1], x.vendas, Number(x.vendido), Number(x.custo), Number(x.lucro), Number(x.despesas), Number(x.resultado), Number(x.recebido), Number(x.em_aberto)]));
+          '<th>Mês</th><th class="num">Vendas</th><th class="num">Vendido</th><th class="num">Custo</th><th class="num">Imposto</th><th class="num">Lucro</th><th class="num">Despesas</th><th class="num">Resultado</th><th class="num">Recebido</th><th class="num">Em aberto</th>',
+          r.map((x) => `<tr><td class="principal">${MESES[x.mes - 1]}</td><td class="num" data-r="Vendas">${x.vendas}</td><td class="num" data-r="Vendido">${brl(x.vendido)}</td><td class="num" data-r="Custo">${brl(x.custo)}</td><td class="num" data-r="Imposto">${brl(x.imposto)}</td><td class="num" data-r="Lucro">${brl(x.lucro)}</td><td class="num" data-r="Despesas">${brl(x.despesas)}</td><td class="num" data-r="Resultado">${brl(x.resultado)}</td><td class="num" data-r="Recebido">${brl(x.recebido)}</td><td class="num" data-r="Em aberto">${brl(x.em_aberto)}</td></tr>`).join(''),
+          `<td data-r="">Total</td><td class="num" data-r="Vendas">${somar(r, 'vendas')}</td><td class="num" data-r="Vendido">${brl(somar(r, 'vendido'))}</td><td class="num" data-r="Custo">${brl(somar(r, 'custo'))}</td><td class="num" data-r="Imposto">${brl(somar(r, 'imposto'))}</td><td class="num" data-r="Lucro">${brl(somar(r, 'lucro'))}</td><td class="num" data-r="Despesas">${brl(somar(r, 'despesas'))}</td><td class="num" data-r="Resultado">${brl(somar(r, 'resultado'))}</td><td class="num" data-r="Recebido">${brl(somar(r, 'recebido'))}</td><td class="num" data-r="Em aberto">${brl(somar(r, 'em_aberto'))}</td>`);
+        exportar = () => baixarCsv(`relatorio-mensal-${estado.ano}.csv`, ['Mês', 'Vendas', 'Vendido', 'Custo', 'Imposto', 'Lucro', 'Despesas', 'Resultado', 'Recebido', 'Em aberto'],
+          r.map((x) => [MESES[x.mes - 1], x.vendas, Number(x.vendido), Number(x.custo), Number(x.imposto), Number(x.lucro), Number(x.despesas), Number(x.resultado), Number(x.recebido), Number(x.em_aberto)]));
       } else if (estado.aba === 'produtos') {
         const r = await api.relProdutos(estado.de, estado.ate, estado.quitadas);
         corpo.innerHTML = `<h2>${dataBr(estado.de)} a ${dataBr(estado.ate)}</h2>` + (r.length ? tabela(
-          '<th>Produto</th><th class="num">Qtd</th><th class="num">Receita</th><th class="num">Custo</th><th class="num">Lucro bruto</th><th class="num">Margem</th>',
-          r.map((x) => `<tr><td class="principal">${esc(x.produto)}</td><td class="num" data-r="Qtd">${x.quantidade}</td><td class="num" data-r="Receita">${brl(x.receita)}</td><td class="num" data-r="Custo">${brl(x.custo)}</td><td class="num" data-r="Lucro bruto">${brl(x.lucro)}</td><td class="num" data-r="Margem">${x.receita > 0 ? numBr(x.lucro / x.receita * 100, 0) + '%' : '—'}</td></tr>`).join(''),
-          `<td data-r="">Total</td><td class="num" data-r="Qtd">${somar(r, 'quantidade')}</td><td class="num" data-r="Receita">${brl(somar(r, 'receita'))}</td><td class="num" data-r="Custo">${brl(somar(r, 'custo'))}</td><td class="num" data-r="Lucro bruto">${brl(somar(r, 'lucro'))}</td><td></td>`) : '<div class="cartao vazio">Sem vendas no período.</div>');
-        exportar = () => baixarCsv(`relatorio-produtos-${estado.de}-a-${estado.ate}.csv`, ['Produto', 'Categoria', 'Quantidade', 'Receita', 'Custo', 'Lucro bruto'],
-          r.map((x) => [x.produto, x.categoria, Number(x.quantidade), Number(x.receita), Number(x.custo), Number(x.lucro)]));
+          '<th>Produto</th><th class="num">Qtd</th><th class="num">Receita</th><th class="num">Custo</th><th class="num">Imposto</th><th class="num">Lucro</th><th class="num">Margem</th>',
+          r.map((x) => `<tr><td class="principal">${esc(x.produto)}</td><td class="num" data-r="Qtd">${x.quantidade}</td><td class="num" data-r="Receita">${brl(x.receita)}</td><td class="num" data-r="Custo">${brl(x.custo)}</td><td class="num" data-r="Imposto">${brl(x.imposto)}</td><td class="num" data-r="Lucro">${brl(x.lucro)}</td><td class="num" data-r="Margem">${x.receita > 0 ? numBr(x.lucro / x.receita * 100, 0) + '%' : '—'}</td></tr>`).join(''),
+          `<td data-r="">Total</td><td class="num" data-r="Qtd">${somar(r, 'quantidade')}</td><td class="num" data-r="Receita">${brl(somar(r, 'receita'))}</td><td class="num" data-r="Custo">${brl(somar(r, 'custo'))}</td><td class="num" data-r="Imposto">${brl(somar(r, 'imposto'))}</td><td class="num" data-r="Lucro">${brl(somar(r, 'lucro'))}</td><td></td>`) : '<div class="cartao vazio">Sem vendas no período.</div>');
+        exportar = () => baixarCsv(`relatorio-produtos-${estado.de}-a-${estado.ate}.csv`, ['Produto', 'Categoria', 'Quantidade', 'Receita', 'Custo', 'Imposto', 'Lucro'],
+          r.map((x) => [x.produto, x.categoria, Number(x.quantidade), Number(x.receita), Number(x.custo), Number(x.imposto), Number(x.lucro)]));
       } else if (estado.aba === 'clientes') {
         const r = await api.relClientes(estado.de, estado.ate);
         corpo.innerHTML = `<h2>${dataBr(estado.de)} a ${dataBr(estado.ate)}</h2>` + (r.length ? tabela(
-          '<th>Cliente</th><th class="num">Vendas</th><th class="num">Total</th><th class="num">Pago</th><th class="num">Em aberto</th><th class="num">Última compra</th>',
-          r.map((x) => `<tr><td class="principal">${x.cliente_id ? `<a href="#/clientes/${x.cliente_id}">${esc(x.cliente)}</a>` : esc(x.cliente)}</td><td class="num" data-r="Vendas">${x.vendas}</td><td class="num" data-r="Total">${brl(x.total)}</td><td class="num" data-r="Pago">${brl(x.pago)}</td><td class="num" data-r="Em aberto">${brl(x.saldo)}</td><td class="num" data-r="Última compra">${dataBr(x.ultima_compra)}</td></tr>`).join(''),
-          `<td data-r="">Total</td><td class="num" data-r="Vendas">${somar(r, 'vendas')}</td><td class="num" data-r="Total">${brl(somar(r, 'total'))}</td><td class="num" data-r="Pago">${brl(somar(r, 'pago'))}</td><td class="num" data-r="Em aberto">${brl(somar(r, 'saldo'))}</td><td></td>`) : '<div class="cartao vazio">Sem vendas no período.</div>');
-        exportar = () => baixarCsv(`relatorio-clientes-${estado.de}-a-${estado.ate}.csv`, ['Cliente', 'Vendas', 'Total', 'Pago', 'Em aberto', 'Última compra'],
-          r.map((x) => [x.cliente, x.vendas, Number(x.total), Number(x.pago), Number(x.saldo), dataBr(x.ultima_compra)]));
+          '<th>Cliente</th><th class="num">Vendas</th><th class="num">Total</th><th class="num">Imposto</th><th class="num">Lucro</th><th class="num">Pago</th><th class="num">Em aberto</th><th class="num">Última compra</th>',
+          r.map((x) => `<tr><td class="principal">${x.cliente_id ? `<a href="#/clientes/${x.cliente_id}">${esc(x.cliente)}</a>` : esc(x.cliente)}</td><td class="num" data-r="Vendas">${x.vendas}</td><td class="num" data-r="Total">${brl(x.total)}</td><td class="num" data-r="Imposto">${brl(x.imposto)}</td><td class="num" data-r="Lucro">${brl(x.lucro)}</td><td class="num" data-r="Pago">${brl(x.pago)}</td><td class="num" data-r="Em aberto">${brl(x.saldo)}</td><td class="num" data-r="Última compra">${dataBr(x.ultima_compra)}</td></tr>`).join(''),
+          `<td data-r="">Total</td><td class="num" data-r="Vendas">${somar(r, 'vendas')}</td><td class="num" data-r="Total">${brl(somar(r, 'total'))}</td><td class="num" data-r="Imposto">${brl(somar(r, 'imposto'))}</td><td class="num" data-r="Lucro">${brl(somar(r, 'lucro'))}</td><td class="num" data-r="Pago">${brl(somar(r, 'pago'))}</td><td class="num" data-r="Em aberto">${brl(somar(r, 'saldo'))}</td><td></td>`) : '<div class="cartao vazio">Sem vendas no período.</div>');
+        exportar = () => baixarCsv(`relatorio-clientes-${estado.de}-a-${estado.ate}.csv`, ['Cliente', 'Vendas', 'Total', 'Imposto', 'Lucro', 'Pago', 'Em aberto', 'Última compra'],
+          r.map((x) => [x.cliente, x.vendas, Number(x.total), Number(x.imposto), Number(x.lucro), Number(x.pago), Number(x.saldo), dataBr(x.ultima_compra)]));
       } else if (estado.aba === 'despesas') {
         const r = await api.relDespesas(estado.de, estado.ate);
         corpo.innerHTML = `<h2>${dataBr(estado.de)} a ${dataBr(estado.ate)}</h2>` + (r.length ? tabela(
@@ -1233,6 +1284,21 @@
           r.map((x) => `<tr><td class="principal">${esc(x.categoria)}</td><td class="num" data-r="Lançamentos">${x.lancamentos}</td><td class="num" data-r="Total">${brl(x.total)}</td></tr>`).join(''),
           `<td data-r="">Total</td><td class="num" data-r="Lançamentos">${somar(r, 'lancamentos')}</td><td class="num" data-r="Total">${brl(somar(r, 'total'))}</td>`) : '<div class="cartao vazio">Sem despesas no período.</div>');
         exportar = () => baixarCsv(`despesas-${estado.de}-a-${estado.ate}.csv`, ['Categoria', 'Lançamentos', 'Total'], r.map((x) => [x.categoria, x.lancamentos, Number(x.total)]));
+      } else if (estado.aba === 'nf') {
+        const [r, pago] = await Promise.all([api.relNf(estado.de, estado.ate), api.impostoPago(estado.de, estado.ate)]);
+        const previsto = somar(r, 'imposto');
+        corpo.innerHTML = `<h2>${dataBr(estado.de)} a ${dataBr(estado.ate)}</h2>
+          <div class="grade g4" style="margin-bottom:14px">
+            <div class="cartao kpi"><div class="rotulo">Vendas com NF</div><div class="valor">${brl(somar(r, 'total'))}</div></div>
+            <div class="cartao kpi"><div class="rotulo">Imposto previsto</div><div class="valor">${brl(previsto)}</div></div>
+            <div class="cartao kpi"><div class="rotulo">Guias pagas</div><div class="valor">${brl(pago)}</div></div>
+            <div class="cartao kpi"><div class="rotulo">Diferença</div><div class="valor">${brl(arred(previsto - Number(pago)))}</div></div>
+          </div>` + (r.length ? tabela(
+          '<th>Cliente</th><th>Data</th><th>NF</th><th class="num">Total</th><th class="num">Alíquota</th><th class="num">Imposto</th>',
+          r.map((x) => `<tr><td class="principal">${esc(x.cliente)}</td><td data-r="Data">${dataBr(x.data)}</td><td data-r="NF">${esc(x.numero_nf) || '—'}</td><td class="num" data-r="Total">${brl(x.total)}</td><td class="num" data-r="Alíquota">${numBr(x.aliquota)}%</td><td class="num" data-r="Imposto">${brl(x.imposto)}</td></tr>`).join(''),
+          `<td data-r="">Total</td><td></td><td></td><td class="num" data-r="Total">${brl(somar(r, 'total'))}</td><td></td><td class="num" data-r="Imposto">${brl(previsto)}</td>`) : '<div class="cartao vazio">Sem vendas com NF no período.</div>');
+        exportar = () => baixarCsv(`notas-fiscais-${estado.de}-a-${estado.ate}.csv`, ['Cliente', 'Data', 'NF', 'Total', 'Alíquota', 'Imposto'],
+          r.map((x) => [x.cliente, dataBr(x.data), x.numero_nf, Number(x.total), Number(x.aliquota), Number(x.imposto)]));
       } else {
         const r = await api.relFormas(estado.de, estado.ate);
         corpo.innerHTML = `<h2>${dataBr(estado.de)} a ${dataBr(estado.ate)}</h2>` + (r.length ? tabela(
@@ -1254,6 +1320,21 @@
     await abrir();
   };
 
+  telas.configuracoes = async (el) => {
+    const config = await api.configuracoes();
+    el.innerHTML = `<div class="topo"><h1>Configurações</h1></div>
+      <div class="cartao pilha" style="max-width:480px">
+        <h2 style="margin:0">Imposto das vendas com NF</h2>
+        <label class="campo">Alíquota (%)<input data-aliq inputmode="decimal" value="${paraCampo(config.aliquota_nf)}"></label>
+        <p class="sub" style="margin:0">Vale para as próximas vendas com NF. Vendas já lançadas mantêm a alíquota com que foram feitas.</p>
+        <div><button class="btn primario" data-s>Salvar alíquota</button></div>
+      </div>`;
+    el.querySelector('[data-s]').onclick = (e) => comTrava(e.target, async () => {
+      await api.salvarAliquotaNf(lerNumero(el.querySelector('[data-aliq]').value));
+      aviso('Alíquota salva.');
+    });
+  };
+
   telas.mais = async (el) => {
     el.innerHTML = `<div class="topo"><h1>Mais</h1></div>
       <div class="mais-lista">
@@ -1261,7 +1342,7 @@
         ${pode('contas') ? '<a class="btn" href="#/contas">Contas</a>' : ''}
         ${pode('compras') ? '<a class="btn" href="#/compras">Compras e fornecedores</a>' : ''}
         ${pode('relatorios') ? '<a class="btn" href="#/relatorios">Relatórios</a>' : ''}
-        ${master() ? '<a class="btn" href="#/usuarios">Usuários</a>' : ''}
+        ${master() ? '<a class="btn" href="#/usuarios">Usuários</a><a class="btn" href="#/configuracoes">Configurações</a>' : ''}
         <button class="btn perigo" data-sair>Sair</button>
       </div>`;
     el.querySelector('[data-sair]').onclick = () => api.sair();
@@ -1279,15 +1360,16 @@
     mais: 'M4 7h16M4 12h16M4 17h16',
     contas: 'M3 10h18M5 10v8M10 10v8M14 10v8M19 10v8M3 20h18M12 3l9 5H3l9-5z',
     usuarios: 'M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3zM9 12l2 2 4-4',
+    configuracoes: 'M4 7h10M18 7h2M4 17h2M10 17h10M14 5v4h4V5h-4zM6 15v4h4v-4H6z',
     sair: 'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10',
   };
   const icone = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICONES[n]}"/></svg>`;
-  const MENU = [['inicio', 'Início'], ['vendas', 'Vendas'], ['receber', 'A receber'], ['clientes', 'Clientes'], ['produtos', 'Produtos'], ['contas', 'Contas'], ['compras', 'Compras'], ['relatorios', 'Relatórios'], ['usuarios', 'Usuários']];
+  const MENU = [['inicio', 'Início'], ['vendas', 'Vendas'], ['receber', 'A receber'], ['clientes', 'Clientes'], ['produtos', 'Produtos'], ['contas', 'Contas'], ['compras', 'Compras'], ['relatorios', 'Relatórios'], ['usuarios', 'Usuários'], ['configuracoes', 'Configurações']];
   // Tela -> permissão necessária. O banco também recusa; aqui é só para não mostrar a tela.
   // A tela Início mostra vendido, recebido e resultado, por isso segue a permissão de relatórios.
   const EXIGE = { inicio: 'relatorios', contas: 'contas', conta: 'contas', compras: 'compras', relatorios: 'relatorios' };
   const telaInicial = () => (pode('relatorios') ? 'inicio' : 'vendas');
-  const liberada = (tela) => (tela === 'usuarios' ? master() : !EXIGE[tela] || pode(EXIGE[tela]));
+  const liberada = (tela) => (['usuarios', 'configuracoes'].includes(tela) ? master() : !EXIGE[tela] || pode(EXIGE[tela]));
   const BAIXO = [['inicio', 'Início'], ['vendas', 'Vendas'], ['receber', 'Receber'], ['clientes', 'Clientes'], ['mais', 'Mais']];
 
   const estados = {};   // guarda filtros de cada tela enquanto navega
