@@ -16,7 +16,7 @@
   const mesAtual = () => hoje().slice(0, 7);
   const fimDoMes = (m) => { const [a, b] = m.split('-').map(Number); return isoLocal(new Date(a, b, 0)); };
   const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-  const FORMAS = { dinheiro: 'Dinheiro', pix: 'PIX / Transferência', credito: 'Cartão de crédito', debito: 'Cartão de débito', cheque: 'Cheque', cortesia: 'Cortesia' };
+  const FORMAS = { dinheiro: 'Dinheiro', pix: 'PIX / Transferência', boleto: 'Boleto', credito: 'Cartão de crédito', debito: 'Cartão de débito', cheque: 'Cheque', cortesia: 'Cortesia' };
   const FORMAS_COMPRA = { dinheiro: 'Dinheiro', pix: 'PIX / Transferência', boleto: 'Boleto', credito: 'Cartão de crédito', debito: 'Cartão de débito', cheque: 'Cheque' };
   const opcoes = (mapa, sel) => Object.entries(mapa).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${esc(v)}</option>`).join('');
   const normalizar = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -148,6 +148,11 @@
     selForma.addEventListener('change', atualizar);
     atualizar();
   }
+
+  // ---------- Boleto ----------
+  const boletoVencido = (v) => v.vencimento_boleto && v.saldo > 0 && v.vencimento_boleto < hoje();
+  const seloBoleto = (v) => (!v.vencimento_boleto || v.saldo <= 0 ? ''
+    : `<span class="selo ${boletoVencido(v) ? 'perigo' : 'alerta'}">Boleto ${boletoVencido(v) ? 'venceu' : 'vence'} ${dataBr(v.vencimento_boleto).slice(0, 5)}</span>`);
 
   // ---------- Selos ----------
   const seloVenda = (s) => ({
@@ -286,15 +291,17 @@
           <div class="linha-conta grande"><span>Total</span><span data-total></span></div>
           ${pode('relatorios') ? `<div class="linha-conta sub" data-imp-linha hidden><span>Imposto previsto (${numBr(aliquota)}%)</span><span data-imp></span></div>` : ''}
         </div>
-        ${id ? `<p class="sub" style="margin:0">Já pago: ${brl(venda.pago)}. Pagamentos são lançados no detalhe da venda.</p>` : `
+        ${id ? `<label class="campo">Vencimento do boleto (deixe em branco se não for boleto)<input type="date" data-venc value="${venda.vencimento_boleto || ''}"></label>
+        <p class="sub" style="margin:0">Já pago: ${brl(venda.pago)}. Pagamentos são lançados no detalhe da venda.</p>` : `
         <div class="cartao">
           <h2>Recebido agora</h2>
           <div class="form-grade manter2">
             <label class="campo">Forma<select data-forma>${opcoes(FORMAS, 'pix')}</select></label>
-            <label class="campo">Valor<input data-pago inputmode="decimal" placeholder="0,00"></label>
-            <label class="campo inteiro" style="grid-column:1/-1">Conta<select data-conta>${opcoesConta(contas)}</select></label>
+            <label class="campo" data-campo-valor>Valor<input data-pago inputmode="decimal" placeholder="0,00"></label>
+            <label class="campo" data-campo-venc hidden>Vencimento do boleto<input type="date" data-venc></label>
+            <label class="campo inteiro" style="grid-column:1/-1" data-campo-conta>Conta<select data-conta>${opcoesConta(contas)}</select></label>
           </div>
-          <div class="acoes-linha">
+          <div class="acoes-linha" data-acoes-pag>
             <button type="button" class="btn pequeno" data-tudo>Pagou tudo</button>
             <button type="button" class="btn pequeno" data-nada>Vai pagar depois</button>
           </div>
@@ -321,7 +328,12 @@
       const impLinha = d.querySelector('[data-imp-linha]');
       if (impLinha) { impLinha.hidden = !comNf; d.querySelector('[data-imp]').textContent = brl(arred(tot * aliquota / 100)); }
       const resta = d.querySelector('[data-resta]');
-      if (resta) {
+      if (resta && d.querySelector('[data-forma]').value === 'boleto') {
+        const venc = d.querySelector('[data-venc]').value;
+        resta.textContent = cliente
+          ? `Boleto de ${brl(tot)} para ${cliente.nome}${venc ? `, vencendo em ${dataBr(venc)}` : ''}. A venda fica em aberto até o pagamento.`
+          : 'Para vender no boleto, escolha um cliente.';
+      } else if (resta) {
         const falta = arred(tot - lerNumero(d.querySelector('[data-pago]').value));
         resta.textContent = falta > 0
           ? (cliente ? `Fica em aberto para ${cliente.nome}: ${brl(falta)}` : `Faltam ${brl(falta)}. Para deixar em aberto, escolha um cliente.`)
@@ -341,6 +353,18 @@
     if (!id) {
       d.querySelector('[data-pago]').oninput = recalcular;
       ligarConta(d.querySelector('[data-forma]'), d.querySelector('[data-conta]'), contas);
+      const formaSel = d.querySelector('[data-forma]');
+      const mostrarBoleto = () => {
+        const boleto = formaSel.value === 'boleto';
+        d.querySelector('[data-campo-valor]').hidden = boleto;
+        d.querySelector('[data-campo-conta]').hidden = boleto;
+        d.querySelector('[data-acoes-pag]').hidden = boleto;
+        d.querySelector('[data-campo-venc]').hidden = !boleto;
+        if (boleto) d.querySelector('[data-pago]').value = '';
+        recalcular();
+      };
+      formaSel.addEventListener('change', mostrarBoleto);
+      d.querySelector('[data-venc]').onchange = recalcular;
       d.querySelector('[data-tudo]').onclick = () => {
         const sub = editor.subtotal();
         d.querySelector('[data-pago]').value = paraCampo(arred(sub - calcDesconto(sub)));
@@ -360,7 +384,13 @@
         descricao: d.querySelector('[data-desc]').value, desconto, itens,
         com_nf: comNf, numero_nf: comNf ? d.querySelector('[data-nf-num]').value : null,
       };
-      if (!id) {
+      const vencTxt = d.querySelector('[data-venc]')?.value || null;
+      if (id) {
+        dados.vencimento_boleto = vencTxt;
+      } else if (d.querySelector('[data-forma]').value === 'boleto') {
+        if (!vencTxt) throw new Error('Informe o vencimento do boleto.');
+        dados.vencimento_boleto = vencTxt;
+      } else {
         const valor = lerNumero(d.querySelector('[data-pago]').value);
         if (valor > 0) {
           const conta = +d.querySelector('[data-conta]').value || null;
@@ -386,6 +416,7 @@
       corpo: `<div class="pilha">
         <div class="linha-conta"><div><strong>${esc(v.cliente_nome)}</strong><div class="sub">${dataBr(v.data)}${v.vendedor ? ' · por ' + esc(v.vendedor) : ''}</div></div><div>${v.com_nf ? '<span class="selo neutro">NF</span> ' : ''}${seloVenda(v.situacao)}</div></div>
         ${v.numero_nf ? `<div class="sub">NF nº ${esc(v.numero_nf)}</div>` : ''}
+        ${v.vencimento_boleto ? `<div class="sub">Boleto com vencimento em ${dataBr(v.vencimento_boleto)} ${seloBoleto(v)}</div>` : ''}
         ${v.descricao ? `<div class="sub">${esc(v.descricao)}</div>` : ''}
         <div class="linhas">${itens.map((i) => `<div class="linha-conta"><span>${i.quantidade} x ${esc(nomeProd(i.produto_id))}<span class="sub"> a ${brl(i.preco_unitario)}</span></span><span class="num">${brl(i.quantidade * i.preco_unitario)}</span></div>`).join('')}</div>
         <div class="totais">
@@ -418,6 +449,56 @@
     });
     const pagar = d.querySelector('[data-pagar]');
     if (pagar) pagar.onclick = () => formPagamento({ titulo: 'Novo pagamento', maximo: v.saldo, aoEnviar: async (data, forma, valor, conta) => { await api.adicionarPagamento(id, data, forma, valor, conta); reabrir(); } }).catch(erroTela);
+  }
+
+  // Um pagamento para uma ou várias vendas do cliente. O banco divide o valor
+  // entre as vendas marcadas, das mais antigas para as mais novas.
+  async function formReceberVendas(nome, vendasAbertas, aoFim) {
+    const contas = await api.contas();
+    const ordem = [...vendasAbertas].sort((a, b) => (a.data === b.data ? a.id - b.id : a.data < b.data ? -1 : 1));
+    const d = janela({
+      titulo: `Receber de ${nome}`,
+      corpo: `<div class="pilha">
+        <div>
+          <div class="linha-conta"><h2 style="margin:0">Vendas</h2><button type="button" class="link" data-todas>Desmarcar todas</button></div>
+          <div data-lista-rec>${ordem.map((v) => `<label class="escolha-venda"><input type="checkbox" data-sel="${v.id}" checked>
+            <span><span class="num-venda">nº ${v.id}</span> · ${dataBr(v.data)} ${seloBoleto(v)}<br><span class="sub">${esc(v.itens_resumo)}</span></span>
+            <strong class="num">${brl(v.saldo)}</strong></label>`).join('')}</div>
+        </div>
+        <div class="linha-conta"><span>Selecionado</span><strong data-sel-total></strong></div>
+        <div class="form-grade">
+          <label class="campo">Data<input type="date" data-data value="${hoje()}"></label>
+          <label class="campo">Forma<select data-forma>${opcoes(FORMAS, 'pix')}</select></label>
+          <label class="campo">Conta<select data-conta>${opcoesConta(contas)}</select></label>
+          <label class="campo">Valor recebido<input data-valor inputmode="decimal"></label>
+        </div>
+        <p class="sub" style="margin:0">Se o valor for menor que o selecionado, ele abate das vendas marcadas mais antigas primeiro.</p>
+      </div>`,
+      pe: '<button class="btn" data-v>Cancelar</button><button class="btn primario" data-s>Salvar recebimento</button>',
+    });
+    const caixas = [...d.querySelectorAll('[data-sel]')];
+    const marcadas = () => caixas.filter((c) => c.checked).map((c) => +c.dataset.sel);
+    const atualizar = () => {
+      const total = arred(ordem.filter((v) => marcadas().includes(v.id)).reduce((s, v) => s + Number(v.saldo), 0));
+      d.querySelector('[data-sel-total]').textContent = `${brl(total)} em ${marcadas().length} venda(s)`;
+      d.querySelector('[data-valor]').value = paraCampo(total);
+      d.querySelector('[data-todas]').textContent = marcadas().length ? 'Desmarcar todas' : 'Marcar todas';
+    };
+    caixas.forEach((c) => { c.onchange = atualizar; });
+    d.querySelector('[data-todas]').onclick = () => { const marcar = !marcadas().length; caixas.forEach((c) => { c.checked = marcar; }); atualizar(); };
+    ligarConta(d.querySelector('[data-forma]'), d.querySelector('[data-conta]'), contas);
+    atualizar();
+    d.querySelector('[data-v]').onclick = d.fechar;
+    d.querySelector('[data-s]').onclick = (e) => comTrava(e.target, async () => {
+      const ids = marcadas();
+      if (!ids.length) throw new Error('Marque ao menos uma venda.');
+      const conta = +d.querySelector('[data-conta]').value || null;
+      await api.receberVendas(ids, d.querySelector('[data-data]').value || hoje(), d.querySelector('[data-forma]').value, lerNumero(d.querySelector('[data-valor]').value), conta);
+      if (conta) lembrarConta(conta);
+      d.fechar();
+      aviso('Recebimento lançado.');
+      aoFim?.();
+    });
   }
 
   async function formPagamento({ titulo, maximo, aoEnviar, ajuda = '' }) {
@@ -480,11 +561,34 @@
     el.querySelector('[data-nova]').onclick = () => formVenda(null, () => mostrar()).catch(erroTela);
   };
 
+  const ORDEM_SITUACAO = { aberta: 0, parcial: 1, quitada: 2 };
+  const COLUNAS_VENDA = [
+    ['id', 'Nº'], ['cliente', 'Cliente'], ['data', 'Data'], ['itens', 'Itens'],
+    ['total', 'Total'], ['saldo', 'Saldo'], ['situacao', 'Situação'],
+  ];
+  function compararVendas(col) {
+    const porData = (a, b) => (a.data === b.data ? a.id - b.id : a.data < b.data ? -1 : 1);
+    return {
+      id: (a, b) => a.id - b.id,
+      cliente: (a, b) => a.cliente_nome.localeCompare(b.cliente_nome, 'pt-BR') || porData(a, b),
+      data: porData,
+      total: (a, b) => a.total - b.total || porData(a, b),
+      saldo: (a, b) => a.saldo - b.saldo || porData(a, b),
+      situacao: (a, b) => ORDEM_SITUACAO[a.situacao] - ORDEM_SITUACAO[b.situacao] || porData(a, b),
+    }[col];
+  }
+
   telas.vendas = async (el, estado) => {
     estado.modo ??= 'mes'; estado.mes ??= mesAtual(); estado.ano ??= mesAtual().slice(0, 4);
     estado.sit ??= 'todas'; estado.nf ??= ''; estado.busca ??= '';
+    estado.col ??= 'data'; estado.dir ??= 'desc';
     const LOTE_TELA = 100;
     let visiveis = LOTE_TELA;
+    const opcoesOrdem = {
+      'data:desc': 'Mais recentes', 'data:asc': 'Mais antigas', 'id:desc': 'Número (maior)', 'id:asc': 'Número (menor)',
+      'cliente:asc': 'Cliente (A–Z)', 'cliente:desc': 'Cliente (Z–A)', 'total:desc': 'Maior total', 'total:asc': 'Menor total',
+      'saldo:desc': 'Maior saldo', 'saldo:asc': 'Menor saldo', 'situacao:asc': 'Situação: em aberto primeiro', 'situacao:desc': 'Situação: quitadas primeiro',
+    };
     el.innerHTML = `
       <div class="topo"><h1>Vendas</h1><div class="topo-acoes">${pode('relatorios') ? '<button class="btn" data-csv>Exportar</button>' : ''}<button class="btn primario" data-nova>Nova venda</button></div></div>
       <div class="filtros">
@@ -492,30 +596,61 @@
         <label class="campo" data-campo-mes>Mês<input type="month" data-mes value="${estado.mes}"></label>
         <label class="campo" data-campo-ano>Ano<input data-ano inputmode="numeric" maxlength="4" value="${estado.ano}"></label>
         <label class="campo">Situação<select data-sit>
-          ${opcoes({ todas: 'Todas', pendentes: 'Com saldo em aberto', quitada: 'Quitadas' }, estado.sit)}</select></label>
+          ${opcoes({ todas: 'Todas', pendentes: 'Com saldo em aberto', quitada: 'Quitadas', boleto: 'Boleto em aberto', vencido: 'Boleto vencido' }, estado.sit)}</select></label>
         <label class="campo">Nota<select data-nf>${opcoes({ '': 'Com e sem NF', com: 'Com NF', sem: 'Sem NF' }, estado.nf)}</select></label>
-        <label class="campo">Buscar<input data-busca placeholder="Cliente, produto, descrição ou NF" value="${esc(estado.busca)}"></label>
+        <label class="campo">Buscar<input data-busca placeholder="Nº da venda, cliente, produto ou NF" value="${esc(estado.busca)}"></label>
+        <label class="campo so-celular">Ordenar por<select data-ordem-cel>${opcoes(opcoesOrdem, `${estado.col}:${estado.dir}`)}</select></label>
       </div>
       <div data-lista><div class="vazio">Carregando…</div></div>`;
     let vendas = [];
     const periodo = () => (estado.modo === 'mes' ? [`${estado.mes}-01`, fimDoMes(estado.mes)]
       : estado.modo === 'ano' ? [`${estado.ano}-01-01`, `${estado.ano}-12-31`]
         : ['2000-01-01', '2100-12-31']);
-    const filtradas = () => vendas.filter((v) =>
-      (estado.sit === 'todas' || (estado.sit === 'pendentes' ? v.saldo > 0 : v.situacao === 'quitada'))
-      && (!estado.nf || (estado.nf === 'com') === v.com_nf)
-      && (!estado.busca || contem(`${v.cliente_nome} ${v.descricao || ''} ${v.itens_resumo || ''} ${v.numero_nf || ''}`, estado.busca)));
+    // Só números (ou "nº 123") busca pelo número da venda ou da NF.
+    const numeroBuscado = () => (estado.busca.match(/^\s*(?:n[º°o.]?\s*)?(\d+)\s*$/i) || [])[1];
+    const filtradas = () => {
+      const n = numeroBuscado();
+      const lista = vendas.filter((v) =>
+        (estado.sit === 'todas'
+          || (estado.sit === 'pendentes' && v.saldo > 0)
+          || (estado.sit === 'quitada' && v.situacao === 'quitada')
+          || (estado.sit === 'boleto' && v.vencimento_boleto && v.saldo > 0)
+          || (estado.sit === 'vencido' && boletoVencido(v)))
+        && (!estado.nf || (estado.nf === 'com') === v.com_nf)
+        && (!estado.busca || (n ? String(v.id) === n || v.numero_nf === n
+          : contem(`${v.cliente_nome} ${v.descricao || ''} ${v.itens_resumo || ''} ${v.numero_nf || ''}`, estado.busca))));
+      const cmp = compararVendas(estado.col);
+      return lista.sort((a, b) => (estado.dir === 'asc' ? cmp(a, b) : cmp(b, a)));
+    };
+    function cabecalho() {
+      return COLUNAS_VENDA.map(([k, r]) => {
+        const num = ['total', 'saldo'].includes(k) ? ' class="num"' : '';
+        if (k === 'itens') return `<th${num}>${r}</th>`;
+        const ativa = estado.col === k;
+        const seta = ativa ? (estado.dir === 'asc' ? '▲' : '▼') : '▲▼';
+        return `<th${num} aria-sort="${ativa ? (estado.dir === 'asc' ? 'ascending' : 'descending') : 'none'}"><button type="button" class="ordena${ativa ? ' ativa' : ''}" data-col="${k}">${r}<span class="seta">${seta}</span></button></th>`;
+      }).join('');
+    }
     function lista() {
       const f = filtradas(), box = el.querySelector('[data-lista]');
       const emAberto = f.reduce((a, v) => a + Number(v.saldo), 0);
       const parte = f.slice(0, visiveis);
       box.innerHTML = `<p class="sub" style="margin:0 0 8px">${f.length} venda(s) · Em aberto ${brl(emAberto)}</p>
-      <div class="tabela-caixa">${f.length ? `<table class="responsiva"><thead><tr><th>Cliente</th><th>Data</th><th>Itens</th><th class="num">Total</th><th class="num">Saldo</th><th>Situação</th></tr></thead><tbody>
-        ${parte.map((v) => `<tr class="clicavel" data-id="${v.id}"><td class="principal">${esc(v.cliente_nome)}${v.com_nf ? ' <span class="selo neutro">NF</span>' : ''}${v.descricao ? `<div class="sub">${esc(v.descricao)}</div>` : ''}</td>
-          <td data-r="Data">${dataBr(v.data)}</td><td data-r="Itens"><span class="sub">${esc(v.itens_resumo)}</span></td><td class="num" data-r="Total">${brl(v.total)}</td><td class="num" data-r="Saldo">${brl(v.saldo)}</td><td data-r="Situação">${seloVenda(v.situacao)}</td></tr>`).join('')}
+      <div class="tabela-caixa">${f.length ? `<table class="responsiva"><thead><tr>${cabecalho()}</tr></thead><tbody>
+        ${parte.map((v) => `<tr class="clicavel" data-id="${v.id}"><td data-r="Nº"><span class="num-venda">nº ${v.id}</span></td><td class="principal">${esc(v.cliente_nome)}${v.com_nf ? ' <span class="selo neutro">NF</span>' : ''}${v.descricao ? `<div class="sub">${esc(v.descricao)}</div>` : ''}</td>
+          <td data-r="Data">${dataBr(v.data)}</td><td data-r="Itens"><span class="sub">${esc(v.itens_resumo)}</span></td><td class="num" data-r="Total">${brl(v.total)}</td><td class="num" data-r="Saldo">${brl(v.saldo)}</td><td data-r="Situação">${seloVenda(v.situacao)} ${seloBoleto(v)}</td></tr>`).join('')}
       </tbody></table>` : '<div class="vazio">Nenhuma venda encontrada.</div>'}</div>
       ${f.length > parte.length ? `<div style="text-align:center;margin-top:12px"><button class="btn" data-mais>Mostrar mais (${f.length - parte.length} restantes)</button></div>` : ''}`;
       box.querySelectorAll('[data-id]').forEach((tr) => { tr.onclick = () => detalheVenda(+tr.dataset.id, carregar).catch(erroTela); });
+      box.querySelectorAll('[data-col]').forEach((b) => {
+        b.onclick = () => {
+          const col = b.dataset.col;
+          if (estado.col === col) estado.dir = estado.dir === 'asc' ? 'desc' : 'asc';
+          else { estado.col = col; estado.dir = ['data', 'id', 'total', 'saldo'].includes(col) ? 'desc' : 'asc'; }
+          el.querySelector('[data-ordem-cel]').value = `${estado.col}:${estado.dir}`;
+          lista();
+        };
+      });
       const mais = box.querySelector('[data-mais]');
       if (mais) mais.onclick = () => { visiveis += LOTE_TELA; lista(); };
     }
@@ -534,27 +669,31 @@
     el.querySelector('[data-sit]').onchange = refazFiltro((e) => { estado.sit = e.target.value; });
     el.querySelector('[data-nf]').onchange = refazFiltro((e) => { estado.nf = e.target.value; });
     el.querySelector('[data-busca]').oninput = refazFiltro((e) => { estado.busca = e.target.value; });
+    el.querySelector('[data-ordem-cel]').onchange = refazFiltro((e) => { [estado.col, estado.dir] = e.target.value.split(':'); });
     el.querySelector('[data-nova]').onclick = () => formVenda(null, carregar).catch(erroTela);
     const exportarVendas = el.querySelector('[data-csv]');
     if (exportarVendas) exportarVendas.onclick = () => baixarCsv(`vendas-${estado.modo === 'mes' ? estado.mes : estado.modo === 'ano' ? estado.ano : 'todas'}.csv`,
-      ['Venda', 'Data', 'Cliente', 'Itens', 'Descrição', 'Total', 'Pago', 'Saldo', 'Situação', 'NF', 'Número da NF'],
-      filtradas().map((v) => [v.id, dataBr(v.data), v.cliente_nome, v.itens_resumo, v.descricao, Number(v.total), Number(v.pago), Number(v.saldo), v.situacao, v.com_nf ? 'Sim' : 'Não', v.numero_nf]));
+      ['Venda', 'Data', 'Cliente', 'Itens', 'Descrição', 'Total', 'Pago', 'Saldo', 'Situação', 'NF', 'Número da NF', 'Vencimento do boleto'],
+      filtradas().map((v) => [v.id, dataBr(v.data), v.cliente_nome, v.itens_resumo, v.descricao, Number(v.total), Number(v.pago), Number(v.saldo), v.situacao, v.com_nf ? 'Sim' : 'Não', v.numero_nf, dataBr(v.vencimento_boleto)]));
     await carregar();
   };
 
   telas.receber = async (el, estado) => {
-    estado.busca ??= ''; estado.atraso ??= '0'; estado.ordem ??= 'saldo'; estado.aberto ??= null;
+    estado.busca ??= ''; estado.atraso ??= '0'; estado.ordem ??= 'saldo'; estado.aberto ??= null; estado.boleto ??= '';
     el.innerHTML = `
       <div class="topo"><h1>A receber</h1><div class="topo-acoes"><button class="btn" data-csv>Exportar</button></div></div>
       <div class="filtros">
         <label class="campo">Buscar cliente<input data-busca value="${esc(estado.busca)}"></label>
         <label class="campo">Em aberto há<select data-atraso>${opcoes({ 0: 'Qualquer prazo', 7: 'Mais de 7 dias', 30: 'Mais de 30 dias', 60: 'Mais de 60 dias' }, estado.atraso)}</select></label>
+        <label class="campo">Boleto<select data-boleto>${opcoes({ '': 'Todos', vencido: 'Com boleto vencido', avencer: 'Com boleto a vencer' }, estado.boleto)}</select></label>
         <label class="campo">Ordenar por<select data-ordem>${opcoes({ saldo: 'Maior saldo', dias: 'Mais antigo', nome: 'Nome' }, estado.ordem)}</select></label>
       </div>
       <div data-lista><div class="vazio">Carregando…</div></div>`;
     let contas = [], vendas = [];
     const filtradas = () => contas
-      .filter((c) => (!estado.busca || contem(c.cliente_nome, estado.busca)) && (!+estado.atraso || c.dias > +estado.atraso))
+      .filter((c) => (!estado.busca || contem(c.cliente_nome, estado.busca)) && (!+estado.atraso || c.dias > +estado.atraso)
+        && (!estado.boleto || vendas.some((v) => v.cliente_id === c.cliente_id && v.vencimento_boleto
+          && (estado.boleto === 'vencido' ? boletoVencido(v) : !boletoVencido(v)))))
       .sort((a, b) => (estado.ordem === 'saldo' ? b.saldo - a.saldo : estado.ordem === 'dias' ? b.dias - a.dias : a.cliente_nome.localeCompare(b.cliente_nome, 'pt-BR')));
     function lista() {
       const f = filtradas(), box = el.querySelector('[data-lista]');
@@ -565,13 +704,13 @@
         const msg = `Olá, ${c.cliente_nome}! Consta em aberto o valor de ${brl(c.saldo)}.`;
         const zap = linkZap(c.cliente_telefone, msg);
         return `<div class="cartao conta-cliente">
-          <div class="linha-conta"><div><a class="nome" href="#/clientes/${c.cliente_id}">${esc(c.cliente_nome)}</a><div class="sub">${c.vendas} venda(s) · desde ${dataBr(c.desde)} · ${c.dias} dia(s)</div></div><div class="saldo">${brl(c.saldo)}</div></div>
+          <div class="linha-conta"><div><a class="nome" href="#/clientes/${c.cliente_id}">${esc(c.cliente_nome)}</a><div class="sub">${c.vendas} venda(s) · desde ${dataBr(c.desde)} · ${c.dias} dia(s)</div>${vs.some(boletoVencido) ? '<span class="selo perigo">Boleto vencido</span>' : ''}</div><div class="saldo">${brl(c.saldo)}</div></div>
           <div class="acoes-linha">
             <button class="btn pequeno primario" data-rec="${c.cliente_id}">Receber</button>
             <button class="btn pequeno" data-ver="${c.cliente_id}">${estado.aberto === c.cliente_id ? 'Ocultar vendas' : 'Ver vendas'}</button>
             ${zap ? `<a class="btn pequeno" href="${esc(zap)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
           </div>
-          ${estado.aberto === c.cliente_id ? `<div class="conta-detalhe linhas">${vs.map((v) => `<div class="linha-conta clicavel" data-venda="${v.id}" style="cursor:pointer"><span>${dataBr(v.data)} <span class="sub">${esc(v.itens_resumo)}</span></span><strong class="num">${brl(v.saldo)}</strong></div>`).join('')}</div>` : ''}
+          ${estado.aberto === c.cliente_id ? `<div class="conta-detalhe linhas">${vs.map((v) => `<div class="linha-conta clicavel" data-venda="${v.id}" style="cursor:pointer"><span><span class="num-venda">nº ${v.id}</span> · ${dataBr(v.data)} ${seloBoleto(v)} <span class="sub">${esc(v.itens_resumo)}</span></span><strong class="num">${brl(v.saldo)}</strong></div>`).join('')}</div>` : ''}
         </div>`;
       }).join('') || '<div class="cartao vazio">Nenhuma conta em aberto com esse filtro.</div>'}</div>`;
       box.querySelectorAll('[data-ver]').forEach((b) => { b.onclick = () => { estado.aberto = estado.aberto === +b.dataset.ver ? null : +b.dataset.ver; lista(); }; });
@@ -579,10 +718,7 @@
       box.querySelectorAll('[data-rec]').forEach((b) => {
         b.onclick = () => {
           const c = contas.find((x) => x.cliente_id === +b.dataset.rec);
-          formPagamento({
-            titulo: `Receber de ${c.cliente_nome}`, maximo: Number(c.saldo), ajuda: 'O valor abate as vendas mais antigas primeiro.',
-            aoEnviar: async (data, forma, valor, conta) => { await api.receberDoCliente(c.cliente_id, data, forma, valor, conta); await carregar(); },
-          }).catch(erroTela);
+          formReceberVendas(c.cliente_nome, vendas.filter((v) => v.cliente_id === c.cliente_id), carregar).catch(erroTela);
         };
       });
     }
@@ -593,6 +729,7 @@
     el.querySelector('[data-busca]').oninput = (e) => { estado.busca = e.target.value; lista(); };
     el.querySelector('[data-atraso]').onchange = (e) => { estado.atraso = e.target.value; lista(); };
     el.querySelector('[data-ordem]').onchange = (e) => { estado.ordem = e.target.value; lista(); };
+    el.querySelector('[data-boleto]').onchange = (e) => { estado.boleto = e.target.value; lista(); };
     el.querySelector('[data-csv]').onclick = () => baixarCsv('contas-em-aberto.csv', ['Cliente', 'Telefone', 'Vendas', 'Saldo', 'Desde', 'Dias'],
       filtradas().map((c) => [c.cliente_nome, c.cliente_telefone, c.vendas, Number(c.saldo), dataBr(c.desde), c.dias]));
     await carregar();
@@ -685,7 +822,7 @@
           ${c.observacoes ? `<div><div class="sub">Observações</div><div style="white-space:pre-wrap">${esc(c.observacoes)}</div></div>` : ''}
         </div></div>
         <div><h2>Histórico de compras</h2><div class="tabela-caixa">${vendas.length ? `<table class="responsiva"><thead><tr><th>Data</th><th>Itens</th><th class="num">Total</th><th class="num">Saldo</th><th>Situação</th></tr></thead><tbody>
-          ${vendas.map((v) => `<tr class="clicavel" data-id="${v.id}"><td class="principal">${dataBr(v.data)}</td><td data-r="Itens"><span class="sub">${esc(v.itens_resumo)}</span></td><td class="num" data-r="Total">${brl(v.total)}</td><td class="num" data-r="Saldo">${brl(v.saldo)}</td><td data-r="Situação">${seloVenda(v.situacao)}</td></tr>`).join('')}
+          ${vendas.map((v) => `<tr class="clicavel" data-id="${v.id}"><td class="principal"><span class="num-venda">nº ${v.id}</span> · ${dataBr(v.data)}</td><td data-r="Itens"><span class="sub">${esc(v.itens_resumo)}</span></td><td class="num" data-r="Total">${brl(v.total)}</td><td class="num" data-r="Saldo">${brl(v.saldo)}</td><td data-r="Situação">${seloVenda(v.situacao)} ${seloBoleto(v)}</td></tr>`).join('')}
         </tbody></table>` : '<div class="vazio">Nenhuma compra registrada.</div>'}</div></div>
       </div>`;
     el.querySelector('[data-editar]').onclick = () => formCliente(c, () => mostrar());
@@ -695,7 +832,7 @@
       await api.salvarCliente(c.id, { ativo: !c.ativo }); mostrar();
     });
     const rec = el.querySelector('[data-rec]');
-    if (rec) rec.onclick = () => formPagamento({ titulo: `Receber de ${c.nome}`, maximo: saldo, ajuda: 'O valor abate as vendas mais antigas primeiro.', aoEnviar: async (data, forma, valor, conta) => { await api.receberDoCliente(c.id, data, forma, valor, conta); mostrar(); } }).catch(erroTela);
+    if (rec) rec.onclick = () => formReceberVendas(c.nome, vendas.filter((v) => v.saldo > 0), () => mostrar()).catch(erroTela);
     el.querySelectorAll('[data-id]').forEach((tr) => { tr.onclick = () => detalheVenda(+tr.dataset.id, () => mostrar()).catch(erroTela); });
   };
 
@@ -1414,17 +1551,28 @@
   window.addEventListener('hashchange', () => { window.scrollTo(0, 0); mostrar(); });
 
   // ---------- Entrada ----------
+  const OLHO_ABERTO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const OLHO_FECHADO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10.8 10.8 0 0112 5c6.5 0 10 7 10 7a17.7 17.7 0 01-3.1 4.2M6.1 6.1C3.6 7.8 2 12 2 12s3.5 7 10 7c1.9 0 3.6-.6 5-1.5M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
   function telaLogin(msg = '') {
     area = null;
     raiz.innerHTML = `<div class="tela-login"><form class="cartao caixa-login">
       <h1>Loja Pampa</h1>
       <label class="campo">E-mail<input type="email" name="email" autocomplete="username" required></label>
-      <label class="campo">Senha<input type="password" name="senha" autocomplete="current-password" required></label>
+      <label class="campo">Senha<span class="senha-caixa"><input type="password" name="senha" autocomplete="current-password" required><button type="button" class="olho" data-olho aria-label="Mostrar senha" aria-pressed="false">${OLHO_ABERTO}</button></span></label>
       <div class="erro" data-erro>${esc(msg)}</div>
       <button class="btn primario" type="submit">Entrar</button>
       <button class="link" type="button" data-esqueci>Esqueci a senha</button>
     </form></div>`;
     const form = raiz.querySelector('form'), err = raiz.querySelector('[data-erro]');
+    const olho = raiz.querySelector('[data-olho]');
+    olho.onclick = () => {
+      const mostrar = form.senha.type === 'password';
+      form.senha.type = mostrar ? 'text' : 'password';
+      olho.innerHTML = mostrar ? OLHO_FECHADO : OLHO_ABERTO;
+      olho.setAttribute('aria-label', mostrar ? 'Esconder senha' : 'Mostrar senha');
+      olho.setAttribute('aria-pressed', String(mostrar));
+      form.senha.focus();
+    };
     form.onsubmit = async (e) => {
       e.preventDefault();
       const b = form.querySelector('[type=submit]');
@@ -1459,6 +1607,8 @@
     const id = sessao?.user?.id ?? null;
     if (id === usuarioAtual) return;
     usuarioAtual = id;
+    // Filtros de quem saiu não passam para quem entra no mesmo aparelho.
+    Object.keys(estados).forEach((k) => delete estados[k]);
     if (!id) { acesso = null; telaLogin(); return; }
     try {
       acesso = await api.meuAcesso();

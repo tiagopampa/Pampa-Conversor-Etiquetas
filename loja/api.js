@@ -110,12 +110,13 @@
     salvarVenda: (id, v) => rpc('salvar_venda', {
       p_id: id, p_cliente_id: v.cliente_id, p_data: v.data, p_descricao: v.descricao,
       p_desconto: v.desconto, p_itens: v.itens, p_pagamento: v.pagamento || null,
-      p_com_nf: !!v.com_nf, p_numero_nf: v.numero_nf || null,
+      p_com_nf: !!v.com_nf, p_numero_nf: v.numero_nf || null, p_vencimento_boleto: v.vencimento_boleto || null,
     }),
     impostoDaVenda: (id) => rpc('imposto_da_venda', { p_id: id }),
     excluirVenda: (id) => rpc('excluir_venda', { p_id: id }),
     adicionarPagamento: (venda, data, forma, valor, conta) => rpc('adicionar_pagamento', { p_venda: venda, p_data: data, p_forma: forma, p_valor: valor, p_conta: conta }),
     excluirPagamento: (id) => rpc('excluir_pagamento', { p_id: id }),
+    receberVendas: (vendas, data, forma, valor, conta) => rpc('receber_vendas', { p_vendas: vendas, p_data: data, p_forma: forma, p_valor: valor, p_conta: conta }),
     receberDoCliente: (cliente, data, forma, valor, conta) => rpc('receber_do_cliente', { p_cliente: cliente, p_data: data, p_forma: forma, p_valor: valor, p_conta: conta }),
     clientesEmAberto: () => todas(() => sb.from('vw_clientes_em_aberto').select('*').order('saldo', { ascending: false }).order('cliente_id')),
 
