@@ -134,7 +134,7 @@
     // ---------- Contas ----------
     contas: () => dados(sb.from('contas').select('id,nome,tipo,ativo').order('nome')),
     saldosDasContas: () => dados(sb.from('vw_contas').select('*').order('nome')),
-    salvarConta: (id, c) => rpc('salvar_conta', { p_id: id, p_nome: c.nome, p_tipo: c.tipo, p_saldo_inicial: c.saldo_inicial, p_ativo: c.ativo }),
+    salvarConta: (id, c) => rpc('salvar_conta', { p_id: id, p_nome: c.nome, p_tipo: c.tipo, p_saldo_inicial: c.saldo_inicial, p_ativo: c.ativo, p_data_inicio: c.data_inicio || null }),
     extrato: (conta, de, ate) => todas(() => sb.from('vw_extrato').select('*').eq('conta_id', conta).gte('data', de).lte('data', ate).order('data').order('origem').order('id')),
     saldoAntes: (conta, data) => rpc('saldo_conta_antes', { p_conta: conta, p_data: data }),
     lancamento: (id) => dados(sb.from('lancamentos').select('*').eq('id', id).single()),

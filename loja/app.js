@@ -1092,7 +1092,8 @@
         <label class="campo inteiro">Nome *<input data-nome value="${esc(v.nome)}" placeholder="Sicoob, Inter, Caixa da loja…"></label>
         <label class="campo">Tipo<select data-tipo>${opcoes({ banco: 'Banco', dinheiro: 'Dinheiro em espécie' }, v.tipo)}</select></label>
         <label class="campo">Saldo inicial<input data-saldo inputmode="decimal" value="${paraCampo(v.saldo_inicial)}"></label>
-        <p class="sub inteiro" style="margin:0">O saldo inicial é quanto havia na conta quando você começou a usar o sistema.</p>
+        <label class="campo">Data de início<input type="date" data-inicio value="${v.data_inicio || ''}"></label>
+        <p class="sub inteiro" style="margin:0">O saldo passa a ser o saldo inicial mais o que entrar e sair a partir da data de início. O que veio antes continua nas vendas e nos relatórios, mas não mexe no saldo. Para reiniciar a conta, informe o saldo do banco no dia e essa data. Sem data, todos os movimentos contam.</p>
         ${c ? `<label class="check inteiro"><input type="checkbox" data-ativa ${v.ativo ? 'checked' : ''}> Conta em uso</label>` : ''}
       </div>`,
       pe: '<button class="btn" data-v>Cancelar</button><button class="btn primario" data-s>Salvar conta</button>',
@@ -1102,6 +1103,7 @@
       await api.salvarConta(c?.id ?? null, {
         nome: d.querySelector('[data-nome]').value, tipo: d.querySelector('[data-tipo]').value,
         saldo_inicial: lerNumero(d.querySelector('[data-saldo]').value), ativo: d.querySelector('[data-ativa]')?.checked ?? true,
+        data_inicio: d.querySelector('[data-inicio]').value || null,
       });
       d.fechar(); aviso('Conta salva.'); aoSalvar?.();
     });
@@ -1171,7 +1173,7 @@
       const box = el.querySelector('[data-lista]');
       box.innerHTML = `<div class="cartao kpi" style="margin-bottom:12px"><div class="rotulo">Saldo total</div><div class="valor">${brl(total)}</div></div>
       <div class="tabela-caixa">${contas.length ? `<table class="responsiva"><thead><tr><th>Conta</th><th class="num">Saldo</th><th class="num">Saldo conferido</th><th>Conciliação</th><th></th></tr></thead><tbody>
-        ${contas.map((c) => `<tr class="clicavel" data-id="${c.id}"><td class="principal">${esc(c.nome)}${c.ativo ? '' : ' <span class="selo neutro">Fora de uso</span>'}</td><td class="num" data-r="Saldo">${brl(c.saldo)}</td><td class="num" data-r="Conferido">${brl(c.saldo_conferido)}</td><td data-r="Conciliação">${c.pendentes ? `<span class="selo alerta">${c.pendentes} a conferir</span>` : '<span class="selo ok">Em dia</span>'}</td><td data-r=""><button class="btn pequeno" data-ed="${c.id}">Editar</button></td></tr>`).join('')}
+        ${contas.map((c) => `<tr class="clicavel" data-id="${c.id}"><td class="principal">${esc(c.nome)}${c.ativo ? '' : ' <span class="selo neutro">Fora de uso</span>'}${c.data_inicio ? `<div class="sub">Saldo a partir de ${dataBr(c.data_inicio)}</div>` : ''}</td><td class="num" data-r="Saldo">${brl(c.saldo)}</td><td class="num" data-r="Conferido">${brl(c.saldo_conferido)}</td><td data-r="Conciliação">${c.pendentes ? `<span class="selo alerta">${c.pendentes} a conferir</span>` : '<span class="selo ok">Em dia</span>'}</td><td data-r=""><button class="btn pequeno" data-ed="${c.id}">Editar</button></td></tr>`).join('')}
       </tbody></table>` : '<div class="vazio">Nenhuma conta criada ainda.</div>'}</div>`;
       box.querySelectorAll('[data-id]').forEach((tr) => { tr.onclick = () => { location.hash = `#/contas/${tr.dataset.id}`; }; });
       box.querySelectorAll('[data-ed]').forEach((b) => { b.onclick = (e) => { e.stopPropagation(); formConta(contas.find((c) => c.id === +b.dataset.ed), carregar); }; });
@@ -1193,7 +1195,12 @@
       const conta = contas.find((c) => c.id === id);
       if (!conta) throw new Error('Conta não encontrada.');
       let corrente = Number(anterior);
-      const comSaldo = linhas.map((l) => { corrente += Number(l.entrada) - Number(l.saida); return { ...l, corrente }; });
+      const antesDoInicio = (l) => conta.data_inicio && l.data < conta.data_inicio;
+      const comSaldo = linhas.map((l) => {
+        if (antesDoInicio(l)) return { ...l, corrente: null, antes: true };
+        corrente += Number(l.entrada) - Number(l.saida);
+        return { ...l, corrente };
+      });
       corpo.innerHTML = `
         <div class="topo"><div><a href="#/contas" class="sub">← Contas</a><h1>${esc(conta.nome)}</h1></div>
           <div class="topo-acoes"><button class="btn" data-ent>Nova entrada</button><button class="btn primario" data-sai>Nova saída</button></div></div>
@@ -1204,9 +1211,9 @@
           <div class="cartao kpi"><div class="rotulo">Diferença</div><div class="valor" data-dif>—</div></div>
         </div>
         <div class="filtros"><label class="campo">Mês<input type="month" data-mes value="${estado.mes}"></label></div>
-        <p class="sub" style="margin:0 0 8px">Saldo anterior: ${brl(anterior)}. Marque cada linha que encontrar no extrato do banco.</p>
+        <p class="sub" style="margin:0 0 8px">Saldo anterior: ${brl(anterior)}. Marque cada linha que encontrar no extrato do banco.${conta.data_inicio ? ` Saldo contado a partir de ${dataBr(conta.data_inicio)}; o que vem antes aparece riscado.` : ''}</p>
         <div class="tabela-caixa">${comSaldo.length ? `<table class="responsiva"><thead><tr><th>Conferido</th><th>Data</th><th>Descrição</th><th class="num">Entrada</th><th class="num">Saída</th><th class="num">Saldo</th></tr></thead><tbody>
-          ${comSaldo.map((l) => `<tr data-linha="${esc(l.origem)}:${l.id}"><td data-r="Conferido"><input type="checkbox" class="confere" style="width:20px;min-height:20px;height:20px" aria-label="Conferido" ${l.conferido ? 'checked' : ''}></td><td class="principal">${dataBr(l.data)}</td><td data-r="Descrição"><span ${l.origem === 'lancamento' ? 'class="link" data-ver' : ''}>${esc(l.descricao)}</span> <span class="sub">${esc(l.categoria)}</span></td><td class="num" data-r="Entrada">${l.entrada ? brl(l.entrada) : ''}</td><td class="num" data-r="Saída">${l.saida ? brl(l.saida) : ''}</td><td class="num" data-r="Saldo">${brl(l.corrente)}</td></tr>`).join('')}
+          ${comSaldo.map((l) => `<tr data-linha="${esc(l.origem)}:${l.id}"${l.antes ? ' class="antes-inicio"' : ''}><td data-r="Conferido">${l.antes ? '<span class="sub">Antes do início</span>' : `<input type="checkbox" class="confere" style="width:20px;min-height:20px;height:20px" aria-label="Conferido" ${l.conferido ? 'checked' : ''}>`}</td><td class="principal">${dataBr(l.data)}</td><td data-r="Descrição"><span ${l.origem === 'lancamento' ? 'class="link" data-ver' : ''}>${esc(l.descricao)}</span> <span class="sub">${esc(l.categoria)}</span></td><td class="num" data-r="Entrada">${l.entrada ? brl(l.entrada) : ''}</td><td class="num" data-r="Saída">${l.saida ? brl(l.saida) : ''}</td><td class="num" data-r="Saldo">${l.antes ? '—' : brl(l.corrente)}</td></tr>`).join('')}
         </tbody></table>` : '<div class="vazio">Nenhum movimento neste mês.</div>'}</div>`;
       const dif = () => {
         const txt = corpo.querySelector('[data-banco]').value.trim(), alvo = corpo.querySelector('[data-dif]');

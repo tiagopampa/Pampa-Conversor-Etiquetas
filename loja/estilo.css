@@ -146,6 +146,10 @@ tfoot td { font-weight: 650; border-top: 1px solid var(--linha); }
 .campo.so-celular { display: none; }
 .num-venda { color: var(--suave); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
+/* ---------- Extrato: movimentos antes do início da conta ---------- */
+tr.antes-inicio td { color: var(--suave); }
+tr.antes-inicio td:not(:first-child) { text-decoration: line-through; text-decoration-color: rgba(95, 107, 103, .45); }
+
 /* ---------- Seleção de vendas a receber ---------- */
 .escolha-venda { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--linha); cursor: pointer; }
 .escolha-venda:last-child { border-bottom: 0; }
