@@ -114,11 +114,21 @@
                     <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
                         Entrar
                     </button>
-                    <!-- BOTÃO BAIXAR RUSTDESK (ACESSO REMOTO) — para atualizar, troque a versão 1.5.1 no link -->
-<a href="https://github.com/rustdesk/rustdesk/releases/download/1.5.1/rustdesk-1.5.1-x86_64.exe" download class="mt-4 w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-bold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all text-center flex items-center gap-2 justify-center no-underline">
+                    <!-- BOTÃO BAIXAR RUSTDESK (ACESSO REMOTO) — o link é atualizado sozinho para a última versão (script abaixo); 1.5.3 é só o reserva -->
+<a id="rustdesk-download" href="https://github.com/rustdesk/rustdesk/releases/download/1.5.3/rustdesk-1.5.3-x86_64.exe" download class="mt-4 w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-bold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all text-center flex items-center gap-2 justify-center no-underline">
     🖥️ Baixar RustDesk (Suporte Remoto)
 </a>
 <p class="mt-1 text-xs text-gray-500 text-center">Windows 64 bits · abra o arquivo e passe o ID para o suporte</p>
+<script>
+  // Busca no GitHub a última versão do RustDesk e aponta o botão para o .exe Windows 64 bits
+  fetch('https://api.github.com/repos/rustdesk/rustdesk/releases/latest')
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(rel => {
+      const exe = (rel.assets || []).find(a => /^rustdesk-[\d.]+-x86_64\.exe$/.test(a.name));
+      if (exe) document.getElementById('rustdesk-download').href = exe.browser_download_url;
+    })
+    .catch(() => {});
+</script>
 <!-- FIM DO BOTÃO -->
 <!-- BOTÃO DO CONCILIADOR -->
 <a href="conciliador.html" target="_blank" class="mt-4 w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all text-center flex items-center gap-2 justify-center no-underline">
